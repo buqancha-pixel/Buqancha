@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: { siteName: SITE_NAME, locale: "uz_UZ", type: "website" },
   robots: ALLOW_INDEXING ? { index: true, follow: true } : { index: false, follow: false },
   // Google Search Console: "HTML tag" usulidagi content qiymati
-  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION || "sERTsrX23Wvoc5ZP3U57fuHrdW4T5lk1MO2Q8fe1qjU" },
 };
 
 export async function generateViewport(): Promise<Viewport> {
