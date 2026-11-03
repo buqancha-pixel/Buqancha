@@ -18,4 +18,8 @@ test("nom va nashriyot bo'yicha", () => {
   assert.equal(isReligiousText("O'tkan kunlar", "Yoshlar matbuoti"), false);
   assert.equal(isReligiousText("Kapitan Grant bolalari"), false);
   assert.equal(isReligiousText("Navoiy"), false);
+  assert.equal(isReligiousText("Stress va din"), true);
+  assert.equal(isReligiousText("Avliyolar kitobi"), true);
+  assert.equal(isReligiousText("Dinozavrlar"), false);
+  assert.equal(isReligiousText("Saodat asri qissalari: 1-kitob"), true);
 });

@@ -2,15 +2,19 @@
  * Narxlarni yig'ish.
  *   npm run collect                  — yig'ish yoqilgan barcha sotuvchilar
  *   npm run collect -- asaxiy topar  — faqat ko'rsatilganlar
+ *   npm run collect -- qamar --stale=24 — faqat 24 soatdan beri tekshirilmaganlar
  */
 import { collectAll, collectSeller, type RunResult } from "../lib/collector/run";
 import { prisma } from "../lib/db";
 
 async function main() {
-  const slugs = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+  const args = process.argv.slice(2);
+  const slugs = args.filter((a) => !a.startsWith("-"));
+  const stale = Number(args.find((a) => a.startsWith("--stale="))?.split("=")[1]);
+  const opts = Number.isFinite(stale) && stale > 0 ? { staleHours: stale } : {};
   const results: RunResult[] = slugs.length
-    ? await Promise.all(slugs.map((s) => collectSeller(s)))
-    : await collectAll();
+    ? await Promise.all(slugs.map((s) => collectSeller(s, opts)))
+    : await collectAll(opts);
   for (const r of results) printResult(r);
   if (!results.length) console.log("Yig'ish yoqilgan sotuvchi yo'q (Seller.collector = NONE).");
   process.exitCode = results.some((r) => r.status === "FAILED") ? 1 : 0;

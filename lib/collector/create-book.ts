@@ -25,6 +25,8 @@ export type CreateVerdict = { ok: true } | { ok: false; reason: string };
 export function canCreateBook(item: CollectedItem, isbn: string | null, sellerName: string): CreateVerdict {
   if (!isbn) return { ok: false, reason: "ISBN yo'q — yangi kitob yaratilmaydi" };
   if (!item.author || item.authorFromBrand) return { ok: false, reason: "muallif ko'rsatilmagan" };
+  if (/tarjim|tarjimon|переводчик|перевод|tərcümə|translat/i.test(item.author))
+    return { ok: false, reason: "muallif o'rnida tarjimon" };
   const ak = searchKey(item.author);
   if (ak === searchKey(sellerName) || (item.publisher && ak === searchKey(item.publisher)))
     return { ok: false, reason: "muallif o'rnida do'kon/nashriyot nomi" };

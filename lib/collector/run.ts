@@ -22,7 +22,13 @@ export async function importFeed(sellerSlug: string, body: string, format?: "csv
 }
 
 /** Sotuvchi sozlamasiga ko'ra narxlarni yig'ish. */
-type FetchOpts = { fetchImpl?: typeof fetch; sleep?: (ms: number) => Promise<void>; discoverLimit?: number };
+type FetchOpts = {
+  fetchImpl?: typeof fetch;
+  sleep?: (ms: number) => Promise<void>;
+  discoverLimit?: number;
+  /** faqat shuncha soatdan beri tekshirilmagan takliflar qayta yuklanadi */
+  staleHours?: number;
+};
 
 /** Sitemap'dan barcha <loc> manzillarni oladi (sitemapindex bo'lsa — ichki sitemap'lar ham, 20 tagacha). */
 export async function sitemapLocs(fetcher: PoliteFetcher, url: string, depth = 0): Promise<string[]> {
@@ -111,6 +117,7 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
   if (seller.collector === "PRODUCT_PAGE") {
     return withRun(seller, "PRODUCT_PAGE", async (stats) => {
       const started = new Date();
+      const staleBefore = opts.staleHours ? new Date(started.getTime() - opts.staleHours * 3600_000) : started;
       if (seller.sitemapUrls.length) await discover(seller, fetcher, stats, opts.discoverLimit ?? 200);
       // allaqachon bog'langan mahsulot sahifalarini qayta tekshiramiz
       // (shu ishga tushirishda topilganlar qayta yuklanmaydi)
@@ -119,7 +126,7 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
           sellerId: seller.id,
           isSample: false,
           url: { not: null },
-          OR: [{ checkedAt: null }, { checkedAt: { lt: started } }],
+          OR: [{ checkedAt: null }, { checkedAt: { lt: staleBefore } }],
         },
         include: { edition: { select: { book: { select: { origin: true } } } } },
       });
