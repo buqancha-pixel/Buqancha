@@ -4,10 +4,12 @@ const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || vercelUrl || "https://buqancha.uz").replace(/\/$/, "");
 
 /**
- * Google indeksatsiyasi. Sukut bo'yicha o'chiq (robots.txt va meta noindex).
- * Sayt tayyor bo'lgach (yaxshisi o'z domeni ulangach) ALLOW_INDEXING=true qiling.
+ * Google indeksatsiyasi. Vercel'dagi asosiy (production) saytda yoqiq; sinov deploy'lari
+ * va mahalliy ishga tushirishda o'chiq (robots.txt Disallow va meta noindex).
+ * ALLOW_INDEXING=true/false bilan majburan yoqish yoki o'chirish mumkin.
  */
-export const ALLOW_INDEXING = process.env.ALLOW_INDEXING === "true";
+const indexingEnv = process.env.ALLOW_INDEXING;
+export const ALLOW_INDEXING = indexingEnv ? indexingEnv === "true" : process.env.VERCEL_ENV === "production";
 
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;

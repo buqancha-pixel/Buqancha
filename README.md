@@ -26,7 +26,7 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 | `CRON_SECRET` | `/api/cron/collect` uchun maxfiy kalit |
 | `COLLECTOR_USER_AGENT` | Ixtiyoriy: bot User-Agent'i (sukut: `BuqanchaBot/1.0 (+SITE_URL/bot)`) |
 | `GOOGLE_SITE_VERIFICATION` | Ixtiyoriy: Google Search Console "HTML tag" tasdiqlash kodi (`content` qiymati) |
-| `ALLOW_INDEXING` | `true` bo'lsa Google indekslaydi. Sukut bo'yicha o'chiq: robots.txt `Disallow: /`, sahifalarda `noindex` |
+| `ALLOW_INDEXING` | Google indeksatsiyasi. Sukut: Vercel production'da yoqiq, boshqa joyda o'chiq (robots.txt `Disallow: /`, `noindex`). `true`/`false` bilan majburlash mumkin |
 
 > **Muhim:** `npm run db:seed` dagi narxlar **namunaviy** (`isSample`, saytda ogohlantirish chiqadi) — faqat mahalliy
 > ishlab chiqish uchun. Internetdagi sayt haqiqiy narxlar nusxasidan (`prisma/data/catalog.json.gz`) boshlanadi.
@@ -135,8 +135,8 @@ Testlar: `npm test` (unit) va `npm run test:db` (alohida `buqancha_test` bazasid
 4. **Narxlarni har kuni yangilash** ([.github/workflows/narxlar.yml](.github/workflows/narxlar.yml)) — GitHub repo →
    *Settings → Secrets and variables → Actions*: secret `DATABASE_URL` (= Neon'dagi `DATABASE_URL_UNPOOLED`),
    variable `SITE_URL` (sayt manzili). Qo'lda ishga tushirish: *Actions → Narxlarni yangilash → Run workflow*.
-5. **Google:** sayt tayyor bo'lgach Vercel'da `ALLOW_INDEXING=true` qo'yib, qayta deploy qiling; Google Search
-   Console'ga saytni qo'shib, `sitemap.xml` ni yuboring. O'z domeni (masalan `buqancha.uz`) ulangach
+5. **Google:** production sayt indeksatsiyaga ochiq. Google Search Console'ga saytni qo'shib (HTML tag usuli,
+   `GOOGLE_SITE_VERIFICATION`), `sitemap.xml` ni yuboring. O'z domeni (masalan `buqancha.uz`) ulangach
    `NEXT_PUBLIC_SITE_URL` ni ham o'rnating.
 
 Katalog nusxasini yangilash (mahalliy bazadan): `npm run snapshot -- export`. Nusxa faqat **bo'sh** bazaga yuklanadi —
