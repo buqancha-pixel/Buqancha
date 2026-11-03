@@ -10,6 +10,8 @@ export type CatalogOptions = Pick<FetcherOptions, "fetchImpl" | "sleep"> & {
   /** shu ishga tushirishda ko'pi bilan nechta sahifa yuklansin */
   limit?: number;
   batchSize?: number;
+  /** navbatdagi (PENDING) moslanmaganlarni ham qayta ko'rib chiqish — qoidalar yaxshilangandan keyin */
+  retryPending?: boolean;
   onBatch?: (done: number, total: number, stats: RunStats) => void;
 };
 
@@ -33,7 +35,10 @@ export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {
     for (const sm of seller.sitemapUrls) locs.push(...(await sitemapLocs(fetcher, sm)));
     const [offers, unmatched] = await Promise.all([
       prisma.offer.findMany({ where: { sellerId: seller.id, url: { not: null } }, select: { url: true } }),
-      prisma.unmatchedItem.findMany({ where: { sellerId: seller.id }, select: { key: true } }),
+      prisma.unmatchedItem.findMany({
+        where: { sellerId: seller.id, ...(opts.retryPending ? { status: { not: "PENDING" } } : {}) },
+        select: { key: true },
+      }),
     ]);
     const known = new Set([...offers.map((o) => o.url!), ...unmatched.map((u) => u.key)]);
     const todo = Array.from(new Set(locs)).filter((u) => pattern.test(u) && !known.has(u));

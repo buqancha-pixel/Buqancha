@@ -6,7 +6,7 @@ import { parsePrice, checkPrice } from "./price.ts";
 import { parseRobots } from "./robots.ts";
 import { extractJsonLdItems } from "./parsers/jsonld.ts";
 import { parseFeed, parseCsv } from "./parsers/feed.ts";
-import { buildIndex, matchItem, cleanTitle, type IndexEdition } from "./match.ts";
+import { buildIndex, matchItem, cleanTitle, isMultiVolume, type IndexEdition } from "./match.ts";
 import { decide } from "./decide.ts";
 import { PoliteFetcher, BlockedByRobotsError } from "./fetcher.ts";
 
@@ -132,6 +132,16 @@ test("moslashtirish: qo'shimcha so'z, to'plam, boshqa til — boshqa mahsulot", 
   assert.equal(matchItem(item({ title: "Shum bola (bolalar uchun)", author: "G'afur G'ulom" }), index).bookId, "b3");
   assert.match((matchItem(item({ title: "O'tkan kunlar 1-2-3 jild", author: "Qodiriy" }), index) as { reason: string }).reason, /to'plam/);
   assert.match((matchItem(item({ title: "O'tkan kunlar", author: "Qodiriy", language: "en" }), index) as { reason: string }).reason, /boshqa tilda/);
+});
+
+test("to'plam / ko'p jildlik", () => {
+  assert.equal(isMultiVolume("O'tkan kunlar: 1-2-3-jild"), true);
+  assert.equal(isMultiVolume("Shaytanat 1-2-3-4-5 kitoblar"), true);
+  assert.equal(isMultiVolume("Qissasul anbiyo (1-2-3-4 kitoblar)"), true);
+  assert.equal(isMultiVolume("Bolalar uchun 5 ta kitob"), true);
+  assert.equal(isMultiVolume("Shuhrat. Hikoya va qissalar to'plami"), false);
+  assert.equal(isMultiVolume("Hadis va Hayot 7-juz"), false);
+  assert.equal(isMultiVolume("O'tkan kunlar"), false);
 });
 
 test("do'kon nomidagi qo'shimchalar: format, betlar, qavs", () => {

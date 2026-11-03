@@ -50,7 +50,18 @@ export function cleanTitle(title: string): string {
   return [t, ...keep].join(" ").replace(/\s+/g, " ").trim();
 }
 // Bular bo'lsa — bu boshqa mahsulot (to'plam, bir nechta jild)
-const SET_WORDS = new Set(["jild", "jildlik", "toplam", "toplami", "komplekt", "set", "kitoblar", "tom"].map((w) => searchKey(w)));
+const SET_WORDS = new Set(["jildlik", "komplekt", "set", "kitoblar"].map((w) => searchKey(w)));
+
+/**
+ * To'plam/bir nechta jild: "1-2-3-jild", "1-5 kitoblar", "5 ta kitob", "komplekt".
+ * "Hikoyalar to'plami" kabi bitta kitob to'plam hisoblanmaydi.
+ */
+export function isMultiVolume(title: string): boolean {
+  if (/\b\d+\s*[-–,]\s*\d+(\s*[-–,]\s*\d+)*\s*-?\s*(jild|kitob|qism|tom|juz)/i.test(title)) return true;
+  if (/\b\d+\s*ta\s+(kitob|jild)/i.test(title)) return true;
+  if (/\bto['‘ʻ’]?plam\b/i.test(title) && /\b\d+\s*[-–]\s*\d+\b/.test(title)) return true;
+  return searchKey(title).split(" ").some((t) => SET_WORDS.has(t));
+}
 
 export function buildIndex(editions: IndexEdition[]): MatchIndex {
   const byIsbn = new Map<string, IndexEdition>();
@@ -111,7 +122,7 @@ export function matchItem(item: CollectedItem, index: MatchIndex): MatchResult {
 
   const itemTitle = searchKey(cleanTitle(item.title));
   const itemTokens = itemTitle.split(" ").filter(Boolean);
-  if (itemTokens.some((t) => SET_WORDS.has(t))) return { editionId: null, bookId: null, reason: "to'plam yoki bir nechta jild" };
+  if (isMultiVolume(item.title)) return { editionId: null, bookId: null, reason: "to'plam yoki bir nechta jild" };
   const itemAuthor = item.author ? searchKey(item.author).split(" ").filter((t) => t.length >= 3) : [];
 
   let best: { len: number; book: MatchIndex["books"][number] }[] = [];

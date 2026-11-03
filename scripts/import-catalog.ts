@@ -1,6 +1,6 @@
 /**
  * Katalog importi: sotuvchi sitemap'idagi kitob sahifalaridan kitoblar bazasini to'ldirish.
- *   npm run import-catalog -- <sotuvchi-slug> [--limit N]
+ *   npm run import-catalog -- <sotuvchi-slug> [--limit N] [--retry-pending]
  * Uzoq davom etadi (har sahifa orasida pauza); to'xtatib, keyin davom ettirish mumkin.
  */
 import { importCatalog } from "../lib/collector/catalog";
@@ -18,6 +18,7 @@ async function main() {
   const started = Date.now();
   const r = await importCatalog(slug, {
     limit,
+    retryPending: args.includes("--retry-pending"),
     onBatch: (done, total, s) => {
       const min = ((Date.now() - started) / 60000).toFixed(1);
       console.log(
