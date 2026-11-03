@@ -31,6 +31,7 @@ async function main() {
       searchUrlTemplate: s.searchUrlTemplate ?? null,
       ...(s.collector ? { collector: s.collector } : {}),
       ...(s.sitemapUrls ? { sitemapUrls: s.sitemapUrls } : {}),
+      ...(s.productUrlPattern ? { productUrlPattern: s.productUrlPattern } : {}),
     };
     const exists = await prisma.seller.findUnique({ where: { slug: s.slug }, select: { id: true } });
     await prisma.seller.upsert({ where: { slug: s.slug }, create: { slug: s.slug, ...data }, update: data });

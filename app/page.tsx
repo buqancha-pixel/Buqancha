@@ -3,7 +3,8 @@ import { SearchForm } from "@/components/SearchForm";
 import { BookCard } from "@/components/BookCard";
 import { Cover } from "@/components/Cover";
 import { JsonLd } from "@/components/JsonLd";
-import { getPopularBooks, getSellers } from "@/lib/books";
+import { catalogCounts, getMostComparedBooks, getPopularBooks, getSellers } from "@/lib/books";
+import { formatNumber } from "@/lib/format";
 import { SELLER_TYPE_LABEL } from "@/lib/format";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
 
@@ -21,7 +22,12 @@ const FLOAT_SLOTS = [
 ];
 
 export default async function HomePage() {
-  const [popular, allSellers] = await Promise.all([getPopularBooks(12), getSellers()]);
+  const [popular, allSellers, compared, counts] = await Promise.all([
+    getPopularBooks(12),
+    getSellers(),
+    getMostComparedBooks(12),
+    catalogCounts(),
+  ]);
   // faqat narxi bor sotuvchilar (katalogdagilar /sotuvchilar sahifasida)
   const sellers = allSellers.filter((s) => s._count.offers > 0);
 
@@ -53,7 +59,7 @@ export default async function HomePage() {
 
         <div className="relative mx-auto flex max-w-3xl flex-col items-center px-4 pb-14 pt-14 text-center sm:pt-24">
           <p className="mb-4 rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-muted">
-            {sellers.length} ta do'kon, nashriyot va marketpleys
+            {formatNumber(counts.books)} ta kitob · {sellers.length} ta sotuvchi
           </p>
           <h1 className="text-[2rem] sm:text-5xl [text-wrap:balance]">
             Kitobni eng arzon narxda toping
@@ -89,6 +95,18 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {compared.length > 0 && (
+        <section className="mx-auto mt-16 max-w-6xl px-4" aria-labelledby="compared">
+          <h2 id="compared" className="text-xl sm:text-2xl">Bir nechta joyda sotiladigan kitoblar</h2>
+          <p className="mt-1 text-sm text-muted">Narxlari eng ko'p do'konda solishtirilgan kitoblar.</p>
+          <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {compared.map((b) => (
+              <BookCard key={b.id} book={b} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mx-auto mt-16 max-w-6xl px-4" aria-labelledby="how">
         <h2 id="how" className="text-xl sm:text-2xl">Qanday ishlaydi</h2>

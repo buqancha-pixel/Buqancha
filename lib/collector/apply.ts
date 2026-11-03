@@ -4,6 +4,7 @@ import type { CollectedItem, RunStats } from "./types";
 import { buildIndex, matchItem, type MatchIndex } from "./match";
 import { decide } from "./decide";
 import { normalizeIsbn } from "./isbn";
+import { canCreateBook, createBookFromItem } from "./create-book";
 
 /** Ko'rinmay qolganlarni "mavjud emas" qilish chegarasi: bundan ko'p bo'lsa feed buzuq deb hisoblanadi. */
 const MAX_MARK_OUT_RATIO = 0.5;
@@ -30,6 +31,8 @@ export type ApplyOptions = {
   fullCatalog: boolean;
   /** item.key → editionId (oldindan ma'lum bog'lanishlar, masalan mahsulot havolasi) */
   knownEditions?: Map<string, string>;
+  /** bazada yo'q kitoblar uchun yangi kitob yaratilsinmi (katalog importi) */
+  createBooks?: { sellerName: string };
   now?: Date;
 };
 
@@ -45,6 +48,17 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
   const sorted = [...items].sort((a, b) => Number(b.inStock) - Number(a.inStock) || a.price - b.price);
 
   for (const item of sorted) {
+    try {
+      await applyOne(item);
+    } catch (e) {
+      // bitta mahsulotdagi xato butun partiyani to'xtatmasin
+      stats.errors.push(`${item.title}: ${(e as Error).message.split("\n").pop()}`);
+    }
+  }
+
+  if (opts.fullCatalog) await markMissing(existing, seenEditions, stats, now);
+
+  async function applyOne(item: CollectedItem) {
     stats.seen++;
     let editionId = opts.knownEditions?.get(item.key) ?? (item.url ? byUrl.get(item.url)?.editionId : undefined) ?? null;
     if (!editionId) {
@@ -69,13 +83,22 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
         index.byIsbn.set(isbn, entry);
         stats.newEditions++;
         editionId = ed.id;
+      } else if (opts.createBooks && !m.bookId && "reason" in m && m.reason === "kitob topilmadi") {
+        const v = canCreateBook(item, isbn, opts.createBooks.sellerName);
+        if (!v.ok) {
+          stats.unmatched++;
+          await recordUnmatched(sellerId, item);
+          return;
+        }
+        editionId = await createBookFromItem(item, isbn!, index);
+        stats.newBooks++;
       } else {
         stats.unmatched++;
         await recordUnmatched(sellerId, item);
-        continue;
+        return;
       }
     }
-    if (seenEditions.has(editionId)) continue;
+    if (seenEditions.has(editionId)) return;
     seenEditions.add(editionId);
 
     const current = byEdition.get(editionId) ?? null;
@@ -125,8 +148,8 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
     }
   }
 
-  if (opts.fullCatalog) await markMissing(existing, seenEditions, stats, now);
 }
+
 
 async function markMissing(
   existing: Awaited<ReturnType<typeof prisma.offer.findMany>>,

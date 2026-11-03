@@ -32,6 +32,8 @@ export type SellerSeed = {
   /** narx yig'ish: mahsulot sahifalari (JSON-LD) va ularni topish uchun sitemap'lar */
   collector?: "NONE" | "FEED" | "PRODUCT_PAGE";
   sitemapUrls?: string[];
+  /** katalog importi: sitemap'dagi kitob sahifalari (regex) */
+  productUrlPattern?: string;
 };
 
 export const SELLERS: SellerSeed[] = [
@@ -116,6 +118,7 @@ export const SELLERS: SellerSeed[] = [
     website: "https://qamar.uz",
     collector: "PRODUCT_PAGE",
     sitemapUrls: ["https://qamar.uz/sitemap.xml"],
+    productUrlPattern: "^https://qamar\\.uz/kitob/",
     description: "Kitob do'koni va nashriyot (o'z nashrlari ISBN bilan): oflayn va onlayn; Toshkentga kuryer, viloyatlarga pochta orqali.",
     sources: ["https://qamar.uz/", "https://www.afisha.uz/uz/gorod/2025/05/06/books", "https://kitobxon.com/oz/company/qamar-media"],
   },
@@ -413,6 +416,7 @@ export const SELLERS: SellerSeed[] = [
     address: "Otamirzayev ko'chasi, 64",
     collector: "PRODUCT_PAGE",
     sitemapUrls: ["https://barakot.uz/sitemap.xml"],
+    productUrlPattern: "^https://barakot\\.uz/book/",
     description: "Onlayn kitob do'koni va Namangandagi do'kon.",
     sources: ["https://www.yellowpages.uz/uz/rubrika/kitoblar-kitob-dokonlari/namangan", "https://barakot.uz/"],
   },
@@ -507,6 +511,7 @@ export const SELLERS: SellerSeed[] = [
     address: "Chilonzor tumani, Chilonzor-20A, 42",
     collector: "PRODUCT_PAGE",
     sitemapUrls: ["https://akademnashr.uz/wp-sitemap-posts-product-1.xml"],
+    productUrlPattern: "^https://akademnashr\\.uz/product/",
     description: "2004-yildan beri faoliyat yuritayotgan xususiy nashriyot: badiiy, ilmiy-ommabop va bolalar adabiyoti.",
     sources: ["https://german-stories.de/node/3416", "https://www.yellowpages.uz/uz/rubrika/nashriyotchilik-faoliyati/toshkent"],
   },

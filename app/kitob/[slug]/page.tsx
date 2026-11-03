@@ -140,10 +140,10 @@ export default async function BookPage({ params, searchParams }: { params: Param
               <span lang="uz-Cyrl" className="text-muted"> · {book.author.nameCyrl}</span>
             )}
           </p>
-          <p className="mt-4 hidden max-w-prose text-[15px] text-muted sm:block">{book.description}</p>
+          {book.description && <p className="mt-4 hidden max-w-prose text-[15px] text-muted sm:block">{book.description}</p>}
         </div>
 
-        <p className="col-span-2 max-w-prose text-[15px] text-muted sm:hidden">{book.description}</p>
+        {book.description && <p className="col-span-2 max-w-prose text-[15px] text-muted sm:hidden">{book.description}</p>}
 
         {stats && (
           <aside className="card col-span-2 grid grid-cols-2 gap-px overflow-hidden p-0 sm:col-start-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:self-start" aria-label="Narxlar xulosasi">
@@ -387,7 +387,7 @@ function bookJsonLd(
     "@id": `${url}#book`,
     name: book.title,
     alternateName: book.titleCyrl ?? undefined,
-    description: book.description,
+    description: book.description || undefined,
     inLanguage: "uz",
     url,
     author: {

@@ -16,6 +16,10 @@ export type CollectedItem = {
   year?: number;
   /** ISO til kodi, masalan "uz", "ru", "en" */
   language?: string;
+  /** muqobil nom (masalan kirillcha) */
+  titleAlt?: string;
+  /** muallif aslida brend maydonidan olingan (ishonchsiz) */
+  authorFromBrand?: boolean;
 };
 
 export type RunStats = {
@@ -28,9 +32,10 @@ export type RunStats = {
   rejected: number;
   markedOut: number;
   newEditions: number;
+  newBooks: number;
   errors: string[];
 };
 
 export function emptyStats(): RunStats {
-  return { seen: 0, created: 0, updated: 0, unchanged: 0, unmatched: 0, flagged: 0, rejected: 0, markedOut: 0, newEditions: 0, errors: [] };
+  return { seen: 0, created: 0, updated: 0, unchanged: 0, unmatched: 0, flagged: 0, rejected: 0, markedOut: 0, newEditions: 0, newBooks: 0, errors: [] };
 }

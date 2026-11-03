@@ -75,6 +75,22 @@ export function buildIndex(editions: IndexEdition[]): MatchIndex {
   return { byIsbn, books: Array.from(books.values()) };
 }
 
+/** Yangi yaratilgan kitobni indeksga qo'shadi. */
+export function addToIndex(index: MatchIndex, e: IndexEdition) {
+  const isbn = normalizeIsbn(e.isbn);
+  if (isbn) index.byIsbn.set(isbn, e);
+  let b = index.books.find((x) => x.bookId === e.bookId);
+  if (!b) {
+    const titleKeys = Array.from(new Set([e.title, e.titleCyrl].filter(Boolean).map((t) => searchKey(t!))));
+    const authorTokens = new Set(
+      [e.author, e.authorCyrl].filter(Boolean).flatMap((a) => searchKey(a!).split(" ")).filter((t) => t.length >= 3),
+    );
+    b = { bookId: e.bookId, titleKeys, authorTokens, editions: [] };
+    index.books.push(b);
+  }
+  b.editions.push(e);
+}
+
 const contains = (hay: string, needle: string) => ` ${hay} `.includes(` ${needle} `);
 
 /**

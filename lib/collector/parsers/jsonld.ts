@@ -42,6 +42,8 @@ export function extractJsonLdItems(html: string, pageUrl: string): CollectedItem
       key: url,
       title,
       author: personName(node.author) ?? personName(node.brand),
+      authorFromBrand: !personName(node.author) && !!personName(node.brand),
+      titleAlt: text(node.alternateName),
       publisher: personName(node.publisher),
       isbn,
       price,

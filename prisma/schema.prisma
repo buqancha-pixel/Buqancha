@@ -107,6 +107,8 @@ model Seller {
   feedUrl      String?
   // mahsulot sahifalarini topish uchun sitemap'lar (PRODUCT_PAGE)
   sitemapUrls  String[]      @default([])
+  // katalog importi uchun: sitemap'dagi qaysi manzillar kitob sahifasi (regex)
+  productUrlPattern String?
   crawlDelayMs Int           @default(3000)
   offers   Offer[]
   runs     CollectorRun[]

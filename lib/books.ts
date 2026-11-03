@@ -22,6 +22,30 @@ export function priceRange(book: BookCardData) {
   return { min: Math.min(...prices), max: Math.max(...prices), count: all.length, inStock: inStock.length };
 }
 
+/** Eng ko'p sotuvchida haqiqiy narxi bor kitoblar (solishtirish uchun eng qiziqarlilari). */
+export async function getMostComparedBooks(limit = 12) {
+  const rows = await prisma.$queryRaw<Array<{ id: string; n: bigint }>>`
+    SELECT e."bookId" AS id, COUNT(DISTINCT o."sellerId") AS n
+    FROM "Offer" o JOIN "Edition" e ON e.id = o."editionId"
+    WHERE o."isSample" = false AND o."inStock" = true
+    GROUP BY e."bookId"
+    HAVING COUNT(DISTINCT o."sellerId") >= 2
+    ORDER BY n DESC, MIN(o.price) ASC
+    LIMIT ${limit}`;
+  if (!rows.length) return [];
+  const books = await prisma.book.findMany({ where: { id: { in: rows.map((r) => r.id) } }, include: bookCardInclude });
+  const order = new Map(rows.map((r, i) => [r.id, i]));
+  return books.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+}
+
+export async function catalogCounts() {
+  const [books, real] = await Promise.all([
+    prisma.book.count(),
+    prisma.offer.count({ where: { isSample: false } }),
+  ]);
+  return { books, realOffers: real };
+}
+
 export async function getPopularBooks(limit = 8) {
   return prisma.book.findMany({
     orderBy: { searchCount: "desc" },
