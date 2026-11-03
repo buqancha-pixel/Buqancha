@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   applicationName: SITE_NAME,
   openGraph: { siteName: SITE_NAME, locale: "uz_UZ", type: "website" },
   robots: ALLOW_INDEXING ? { index: true, follow: true } : { index: false, follow: false },
+  // Google Search Console: "HTML tag" usulidagi content qiymati
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
 export async function generateViewport(): Promise<Viewport> {

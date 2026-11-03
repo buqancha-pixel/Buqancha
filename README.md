@@ -25,6 +25,7 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 | `DATABASE_URL_UNPOOLED` | Ixtiyoriy: migratsiyalar uchun to'g'ridan-to'g'ri ulanish (Neon integratsiyasi o'zi qo'yadi) |
 | `CRON_SECRET` | `/api/cron/collect` uchun maxfiy kalit |
 | `COLLECTOR_USER_AGENT` | Ixtiyoriy: bot User-Agent'i (sukut: `BuqanchaBot/1.0 (+SITE_URL/bot)`) |
+| `GOOGLE_SITE_VERIFICATION` | Ixtiyoriy: Google Search Console "HTML tag" tasdiqlash kodi (`content` qiymati) |
 | `ALLOW_INDEXING` | `true` bo'lsa Google indekslaydi. Sukut bo'yicha o'chiq: robots.txt `Disallow: /`, sahifalarda `noindex` |
 
 > **Muhim:** `npm run db:seed` dagi narxlar **namunaviy** (`isSample`, saytda ogohlantirish chiqadi) — faqat mahalliy
