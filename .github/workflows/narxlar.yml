@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 340
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://buqancha.vercel.app' }}
       NODE_NO_WARNINGS: "1"
     steps:
       - uses: actions/checkout@v4

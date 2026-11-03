@@ -4,13 +4,17 @@
 # beradi; migratsiyalar pooler orqali ishlamaydi, shuning uchun to'g'ridan-to'g'ri ulanish olinadi.
 set -euo pipefail
 
-if [ -z "${DATABASE_URL:-}" ]; then
-  echo "DATABASE_URL o'rnatilmagan: Vercel → Storage → Neon bazasini loyihaga ulang." >&2
+# Neon integratsiyasi prefiksga qarab turli nom beradi — birinchi topilgani olinadi
+POOLED="${DATABASE_URL:-${STORAGE_URL:-${POSTGRES_PRISMA_URL:-${POSTGRES_URL:-}}}}"
+DIRECT="${DATABASE_URL_UNPOOLED:-${STORAGE_URL_UNPOOLED:-${POSTGRES_URL_NON_POOLING:-$POOLED}}}"
+
+if [ -z "$POOLED" ]; then
+  echo "Baza manzili topilmadi: Vercel → Storage → Neon bazasini loyihaga ulang." >&2
   exit 1
 fi
+echo "Baza: $(echo "$POOLED" | sed -E 's#^[a-z]+://[^@]*@([^/:?]+).*#\1#')"
 
-DIRECT="${DATABASE_URL_UNPOOLED:-${POSTGRES_URL_NON_POOLING:-$DATABASE_URL}}"
-
+export DATABASE_URL="$POOLED"
 npx prisma generate
 DATABASE_URL="$DIRECT" npx prisma migrate deploy
 DATABASE_URL="$DIRECT" npx tsx scripts/snapshot.ts load --if-empty
