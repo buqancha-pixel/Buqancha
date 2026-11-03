@@ -58,9 +58,9 @@ ishlaydi va `prefers-reduced-motion` hurmat qilinadi.
 
 ## Sotuvchilar katalogi
 
-`prisma/data/sellers.ts` — O'zbekistondagi 38 ta do'kon, nashriyot va marketpleys (ochiq manbalardan, har birida
-`sources`). Sayt manzili faqat tasdiqlangan bo'lsa yozilgan; narxlar yo'q. Ko'rib chiqish uchun jadval:
-`docs/sotuvchilar.csv`.
+`prisma/data/sellers.ts` — O'zbekistondagi 96 ta do'kon, nashriyot va marketpleys (qidiruv, OAV va
+goldenpages.uz / yellowpages.uz / kitobxon.com kataloglaridan; har birida `sources`). Sayt manzili faqat ochilib
+tekshirilgan bo'lsa yozilgan. Ko'rib chiqish uchun jadval: `docs/sotuvchilar.csv`.
 
 ```bash
 npm run db:sellers            # katalogni bazaga qo'shish/yangilash (takliflarga tegmaydi)
@@ -75,7 +75,7 @@ Har bir sotuvchida `collector` maydoni bor:
 | --- | --- | --- |
 | `NONE` | narxlar qo'lda kiritiladi | `MANUAL` |
 | `FEED` | hamkorning CSV/JSON feed'i (`feedUrl` yoki fayl) — butun katalog | `PARTNER` |
-| `PRODUCT_PAGE` | kuzatuvdagi mahsulot sahifalaridan schema.org JSON-LD (`Product` + `Offer`) | `AUTO` |
+| `PRODUCT_PAGE` | mahsulot sahifalaridan schema.org JSON-LD (`Product` + `Offer`); `sitemapUrls` bo'lsa — yangi sahifalar sitemap'dan topiladi | `AUTO` |
 
 Buyruqlar:
 
@@ -91,7 +91,12 @@ Rejalashtirilgan ishga tushirish: `GET /api/cron/collect` + `Authorization: Bear
 Qoidalar:
 
 - **Moslashtirish:** avval ISBN, keyin normallashtirilgan nom + muallif; kitobning bir nechta nashri bo'lsa — nashriyot
-  bo'yicha. Aniq bo'lmasa, mahsulot `UnmatchedItem` navbatiga tushadi (`npm run review -- link <id> <kitob-slug>`).
+  bo'yicha. Do'kon qo'shimchalari ("(А5, qattiq) 400 bet") olib tashlanadi; nomda boshqa so'z qolsa ("Ufq
+  bo'sag'asida"), to'plam/jild yoki boshqa til bo'lsa — moslanmaydi va `UnmatchedItem` navbatiga tushadi
+  (`npm run review -- link <id> <kitob-slug>`). Kitob ma'lum, ISBN esa yangi bo'lsa — yangi nashr yaratiladi.
+- **Sitemap orqali topish:** faqat manzilida bazadagi kitob nomi uchraydigan va avval ko'rilmagan sahifalar yuklanadi.
+- **Namunaviy narxlar:** kitobda haqiqiy narx bo'lsa, eng arzon/qimmat, sarlavha va JSON-LD faqat haqiqiylardan
+  hisoblanadi; namunaviylar alohida yig'ilgan bo'limda.
 - **Xavfsizlik:** 1 000 – 10 000 000 so'mdan tashqari narx rad etiladi; 70% dan ortiq keskin o'zgarish qo'llanmaydi,
   `pendingPrice` ga yoziladi (`npm run review -- accept|reject <offerId>`).
 - **Feed (butun katalog):** feed'da yo'q takliflar "mavjud emas" bo'ladi, lekin yarmidan ko'pi yo'qolsa — feed buzuq
@@ -100,6 +105,12 @@ Qoidalar:
 - **Bot odobi** (`BuqanchaBot`, `/bot` sahifasi): robots.txt va `Crawl-delay` hurmat qilinadi, robots.txt ochilmasa
   sayt umuman yuklanmaydi; hostga so'rovlar orasida `Seller.crawlDelayMs` (sukut 3 s) kutiladi; 429/5xx da
   `Retry-After` bilan qayta uriniladi. Bot saytni aylanib chiqmaydi — faqat kuzatuvdagi sahifalarni tekshiradi.
+
+Hozir avtomatik yig'iladigan sotuvchilar: **Qamar**, **Barakot** (sitemap + JSON-LD), **Akademnashr**. Asaxiy va
+Topar Cloudflare bot himoyasidan foydalanadi — chetlab o'tilmaydi, ular bilan feed orqali ishlash kerak.
+
+> Proksi orqali chiqadigan muhitda (masalan, bulutli dev-konteyner) Node `fetch` uchun `NODE_USE_ENV_PROXY=1` kerak.
+> `npm run db:seed` bazani to'liq qayta yaratadi — yig'ilgan narxlar ham o'chadi; keyin `npm run collect` ni qayta ishga tushiring.
 
 Testlar: `npm test` (unit) va `npm run test:db` (alohida `buqancha_test` bazasida integratsiya; bazani seed qiladi).
 

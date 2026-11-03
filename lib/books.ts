@@ -5,13 +5,16 @@ import { searchKey } from "./normalize";
 
 const bookCardInclude = {
   author: true,
-  editions: { include: { offers: { select: { price: true, inStock: true } } } },
+  editions: { include: { offers: { select: { price: true, inStock: true, isSample: true } } } },
 } satisfies Prisma.BookInclude;
 
 export type BookCardData = Prisma.BookGetPayload<{ include: typeof bookCardInclude }>;
 
 export function priceRange(book: BookCardData) {
-  const all = book.editions.flatMap((e) => e.offers);
+  const every = book.editions.flatMap((e) => e.offers);
+  // haqiqiy narxlar bo'lsa — namunaviylar hisobga olinmaydi
+  const real = every.filter((o) => !o.isSample);
+  const all = real.length ? real : every;
   const inStock = all.filter((o) => o.inStock);
   const pool = inStock.length ? inStock : all;
   if (!pool.length) return null;
@@ -106,7 +109,15 @@ export function filterOffers(
   });
 }
 
-export function offerStats(offers: OfferRow[]) {
+/** Haqiqiy va namunaviy takliflarni ajratadi; asosiy ro'yxat — haqiqiylar (bo'lsa). */
+export function splitOffers(all: OfferRow[]) {
+  const real = all.filter((o) => !o.isSample);
+  const sample = all.filter((o) => o.isSample);
+  return { real, sample, primary: real.length ? real : sample, onlySample: !real.length && sample.length > 0 };
+}
+
+export function offerStats(all: OfferRow[]) {
+  const offers = splitOffers(all).primary;
   const inStock = offers.filter((o) => o.inStock);
   const pool = inStock.length ? inStock : offers;
   if (!pool.length) return null;

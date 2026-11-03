@@ -125,3 +125,52 @@ test("mahsulot sahifasi (JSON-LD): kuzatuvga qo'shish va qayta tekshirish", asyn
   const samples = await prisma.offer.count({ where: { seller: { slug: "asaxiy" }, isSample: true } });
   assert.ok(samples > 5);
 });
+
+test("sitemap orqali topish: yangi nashr, to'plam navbatga, aloqasiz sahifa yuklanmaydi", async () => {
+  await prisma.seller.update({
+    where: { slug: "qamar" },
+    data: { collector: "PRODUCT_PAGE", crawlDelayMs: 0, sitemapUrls: ["https://qamar.uz/sitemap.xml"] },
+  });
+  const fetched: string[] = [];
+  const page = (name: string, isbn: string, price: number) =>
+    `<script type="application/ld+json">${JSON.stringify({
+      "@type": ["Product", "Book"], name, isbn, numberOfPages: 576, bookFormat: "https://schema.org/Hardcover",
+      author: { "@type": "Person", name: "Abdulla Qodiriy" }, publisher: { "@type": "Organization", name: "Qamar" },
+      offers: { "@type": "Offer", price, priceCurrency: "UZS", availability: "https://schema.org/InStock" },
+    })}</script>`;
+  const fake = (async (u: string) => {
+    const url = String(u);
+    fetched.push(url);
+    if (url.endsWith("/robots.txt")) return new Response("User-agent: *\nAllow: /");
+    if (url.endsWith("/sitemap.xml"))
+      return new Response(
+        `<urlset><url><loc>https://qamar.uz/kitob/otkan-kunlar-romoni</loc></url>` +
+          `<url><loc>https://qamar.uz/kitob/otkan-kunlar-1-2-3-jild</loc></url>` +
+          `<url><loc>https://qamar.uz/kitob/atom-odatlar</loc></url></urlset>`,
+      );
+    if (url.endsWith("otkan-kunlar-romoni")) return new Response(page("O'tkan kunlar ro'moni", "9789910922725", 50000));
+    if (url.endsWith("1-2-3-jild")) return new Response(page("O'tkan kunlar: 1-2-3-jild", "9789910922732", 135000));
+    return new Response("", { status: 404 });
+  }) as typeof fetch;
+
+  const r = await collectSeller("qamar", { fetchImpl: fake, sleep: async () => {} });
+  assert.equal(r.status, "SUCCESS");
+  assert.equal(r.stats.created, 1);
+  assert.equal(r.stats.newEditions, 1);
+  assert.equal(r.stats.unmatched, 1);
+  assert.ok(!fetched.some((u) => u.includes("atom-odatlar")), "aloqasiz sahifa yuklanmaydi");
+
+  const ed = await prisma.edition.findUniqueOrThrow({ where: { isbn: "9789910922725" }, include: { book: true, offers: true } });
+  assert.equal(ed.book.slug, "otkan-kunlar");
+  assert.equal(ed.publisher, "Qamar");
+  assert.equal(ed.pages, 576);
+  assert.equal(ed.cover, "qattiq");
+  assert.equal(ed.offers[0].price, 50000);
+
+  // ikkinchi marta: ko'rilgan sahifalar qayta "topilmaydi", taklif esa qayta tekshiriladi
+  fetched.length = 0;
+  const r2 = await collectSeller("qamar", { fetchImpl: fake, sleep: async () => {} });
+  assert.equal(r2.stats.newEditions, 0);
+  assert.equal(r2.stats.unchanged, 1);
+  assert.equal(fetched.filter((u) => u.includes("1-2-3-jild")).length, 0);
+});

@@ -105,6 +105,8 @@ model Seller {
   // narx yig'ish sozlamalari
   collector    CollectorKind @default(NONE)
   feedUrl      String?
+  // mahsulot sahifalarini topish uchun sitemap'lar (PRODUCT_PAGE)
+  sitemapUrls  String[]      @default([])
   crawlDelayMs Int           @default(3000)
   offers   Offer[]
   runs     CollectorRun[]

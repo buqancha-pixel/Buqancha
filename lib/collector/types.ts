@@ -10,6 +10,12 @@ export type CollectedItem = {
   price: number;
   inStock: boolean;
   url?: string;
+  /** nashr ma'lumotlari (bo'lsa) — yangi nashr yaratishda ishlatiladi */
+  pages?: number;
+  cover?: "qattiq" | "yumshoq";
+  year?: number;
+  /** ISO til kodi, masalan "uz", "ru", "en" */
+  language?: string;
 };
 
 export type RunStats = {
@@ -21,9 +27,10 @@ export type RunStats = {
   flagged: number;
   rejected: number;
   markedOut: number;
+  newEditions: number;
   errors: string[];
 };
 
 export function emptyStats(): RunStats {
-  return { seen: 0, created: 0, updated: 0, unchanged: 0, unmatched: 0, flagged: 0, rejected: 0, markedOut: 0, errors: [] };
+  return { seen: 0, created: 0, updated: 0, unchanged: 0, unmatched: 0, flagged: 0, rejected: 0, markedOut: 0, newEditions: 0, errors: [] };
 }

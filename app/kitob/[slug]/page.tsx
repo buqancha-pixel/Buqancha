@@ -12,6 +12,7 @@ import {
   getAuthorBySlug,
   getBookBySlug,
   offerStats,
+  splitOffers,
   type OfferRow,
   type OfferSort,
 } from "@/lib/books";
@@ -68,8 +69,11 @@ export default async function BookPage({ params, searchParams }: { params: Param
   const onlyInStock = sp.mavjud === "1";
   const sort: OfferSort = SORTS.some(([s]) => s === sp.tartib) ? (sp.tartib as OfferSort) : "arzon";
 
-  const allOffers = flattenOffers(book);
-  const stats = offerStats(allOffers);
+  const everyOffer = flattenOffers(book);
+  // haqiqiy narxlar bo'lsa, asosiy ro'yxat va hisob-kitob faqat ular bo'yicha;
+  // namunaviylar pastda alohida ko'rsatiladi
+  const { primary: allOffers, sample: sampleOffers, onlySample } = splitOffers(everyOffer);
+  const stats = offerStats(everyOffer);
   const offers = filterOffers(allOffers, {
     types: tur ? [SELLER_TYPE_PARAM[tur]] : undefined,
     onlyInStock,
@@ -169,7 +173,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
         <h2 id="offers-h" className="text-xl sm:text-2xl">
           {book.title} narxlari
         </h2>
-        {stats?.hasSample && <SampleNotice all={allOffers.every((o) => o.isSample)} className="mt-4" />}
+        {onlySample && <SampleNotice all className="mt-4" />}
 
         <div className="mt-5 flex flex-col gap-3">
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="group" aria-label="Sotuvchi turi">
@@ -227,6 +231,24 @@ export default async function BookPage({ params, searchParams }: { params: Param
           </div>
         )}
       </section>
+
+      {!onlySample && sampleOffers.length > 0 && (
+        <details className="mt-6 rounded-card border border-dashed border-border p-4">
+          <summary className="cursor-pointer text-sm font-medium text-muted">
+            Namunaviy narxlar ({sampleOffers.length}) — haqiqiy emas, solishtirishda hisobga olinmaydi
+          </summary>
+          <ul className="mt-3 divide-y divide-border text-sm">
+            {sampleOffers.map((o) => (
+              <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-muted">
+                <span>
+                  {o.seller.name} · {o.edition.publisher}
+                </span>
+                <span className="tabular line-through decoration-1">{formatPrice(o.price)}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       <section className="mt-12" aria-labelledby="editions-h">
         <h2 id="editions-h" className="text-xl sm:text-2xl">Nashrlar</h2>

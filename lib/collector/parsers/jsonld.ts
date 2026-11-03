@@ -47,6 +47,10 @@ export function extractJsonLdItems(html: string, pageUrl: string): CollectedItem
       price,
       inStock: availability(offer.availability),
       url,
+      pages: positiveInt(node.numberOfPages),
+      cover: coverType(node.bookFormat) ?? coverFromTitle(title),
+      year: yearOf(node.datePublished),
+      language: text(node.inLanguage)?.toLowerCase().slice(0, 2),
     });
   }
   return items;
@@ -99,6 +103,31 @@ function text(v: unknown): string | undefined {
   if (typeof v === "string") return v.trim() || undefined;
   if (typeof v === "number") return String(v);
   return undefined;
+}
+
+function positiveInt(v: unknown): number | undefined {
+  const n = typeof v === "number" ? v : typeof v === "string" ? parseInt(v, 10) : NaN;
+  return Number.isFinite(n) && n > 0 && n < 10000 ? n : undefined;
+}
+
+function coverType(v: unknown): "qattiq" | "yumshoq" | undefined {
+  const s = text(v);
+  if (!s) return undefined;
+  if (/Hardcover/i.test(s)) return "qattiq";
+  if (/Paperback/i.test(s)) return "yumshoq";
+  return undefined;
+}
+
+/** "O'tkan kunlar (А5, qattiq)" → "qattiq" */
+function coverFromTitle(title: string): "qattiq" | "yumshoq" | undefined {
+  if (/\bqattiq\b/i.test(title)) return "qattiq";
+  if (/\byumshoq\b/i.test(title)) return "yumshoq";
+  return undefined;
+}
+
+function yearOf(v: unknown): number | undefined {
+  const m = text(v)?.match(/\b(1[89]\d\d|20\d\d)\b/);
+  return m ? Number(m[1]) : undefined;
 }
 
 function absolutize(url: string, base: string): string {

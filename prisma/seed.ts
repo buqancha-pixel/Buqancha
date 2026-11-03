@@ -372,7 +372,7 @@ async function main() {
 
   const sellerIds: Record<string, string> = {};
   for (const s of sellers) {
-    const created = await prisma.seller.create({ data: { ...s, searchUrlTemplate: s.searchUrlTemplate ?? null } });
+    const created = await prisma.seller.create({ data: { ...s, searchUrlTemplate: s.searchUrlTemplate ?? null, sitemapUrls: s.sitemapUrls ?? [] } });
     sellerIds[s.slug] = created.id;
   }
 

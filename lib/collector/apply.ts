@@ -49,8 +49,27 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
     let editionId = opts.knownEditions?.get(item.key) ?? (item.url ? byUrl.get(item.url)?.editionId : undefined) ?? null;
     if (!editionId) {
       const m = matchItem(item, index);
+      const isbn = normalizeIsbn(item.isbn);
       if (m.editionId) editionId = m.editionId;
-      else {
+      else if (m.bookId && isbn) {
+        // kitob ma'lum, bu nashri esa yangi — ISBN bilan yangi nashr yaratamiz
+        const ed = await prisma.edition.create({
+          data: {
+            bookId: m.bookId,
+            isbn,
+            publisher: item.publisher?.slice(0, 200) || "Noma'lum",
+            pages: item.pages ?? null,
+            cover: item.cover ?? null,
+            year: item.year ?? null,
+          },
+        });
+        const book = index.books.find((b) => b.bookId === m.bookId)!;
+        const entry = { ...book.editions[0], editionId: ed.id, isbn, publisher: ed.publisher };
+        book.editions.push(entry);
+        index.byIsbn.set(isbn, entry);
+        stats.newEditions++;
+        editionId = ed.id;
+      } else {
         stats.unmatched++;
         await recordUnmatched(sellerId, item);
         continue;

@@ -6,7 +6,7 @@ import { parsePrice, checkPrice } from "./price.ts";
 import { parseRobots } from "./robots.ts";
 import { extractJsonLdItems } from "./parsers/jsonld.ts";
 import { parseFeed, parseCsv } from "./parsers/feed.ts";
-import { buildIndex, matchItem, type IndexEdition } from "./match.ts";
+import { buildIndex, matchItem, cleanTitle, type IndexEdition } from "./match.ts";
 import { decide } from "./decide.ts";
 import { PoliteFetcher, BlockedByRobotsError } from "./fetcher.ts";
 
@@ -68,6 +68,7 @@ test("JSON-LD: Product + AggregateOffer, @graph, buzuq bloklar, boshqa valyuta",
   assert.equal(it.isbn, "9780306406157");
   assert.equal(it.author, "Abdulla Qodiriy");
   assert.equal(it.url, "https://dokon.example/p/otkan-kunlar");
+  assert.equal(it.cover, "qattiq", "muqova nomdan aniqlanadi");
 });
 
 test("CSV feed: ; ajratkich, qo'shtirnoq, o'zbekcha sarlavhalar, xatolar", () => {
@@ -109,17 +110,46 @@ const index = buildIndex(editions);
 const item = (o: Partial<Parameters<typeof matchItem>[0]>) => ({ key: "k", title: "", price: 30000, inStock: true, ...o });
 
 test("moslashtirish: ISBN, nom + muallif, nashriyot, noaniqlik", () => {
-  assert.deepEqual(matchItem(item({ title: "nimadir", isbn: "0-306-40615-2" }), index), { editionId: "e1", by: "isbn" });
-  // ikki nashr bor, nashriyot aytilmagan — moslanmaydi
-  assert.equal(matchItem(item({ title: "O'tkan kunlar", author: "A. Qodiriy" }), index).editionId, null);
-  assert.deepEqual(matchItem(item({ title: "Ўткан кунлар", author: "Қодирий", publisher: "Akademnashr" }), index), { editionId: "e2", by: "title" });
+  assert.deepEqual(matchItem(item({ title: "nimadir", isbn: "0-306-40615-2" }), index), { editionId: "e1", bookId: "b1", by: "isbn" });
+  // ikki nashr bor, nashriyot aytilmagan — kitob topiladi, nashr esa yo'q
+  assert.deepEqual(matchItem(item({ title: "O'tkan kunlar", author: "A. Qodiriy" }), index), { editionId: null, bookId: "b1", reason: "nashr aniq emas (bir nechta nashr)" });
+  assert.equal(matchItem(item({ title: "Ўткан кунлар", author: "Қодирий", publisher: "Akademnashr" }), index).editionId, "e2");
   // muallifsiz: nom aynan teng bo'lsa yoki muallif familiyasi nomda bo'lsa
   assert.equal(matchItem(item({ title: "Shum bola" }), index).editionId, "e4");
-  assert.equal(matchItem(item({ title: "G'afur G'ulom — Shum bola (bolalar uchun)" }), index).editionId, "e4");
-  // "Navoiy" so'zi bor, lekin muallif boshqa — Oybekning romani emas
+  assert.equal(matchItem(item({ title: "G'afur G'ulom — Shum bola" }), index).editionId, "e4");
+  // "shovqin" so'zlar: roman, qattiq muqova
+  assert.equal(matchItem(item({ title: "Navoiy romani (qattiq muqova)", author: "Oybek" }), index).editionId, "e3");
+  // "Navoiy" so'zi bor, lekin boshqa kitob
   assert.equal(matchItem(item({ title: "Alisher Navoiy. Xamsa", author: "Alisher Navoiy" }), index).editionId, null);
-  assert.equal(matchItem(item({ title: "Navoiy haqida esse" }), index).editionId, null);
+  assert.equal(matchItem(item({ title: "Navoiy haqida esse" }), index).bookId, null);
   assert.equal(matchItem(item({ title: "Navoiy", author: "Oybek" }), index).editionId, "e3");
+});
+
+test("moslashtirish: qo'shimcha so'z, to'plam, boshqa til — boshqa mahsulot", () => {
+  assert.equal(matchItem(item({ title: "Shum bola 2", author: "G'afur G'ulom" }), index).bookId, null);
+  assert.equal(matchItem(item({ title: "Shum bola bolalar uchun", author: "G'afur G'ulom" }), index).bookId, null);
+  // qavs ichidagi izoh — o'sha kitob
+  assert.equal(matchItem(item({ title: "Shum bola (bolalar uchun)", author: "G'afur G'ulom" }), index).bookId, "b3");
+  assert.match((matchItem(item({ title: "O'tkan kunlar 1-2-3 jild", author: "Qodiriy" }), index) as { reason: string }).reason, /to'plam/);
+  assert.match((matchItem(item({ title: "O'tkan kunlar", author: "Qodiriy", language: "en" }), index) as { reason: string }).reason, /boshqa tilda/);
+});
+
+test("do'kon nomidagi qo'shimchalar: format, betlar, qavs", () => {
+  assert.equal(cleanTitle("O'tkan kunlar (А5, qattiq) 400 bet"), "O'tkan kunlar");
+  assert.equal(cleanTitle("Shaytanat (2-kitob)"), "Shaytanat 2-kitob");
+  assert.equal(matchItem(item({ title: "Navoiy (A5, yumshoq) 424 bet", author: "Oybek" }), index).editionId, "e3");
+  assert.equal(matchItem(item({ title: "Navoiy nazmi rangin", author: "Oybek" }), index).bookId, null);
+  assert.equal(matchItem(item({ title: "Shum bola (2-kitob)", author: "G'afur G'ulom" }), index).bookId, null);
+});
+
+test("moslashtirish: yangi ISBN — yangi nashr yoki ISBN'siz nashrni to'ldirish", () => {
+  // Qamar o'z nashri: kitob ma'lum, nashr yangi
+  assert.deepEqual(
+    matchItem(item({ title: "O'tkan kunlar ro'moni", author: "Abdulla Qodiriy", publisher: "Qamar", isbn: "9789910922725" }), index),
+    { editionId: null, bookId: "b1", reason: "yangi nashr" },
+  );
+  // Akademnashr nashrining ISBN'i bazada yo'q edi — o'sha nashrga bog'lanadi
+  assert.equal(matchItem(item({ title: "O'tkan kunlar", author: "Qodiriy", publisher: "Akademnashr", isbn: "9789910922725" }), index).editionId, "e2");
 });
 
 test("qaror: yaratish, yangilash, shubhali, namunaviyni almashtirish", () => {

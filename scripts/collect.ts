@@ -21,7 +21,7 @@ export function printResult(r: RunResult) {
   console.log(
     `${r.seller} [${r.kind}] ${r.status}: ko'rildi ${s.seen}, yangi ${s.created}, yangilandi ${s.updated}, ` +
       `o'zgarmadi ${s.unchanged}, moslanmadi ${s.unmatched}, shubhali ${s.flagged}, rad ${s.rejected}, ` +
-      `mavjud emas ${s.markedOut}`,
+      `mavjud emas ${s.markedOut}, yangi nashr ${s.newEditions}`,
   );
   if (r.error) console.log(`  xato: ${r.error}`);
   for (const e of s.errors.slice(0, 20)) console.log(`  - ${e}`);

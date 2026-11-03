@@ -5,6 +5,8 @@ import { PoliteFetcher } from "./fetcher";
 import { parseFeed } from "./parsers/feed";
 import { extractJsonLdItems } from "./parsers/jsonld";
 import { emptyStats, type CollectedItem, type RunStats } from "./types";
+import { loadIndex } from "./apply";
+import { searchKey } from "../normalize";
 
 export type RunResult = { seller: string; kind: CollectorKind; status: string; stats: RunStats; error?: string };
 
@@ -19,7 +21,75 @@ export async function importFeed(sellerSlug: string, body: string, format?: "csv
 }
 
 /** Sotuvchi sozlamasiga ko'ra narxlarni yig'ish. */
-type FetchOpts = { fetchImpl?: typeof fetch; sleep?: (ms: number) => Promise<void> };
+type FetchOpts = { fetchImpl?: typeof fetch; sleep?: (ms: number) => Promise<void>; discoverLimit?: number };
+
+/** Sitemap'dan barcha <loc> manzillarni oladi (sitemapindex bo'lsa — ichki sitemap'lar ham, 20 tagacha). */
+export async function sitemapLocs(fetcher: PoliteFetcher, url: string, depth = 0): Promise<string[]> {
+  const res = await fetcher.get(url);
+  if (res.status !== 200) throw new Error(`sitemap HTTP ${res.status}: ${url}`);
+  const locs = Array.from(res.body.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g), (m) =>
+    m[1].replace(/&amp;/g, "&"),
+  );
+  if (/<sitemapindex/i.test(res.body) && depth < 1) {
+    const out: string[] = [];
+    for (const child of locs.slice(0, 20)) out.push(...(await sitemapLocs(fetcher, child, depth + 1)));
+    return out;
+  }
+  return locs;
+}
+
+/** URL'ning oxirgi qismini qidiruv kalitiga aylantiradi: "/kitob/otkan-kunlar-romoni" → "otkan kunlar romoni" */
+export function urlKey(url: string): string {
+  try {
+    const u = new URL(url);
+    const last = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() ?? "");
+    return searchKey(last.replace(/[-_]+/g, " "));
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Sitemap orqali bazadagi kitoblarga mos mahsulot sahifalarini topish.
+ * Faqat manzilida kitob nomi uchraydigan, avval ko'rilmagan sahifalar yuklanadi.
+ */
+async function discover(seller: Seller, fetcher: PoliteFetcher, stats: RunStats, limit: number) {
+  const index = await loadIndex();
+  const titleKeys = Array.from(new Set(index.books.flatMap((b) => b.titleKeys))).filter((k) => k.length >= 3);
+  const [offers, unmatched] = await Promise.all([
+    prisma.offer.findMany({ where: { sellerId: seller.id, url: { not: null } }, select: { url: true } }),
+    prisma.unmatchedItem.findMany({ where: { sellerId: seller.id }, select: { key: true } }),
+  ]);
+  const known = new Set([...offers.map((o) => o.url!), ...unmatched.map((u) => u.key)]);
+
+  const locs: string[] = [];
+  for (const sm of seller.sitemapUrls) {
+    try {
+      locs.push(...(await sitemapLocs(fetcher, sm)));
+    } catch (e) {
+      stats.errors.push(`${sm}: ${(e as Error).message}`);
+    }
+  }
+  const candidates = Array.from(new Set(locs)).filter((url) => {
+    if (known.has(url)) return false;
+    const k = ` ${urlKey(url)} `;
+    return titleKeys.some((t) => k.includes(` ${t} `));
+  });
+  if (candidates.length > limit) stats.errors.push(`${candidates.length} ta nomzoddan ${limit} tasi tekshirildi`);
+
+  const items: CollectedItem[] = [];
+  for (const url of candidates.slice(0, limit)) {
+    try {
+      const res = await fetcher.get(url);
+      if (res.status !== 200) continue;
+      const found = extractJsonLdItems(res.body, url);
+      if (found[0]) items.push({ ...found[0], key: url, url });
+    } catch (e) {
+      stats.errors.push(`${url}: ${(e as Error).message}`);
+    }
+  }
+  await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false });
+}
 
 export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): Promise<RunResult> {
   const seller = await prisma.seller.findUniqueOrThrow({ where: { slug: sellerSlug } });
@@ -39,8 +109,18 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
 
   if (seller.collector === "PRODUCT_PAGE") {
     return withRun(seller, "PRODUCT_PAGE", async (stats) => {
+      const started = new Date();
+      if (seller.sitemapUrls.length) await discover(seller, fetcher, stats, opts.discoverLimit ?? 200);
       // allaqachon bog'langan mahsulot sahifalarini qayta tekshiramiz
-      const offers = await prisma.offer.findMany({ where: { sellerId: seller.id, isSample: false, url: { not: null } } });
+      // (shu ishga tushirishda topilganlar qayta yuklanmaydi)
+      const offers = await prisma.offer.findMany({
+        where: {
+          sellerId: seller.id,
+          isSample: false,
+          url: { not: null },
+          OR: [{ checkedAt: null }, { checkedAt: { lt: started } }],
+        },
+      });
       const items: CollectedItem[] = [];
       const known = new Map<string, string>();
       for (const o of offers) {
