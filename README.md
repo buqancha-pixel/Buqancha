@@ -56,6 +56,17 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 serverda o'qiladi, shuning uchun sahifa ochilganda miltillamaydi. Animatsiyalar faqat `transform`/`opacity` bilan
 ishlaydi va `prefers-reduced-motion` hurmat qilinadi.
 
+## Sotuvchilar katalogi
+
+`prisma/data/sellers.ts` — O'zbekistondagi 38 ta do'kon, nashriyot va marketpleys (ochiq manbalardan, har birida
+`sources`). Sayt manzili faqat tasdiqlangan bo'lsa yozilgan; narxlar yo'q. Ko'rib chiqish uchun jadval:
+`docs/sotuvchilar.csv`.
+
+```bash
+npm run db:sellers            # katalogni bazaga qo'shish/yangilash (takliflarga tegmaydi)
+npm run db:sellers -- --csv   # docs/sotuvchilar.csv ni qayta yaratish
+```
+
 ## Narx yig'ish (2-bosqich)
 
 Har bir sotuvchida `collector` maydoni bor:

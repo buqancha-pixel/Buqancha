@@ -133,7 +133,7 @@ export const getAuthorBySlug = cache(async (slug: string) => {
 
 export async function getSellers() {
   return prisma.seller.findMany({
-    orderBy: [{ type: "asc" }, { name: "asc" }],
+    orderBy: [{ offers: { _count: "desc" } }, { type: "asc" }, { name: "asc" }],
     include: {
       _count: { select: { offers: true } },
       runs: { orderBy: { startedAt: "desc" }, take: 1, select: { startedAt: true, status: true } },

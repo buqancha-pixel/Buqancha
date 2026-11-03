@@ -4,71 +4,109 @@ import type { SellerType } from "@prisma/client";
 import { getSellers } from "@/lib/books";
 import { SELLER_TYPE_LABEL, SELLER_TYPE_PLURAL, formatRelative } from "@/lib/format";
 
+export const metadata: Metadata = {
+  title: "Sotuvchilar — kitob do'konlari, nashriyotlar va marketpleyslar",
+  description:
+    "O'zbekistondagi kitob do'konlari, nashriyotlar va marketpleyslar katalogi: shahar, manzil, sayt va Buqanchadagi takliflar soni.",
+  alternates: { canonical: "/sotuvchilar" },
+};
+
+const ORDER: SellerType[] = ["STORE", "PUBLISHER", "MARKETPLACE"];
+
 const COLLECTOR_LABEL = {
   FEED: "Narxlar hamkor feed'idan",
   PRODUCT_PAGE: "Narxlar sayt sahifalaridan avtomatik",
   NONE: "Narxlar qo'lda kiritiladi",
 } as const;
 
-export const metadata: Metadata = {
-  title: "Sotuvchilar — kitob do'konlari, nashriyotlar va marketpleyslar",
-  description:
-    "Buqancha narxlarini solishtiradigan kitob do'konlari, nashriyotlar va marketpleyslar ro'yxati: shahar, sayt va takliflar soni.",
-  alternates: { canonical: "/sotuvchilar" },
-};
-
-const ORDER: SellerType[] = ["STORE", "PUBLISHER", "MARKETPLACE"];
+type SellerRow = Awaited<ReturnType<typeof getSellers>>[number];
 
 export default async function SellersPage() {
   const sellers = await getSellers();
+  const active = sellers.filter((s) => s._count.offers > 0);
+  const catalog = sellers.filter((s) => s._count.offers === 0);
+
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8">
       <h1 className="text-3xl sm:text-4xl">Sotuvchilar</h1>
       <p className="mt-3 max-w-2xl text-muted">
-        Narxlarini solishtiradigan do'konlar, nashriyotlar va marketpleyslar. Ro'yxatda yo'qmisiz?{" "}
+        O'zbekistondagi kitob do'konlari, nashriyotlar va marketpleyslar. Hozir {active.length} tasining narxlari
+        solishtiriladi, yana {catalog.length} tasi katalogda. Ro'yxatda yo'qmisiz yoki narxlaringizni qo'shmoqchimisiz?{" "}
         <Link href="/hamkorlik" className="font-semibold text-accent hover:underline">
           Hamkor bo'ling
         </Link>
         .
       </p>
 
+      <section className="mt-10" aria-labelledby="h-active">
+        <h2 id="h-active" className="text-xl sm:text-2xl">
+          Narxlari solishtiriladi <span className="tabular text-muted">({active.length})</span>
+        </h2>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {active.map((s) => (
+            <SellerCard key={s.id} s={s} />
+          ))}
+        </ul>
+      </section>
+
       {ORDER.map((type) => {
-        const list = sellers.filter((s) => s.type === type);
+        // sayti bor (tekshirish oson) sotuvchilar oldinda
+        const list = catalog
+          .filter((s) => s.type === type)
+          .sort((a, b) => Number(!!b.website) - Number(!!a.website) || a.name.localeCompare(b.name));
         if (!list.length) return null;
         return (
-          <section key={type} className="mt-10" aria-labelledby={`h-${type}`}>
+          <section key={type} className="mt-12" aria-labelledby={`h-${type}`}>
             <h2 id={`h-${type}`} className="text-xl sm:text-2xl">
               {SELLER_TYPE_PLURAL[type]} <span className="tabular text-muted">({list.length})</span>
             </h2>
+            <p className="mt-1 text-sm text-muted">Katalogda — narxlari hali qo'shilmagan.</p>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {list.map((s) => (
-                <li key={s.id} className="card flex flex-col p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-semibold">{s.name}</h3>
-                    <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
-                      {SELLER_TYPE_LABEL[s.type]}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-muted">{s.city}</p>
-                  {s.description && <p className="mt-3 text-sm">{s.description}</p>}
-                  <p className="mt-3 text-xs text-muted">
-                    {COLLECTOR_LABEL[s.collector]}
-                    {s.runs[0] && ` · oxirgi yangilanish ${formatRelative(s.runs[0].startedAt)}`}
-                  </p>
-                  <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-sm">
-                    <span className="tabular text-muted">{s._count.offers} ta taklif</span>
-                    {s.website && (
-                      <a href={s.website} target="_blank" rel="nofollow noopener noreferrer" className="font-semibold text-accent hover:underline">
-                        {s.website.replace(/^https?:\/\//, "")} ↗
-                      </a>
-                    )}
-                  </div>
-                </li>
+                <SellerCard key={s.id} s={s} />
               ))}
             </ul>
           </section>
         );
       })}
+
+      <p className="mt-12 max-w-2xl text-xs text-muted">
+        Manzil va aloqa ma'lumotlari ochiq kataloglar va OAV materiallaridan olingan, eskirgan bo'lishi mumkin. Xato
+        topsangiz, <Link href="/hamkorlik" className="underline">bizga yozing</Link>.
+      </p>
     </div>
+  );
+}
+
+function SellerCard({ s }: { s: SellerRow }) {
+  const link = s.website ?? (s.social ? `https://${s.social}` : null);
+  return (
+    <li className="card flex flex-col p-5">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-lg font-semibold">{s.name}</h3>
+        <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
+          {SELLER_TYPE_LABEL[s.type]}
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-muted">
+        {s.city}
+        {s.address && ` · ${s.address}`}
+      </p>
+      {s.description && <p className="mt-3 text-sm">{s.description}</p>}
+      {s._count.offers > 0 && (
+        <p className="mt-3 text-xs text-muted">
+          {COLLECTOR_LABEL[s.collector]}
+          {s.runs[0] && ` · oxirgi yangilanish ${formatRelative(s.runs[0].startedAt)}`}
+        </p>
+      )}
+      <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-sm">
+        <span className="tabular text-muted">{s._count.offers ? `${s._count.offers} ta taklif` : "Narx yo'q"}</span>
+        {link && (
+          <a href={link} target="_blank" rel="nofollow noopener noreferrer" className="truncate font-semibold text-accent hover:underline">
+            {link.replace(/^https?:\/\//, "")} ↗
+          </a>
+        )}
+      </div>
+    </li>
   );
 }

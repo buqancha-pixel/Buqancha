@@ -97,6 +97,11 @@ model Seller {
   // qidiruv havolasi shabloni, {q} o'rniga kitob nomi qo'yiladi
   searchUrlTemplate String?
   description String?
+  address  String?
+  // Instagram / Telegram (sayti bo'lmaganlar uchun)
+  social   String?
+  // ma'lumot olingan manbalar (tekshirish uchun)
+  sources  String[]  @default([])
   // narx yig'ish sozlamalari
   collector    CollectorKind @default(NONE)
   feedUrl      String?

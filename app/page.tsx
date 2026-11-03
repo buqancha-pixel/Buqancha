@@ -21,7 +21,9 @@ const FLOAT_SLOTS = [
 ];
 
 export default async function HomePage() {
-  const [popular, sellers] = await Promise.all([getPopularBooks(12), getSellers()]);
+  const [popular, allSellers] = await Promise.all([getPopularBooks(12), getSellers()]);
+  // faqat narxi bor sotuvchilar (katalogdagilar /sotuvchilar sahifasida)
+  const sellers = allSellers.filter((s) => s._count.offers > 0);
 
   return (
     <>

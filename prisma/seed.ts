@@ -1,64 +1,19 @@
 /**
  * Namunaviy ma'lumotlar.
  *
- * Sotuvchilar — O'zbekistondagi real do'kon, marketpleys va nashriyotlar.
+ * Sotuvchilar — O'zbekistondagi real do'kon, marketpleys va nashriyotlar
+ * (katalog: prisma/data/sellers.ts). Namunaviy narxlar faqat 5 tasida.
  * NARXLAR NAMUNAVIY: ular haqiqiy narxlar emas, faqat saytni sinash uchun.
  * Shuning uchun barcha takliflar `isSample: true` bilan belgilanadi va
  * saytda ogohlantirish ko'rsatiladi. Narx yig'ish keyingi bosqichda.
  */
-import { PrismaClient, SellerType, OfferSource } from "@prisma/client";
+import { PrismaClient, OfferSource } from "@prisma/client";
 import { buildSearchKey, slugify } from "../lib/normalize.ts";
+import { SELLERS } from "./data/sellers.ts";
 
 const prisma = new PrismaClient();
 
-const sellers = [
-  {
-    slug: "asaxiy",
-    name: "Asaxiy",
-    type: SellerType.MARKETPLACE,
-    city: "Toshkent",
-    website: "https://asaxiy.uz",
-    searchUrlTemplate: "https://asaxiy.uz/uz/product?key={q}",
-    description:
-      "Onlayn marketpleys va Asaxiy Books kitob yo'nalishi. Butun O'zbekiston bo'ylab yetkazib berish.",
-  },
-  {
-    slug: "uzum-market",
-    name: "Uzum Market",
-    type: SellerType.MARKETPLACE,
-    city: "Toshkent",
-    website: "https://uzum.uz",
-    searchUrlTemplate: "https://uzum.uz/uz/search?query={q}",
-    description: "Yirik marketpleys: kitoblarni turli do'konlar sotadi, topshirish punktlari ko'p.",
-  },
-  {
-    slug: "topar",
-    name: "Topar",
-    type: SellerType.STORE,
-    city: "Toshkent",
-    website: "https://topar.uz",
-    searchUrlTemplate: null,
-    description: "Toshkentdagi kitob do'koni: oflayn do'kon va onlayn buyurtma.",
-  },
-  {
-    slug: "akademnashr",
-    name: "Akademnashr",
-    type: SellerType.PUBLISHER,
-    city: "Toshkent",
-    website: "https://akademnashr.uz",
-    searchUrlTemplate: null,
-    description: "2004-yildan beri faoliyat yuritayotgan nashriyot: badiiy, ilmiy-ommabop va bolalar adabiyoti.",
-  },
-  {
-    slug: "gafur-gulom-nmiu",
-    name: "G'afur G'ulom nomidagi NMIU",
-    type: SellerType.PUBLISHER,
-    city: "Toshkent",
-    website: null,
-    searchUrlTemplate: null,
-    description: "G'afur G'ulom nomidagi nashriyot-matbaa ijodiy uyi — o'zbek mumtoz va zamonaviy adabiyoti.",
-  },
-] as const;
+const sellers = SELLERS;
 
 const PUBLISHER_SELLER: Record<string, string> = {
   Akademnashr: "akademnashr",
@@ -417,7 +372,7 @@ async function main() {
 
   const sellerIds: Record<string, string> = {};
   for (const s of sellers) {
-    const created = await prisma.seller.create({ data: { ...s } });
+    const created = await prisma.seller.create({ data: { ...s, searchUrlTemplate: s.searchUrlTemplate ?? null } });
     sellerIds[s.slug] = created.id;
   }
 
@@ -451,7 +406,7 @@ async function main() {
       for (const [sellerSlug, rawPrice] of Object.entries(e.offers)) {
         const seller = sellers.find((s) => s.slug === sellerSlug)!;
         // nashriyot faqat o'z nashrini sotadi
-        if (seller.type === SellerType.PUBLISHER && PUBLISHER_SELLER[e.publisher] !== sellerSlug) {
+        if (seller.type === "PUBLISHER" && PUBLISHER_SELLER[e.publisher] !== sellerSlug) {
           throw new Error(`${seller.name} ${e.publisher} nashrini sota olmaydi (${b.title})`);
         }
         const url = seller.searchUrlTemplate

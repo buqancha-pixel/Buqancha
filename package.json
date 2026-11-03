@@ -15,7 +15,8 @@
     "import-feed": "tsx scripts/import-feed.ts",
     "track-url": "tsx scripts/track-url.ts",
     "review": "tsx scripts/review.ts",
-    "test:db": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://buqancha:buqancha@localhost:5432/buqancha_test} tsx --test lib/collector/collector.itest.ts"
+    "test:db": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://buqancha:buqancha@localhost:5432/buqancha_test} tsx --test lib/collector/collector.itest.ts",
+    "db:sellers": "tsx scripts/sync-sellers.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
