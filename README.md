@@ -156,6 +156,12 @@ Hamkorlik sahifasida forma yo'q (shaxsiy ma'lumot saqlanmaydi) — Telegram havo
    `GOOGLE_SITE_VERIFICATION`), `sitemap.xml` ni yuboring. O'z domeni (masalan `buqancha.uz`) ulangach
    `NEXT_PUBLIC_SITE_URL` ni ham o'rnating.
 
+**Texnik xizmat** ([.github/workflows/xizmat.yml](.github/workflows/xizmat.yml)) — *Actions → Texnik xizmat → Run workflow*:
+statistika, ko'rib chiqish ro'yxati, takrorlarni ko'rish/birlashtirish, diniy kitoblarni ko'rish/olib tashlash,
+bitta sotuvchi narxlarini yangilash, katalog importi, moslanmaganlarni qayta urinish, rasmlar statistikasi.
+`...-qollash` vazifalari bazani o'zgartiradi, qolganlari faqat ko'rsatadi; natija workflow logida.
+Kechki narx yig'ish bilan bir vaqtda ishlamaydi (navbatda kutadi). Mahalliy: `npm run stats`.
+
 Katalog nusxasini yangilash (mahalliy bazadan): `npm run snapshot -- export`. Nusxa faqat **bo'sh** bazaga yuklanadi —
 ishlayotgan bazadagi ma'lumot ustidan yozilmaydi.
 

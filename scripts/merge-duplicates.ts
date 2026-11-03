@@ -3,7 +3,7 @@
  *   npm run merge-duplicates            — o'zgartirishlarni ko'rsatadi (hech narsa o'zgarmaydi)
  *   npm run merge-duplicates -- --apply — birlashtiradi
  * Muallif: normallashtirilgan ism bir xil. Kitob: normallashtirilgan nom va muallif bir xil.
- * Eng eski yozuv saqlanadi; nashrlar (va ularning narxlari) unga o'tkaziladi.
+ * Qo'lda kiritilgan (yoki eng eski) yozuv saqlanadi; nashrlar (va ularning narxlari) unga o'tkaziladi.
  * Teskarisi ham: bitta kitobga yopishib qolgan turli jildlar (havolada "7-juz", "2-kitob")
  * alohida kitoblarga ajratiladi.
  */
@@ -27,7 +27,8 @@ async function main() {
   const authors = await prisma.author.findMany({ orderBy: { id: "asc" }, include: { _count: { select: { books: true } } } });
   let mergedAuthors = 0;
   for (const g of groups(authors, (a) => searchKey(a.name))) {
-    const [keep, ...dups] = g.sort((a, b) => b._count.books - a._count.books);
+    // biografiyasi bor (qo'lda yozilgan) muallif, so'ng kitobi ko'pi saqlanadi
+    const [keep, ...dups] = g.sort((a, b) => Number(!!b.bio) - Number(!!a.bio) || b._count.books - a._count.books);
     console.log(`muallif: ${keep.name}  ⟵  ${dups.map((d) => d.name).join(", ")}`);
     if (APPLY) {
       await prisma.book.updateMany({ where: { authorId: { in: dups.map((d) => d.id) } }, data: { authorId: keep.id } });
@@ -44,7 +45,8 @@ async function main() {
   const books = await prisma.book.findMany({ orderBy: { createdAt: "asc" }, include: { author: true } });
   let mergedBooks = 0;
   for (const g of groups(books, (b) => `${searchKey(b.title)}|${b.authorId}`)) {
-    const [keep, ...dups] = g; // eng eskisi (seed kitoblari va ularning tavsifi saqlanadi)
+    // qo'lda kiritilgan (admin panel, seed) kitob, bo'lmasa eng eskisi saqlanadi
+    const [keep, ...dups] = [...g].sort((a, b) => Number(b.origin === "manual") - Number(a.origin === "manual"));
     console.log(`kitob: ${keep.title} (${keep.author.name})  ⟵  ${dups.length} ta takror`);
     if (APPLY) {
       await prisma.edition.updateMany({ where: { bookId: { in: dups.map((d) => d.id) } }, data: { bookId: keep.id } });
@@ -53,6 +55,8 @@ async function main() {
         where: { id: keep.id },
         data: {
           titleCyrl: cyrl,
+          description: keep.description || dups.find((d) => d.description)?.description || "",
+          origin: g.some((b) => b.origin === "manual") ? "manual" : keep.origin,
           searchCount: keep.searchCount + dups.reduce((s, d) => s + d.searchCount, 0),
           searchKey: buildSearchKey(keep.title, cyrl, keep.author.name, keep.author.nameCyrl),
         },

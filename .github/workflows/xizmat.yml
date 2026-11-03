@@ -1,0 +1,72 @@
+# Texnik xizmat: bazadagi ishlarni qo'lda ishga tushirish (Actions → Texnik xizmat → Run workflow).
+# DATABASE_URL secret'i narxlar workflow'i bilan bir xil. "...-qollash" vazifalari bazani o'zgartiradi,
+# qolganlari faqat ko'rsatadi (natija — workflow logida).
+name: Texnik xizmat
+
+on:
+  workflow_dispatch:
+    inputs:
+      vazifa:
+        description: Vazifa
+        required: true
+        type: choice
+        options:
+          - statistika
+          - korib-chiqish-royxati
+          - takrorlar-korish
+          - takrorlar-birlashtirish-qollash
+          - diniy-korish
+          - diniy-olib-tashlash-qollash
+          - narxlarni-yangilash
+          - katalog-import
+          - moslanmaganlarni-qayta-urinish
+          - rasmlar-statistikasi
+      sotuvchi:
+        description: "Sotuvchi slug'i (narxlarni-yangilash, katalog-import, moslanmaganlarni-qayta-urinish uchun): qamar, barakot…"
+        required: false
+        default: ""
+
+concurrency:
+  group: narxlar # kechki yig'ish bilan bir vaqtda ishlamaydi
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://buqancha.vercel.app' }}
+      NODE_NO_WARNINGS: "1"
+      VAZIFA: ${{ inputs.vazifa }}
+      SOTUVCHI: ${{ inputs.sotuvchi }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - name: Vazifa
+        run: |
+          set -euo pipefail
+          if [ -n "$SOTUVCHI" ] && ! [[ "$SOTUVCHI" =~ ^[a-z0-9-]{2,60}$ ]]; then
+            echo "::error::Sotuvchi slug'i noto'g'ri: $SOTUVCHI"; exit 1
+          fi
+          need_seller() { if [ -z "$SOTUVCHI" ]; then echo "::error::Bu vazifa uchun sotuvchi slug'ini kiriting"; exit 1; fi; }
+          case "$VAZIFA" in
+            statistika)                       npm run --silent stats ;;
+            korib-chiqish-royxati)            npm run --silent review ;;
+            takrorlar-korish)                 npm run --silent merge-duplicates ;;
+            takrorlar-birlashtirish-qollash)  npm run --silent merge-duplicates -- --apply ;;
+            diniy-korish)                     npm run --silent remove-religious ;;
+            diniy-olib-tashlash-qollash)      npm run --silent remove-religious -- --apply ;;
+            narxlarni-yangilash)              need_seller; npm run --silent collect -- "$SOTUVCHI" ;;
+            katalog-import)                   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" ;;
+            moslanmaganlarni-qayta-urinish)   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" --retry-pending ;;
+            rasmlar-statistikasi)             npm run --silent images -- stats ;;
+            *) echo "::error::Noma'lum vazifa: $VAZIFA"; exit 1 ;;
+          esac
+          echo "--- yakuniy holat ---"
+          npm run --silent stats
