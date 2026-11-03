@@ -4,9 +4,11 @@
  *   npm run merge-duplicates -- --apply — birlashtiradi
  * Muallif: normallashtirilgan ism bir xil. Kitob: normallashtirilgan nom va muallif bir xil.
  * Eng eski yozuv saqlanadi; nashrlar (va ularning narxlari) unga o'tkaziladi.
+ * Teskarisi ham: bitta kitobga yopishib qolgan turli jildlar (havolada "7-juz", "2-kitob")
+ * alohida kitoblarga ajratiladi.
  */
 import { prisma } from "../lib/db";
-import { buildSearchKey, searchKey } from "../lib/normalize";
+import { buildSearchKey, searchKey, slugify } from "../lib/normalize";
 
 const APPLY = process.argv.includes("--apply");
 
@@ -59,7 +61,69 @@ async function main() {
     }
     mergedBooks += dups.length;
   }
-  console.log(`\n${APPLY ? "Birlashtirildi" : "Birlashtiriladi"}: ${mergedAuthors} ta muallif, ${mergedBooks} ta kitob.${APPLY ? "" : " (--apply bilan qo'llang)"}`);
+  // 3) jildlarni ajratish
+  const splitBooks = await splitVolumes();
+
+  console.log(
+    `\n${APPLY ? "Bajarildi" : "Bajariladi"}: ${mergedAuthors} ta muallif va ${mergedBooks} ta kitob birlashtirish, ` +
+      `${splitBooks} ta jild ajratish.${APPLY ? "" : " (--apply bilan qo'llang)"}`,
+  );
+}
+
+const UNIT: Record<string, string> = { juz: "juz", jild: "jild", kitob: "kitob", qism: "qism", tom: "tom" };
+
+/** Havoladan jild belgisi: ".../hadis-va-hayot-namoz-7-juz" → "7-juz" */
+export function volumeOf(url: string): string | null {
+  const last = decodeURIComponent(url.split("?")[0].split("/").filter(Boolean).pop() ?? "").toLowerCase();
+  const m = last.match(/(?:^|-)(\d{1,3})-(juz|jild|kitob|qism|tom)(?:-|$)/) ?? last.match(/(?:^|-)(juz|jild|kitob|qism|tom)-(\d{1,3})(?:-|$)/);
+  if (!m) return null;
+  const [n, unit] = /\d/.test(m[1]) ? [m[1], m[2]] : [m[2], m[1]];
+  return `${Number(n)}-${UNIT[unit]}`;
+}
+
+async function splitVolumes(): Promise<number> {
+  const books = await prisma.book.findMany({
+    where: { editions: { some: {} } },
+    include: { author: true, editions: { include: { offers: { select: { url: true } } } } },
+  });
+  let created = 0;
+  for (const book of books) {
+    if (book.editions.length < 2) continue;
+    const byVol = new Map<string, typeof book.editions>();
+    for (const e of book.editions) {
+      const vols = new Set(e.offers.map((o) => (o.url ? volumeOf(o.url) : null)).filter(Boolean) as string[]);
+      if (vols.size !== 1) continue; // belgisiz yoki noaniq — joyida qoladi
+      const v = [...vols][0];
+      byVol.set(v, [...(byVol.get(v) ?? []), e]);
+    }
+    if (byVol.size < 2) continue;
+    const vols = [...byVol.keys()].sort((a, b) => parseInt(a) - parseInt(b));
+    console.log(`jildlar: ${book.title} → ${vols.join(", ")}`);
+    if (!APPLY) {
+      created += vols.length - 1;
+      continue;
+    }
+    const base = book.title.replace(/\s+\d+-(juz|jild|kitob|qism|tom)$/i, "");
+    for (const [i, v] of vols.entries()) {
+      const title = `${base} ${v}`;
+      const sk = buildSearchKey(title, book.titleCyrl ? `${book.titleCyrl} ${v}` : null, book.author.name, book.author.nameCyrl);
+      if (i === 0) {
+        await prisma.book.update({ where: { id: book.id }, data: { title, searchKey: sk } });
+        continue;
+      }
+      let slug = slugify(title);
+      for (let k = 2; await prisma.book.findUnique({ where: { slug } }); k++) slug = `${slugify(title)}-${k}`;
+      const nb = await prisma.book.create({
+        data: {
+          slug, title, titleCyrl: book.titleCyrl ? `${book.titleCyrl} ${v}` : null, description: "",
+          authorId: book.authorId, coverColor: book.coverColor, searchKey: sk,
+        },
+      });
+      await prisma.edition.updateMany({ where: { id: { in: byVol.get(v)!.map((e) => e.id) } }, data: { bookId: nb.id } });
+      created++;
+    }
+  }
+  return created;
 }
 
 main().finally(() => prisma.$disconnect());

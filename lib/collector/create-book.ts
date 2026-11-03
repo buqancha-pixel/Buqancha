@@ -62,7 +62,7 @@ async function findOrCreateAuthor(rawName: string) {
 }
 
 /** Yangi kitob, muallif (kerak bo'lsa) va ISBN'li nashr yaratadi, indeksni yangilaydi. */
-export async function createBookFromItem(item: CollectedItem, isbn: string, index: MatchIndex): Promise<string> {
+export async function createBookFromItem(item: CollectedItem, isbn: string, index: MatchIndex, sellerSlug: string): Promise<string> {
   // boshqa jarayon (parallel import) shu ISBN'ni allaqachon yaratgan bo'lishi mumkin
   const existing = await prisma.edition.findUnique({
     where: { isbn },
@@ -105,6 +105,8 @@ export async function createBookFromItem(item: CollectedItem, isbn: string, inde
       pages: item.pages ?? null,
       cover: item.cover ?? null,
       year: item.year ?? null,
+      imageUrl: item.image ?? null,
+      imageSource: item.image ? sellerSlug : null,
     },
   });
   const entry: IndexEdition = {

@@ -16,6 +16,8 @@ export type CollectedItem = {
   year?: number;
   /** ISO til kodi, masalan "uz", "ru", "en" */
   language?: string;
+  /** muqova rasmi havolasi (sotuvchi saytida) */
+  image?: string;
   /** muqobil nom (masalan kirillcha) */
   titleAlt?: string;
   /** muallif aslida brend maydonidan olingan (ishonchsiz) */

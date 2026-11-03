@@ -44,7 +44,7 @@ const NOISE = new Set(
  * Qavs ichidagi "2-kitob", "3-jild" kabi belgilar saqlanadi — ular boshqa mahsulotni bildiradi.
  */
 export function cleanTitle(title: string): string {
-  const keep = Array.from(title.matchAll(/\b\d+\s*-?\s*(kitob|jild|qism|tom|kitoblar)\b/gi), (m) => m[0]);
+  const keep = Array.from(title.matchAll(/\b\d+\s*-?\s*(kitob|jild|qism|tom|kitoblar|juz|juzlar)\b/gi), (m) => m[0]);
   let t = title.replace(/\([^)]*\)|\[[^\]]*\]/g, " ");
   t = t.replace(/\b\d+\s*(bet|sahifa|стр)\b\.?/gi, " ").replace(/\b[АAаa]\s?[3-6]\b/g, " ");
   return [t, ...keep].join(" ").replace(/\s+/g, " ").trim();

@@ -10,6 +10,13 @@ const bookCardInclude = {
 
 export type BookCardData = Prisma.BookGetPayload<{ include: typeof bookCardInclude }>;
 
+/** Kitob uchun eng yaxshi muqova: o'z suratimiz, so'ng sotuvchi rasmi. */
+export function bookImage(book: { editions: Array<{ imageUrl: string | null; imageSource: string | null }> }) {
+  const own = book.editions.find((e) => e.imageUrl && e.imageSource === "own");
+  const any = own ?? book.editions.find((e) => e.imageUrl);
+  return any ? { url: any.imageUrl!, source: any.imageSource } : null;
+}
+
 export function priceRange(book: BookCardData) {
   const every = book.editions.flatMap((e) => e.offers);
   // haqiqiy narxlar bo'lsa — namunaviylar hisobga olinmaydi

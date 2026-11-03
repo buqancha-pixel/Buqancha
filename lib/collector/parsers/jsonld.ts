@@ -44,6 +44,7 @@ export function extractJsonLdItems(html: string, pageUrl: string): CollectedItem
       author: personName(node.author) ?? personName(node.brand),
       authorFromBrand: !personName(node.author) && !!personName(node.brand),
       titleAlt: text(node.alternateName),
+      image: imageUrl(node.image, pageUrl),
       publisher: personName(node.publisher),
       isbn,
       price,
@@ -105,6 +106,19 @@ function text(v: unknown): string | undefined {
   if (typeof v === "string") return v.trim() || undefined;
   if (typeof v === "number") return String(v);
   return undefined;
+}
+
+/** schema.org image: satr, massiv yoki ImageObject → mutlaq https havola */
+function imageUrl(v: unknown, base: string): string | undefined {
+  const first = Array.isArray(v) ? v[0] : v;
+  const raw = typeof first === "string" ? first : first && typeof first === "object" ? text((first as Record<string, unknown>).url ?? (first as Record<string, unknown>).contentUrl) : undefined;
+  if (!raw) return undefined;
+  try {
+    const u = new URL(raw, base);
+    return u.protocol === "https:" ? u.toString() : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function positiveInt(v: unknown): number | undefined {

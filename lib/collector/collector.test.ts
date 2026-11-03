@@ -137,6 +137,7 @@ test("moslashtirish: qo'shimcha so'z, to'plam, boshqa til — boshqa mahsulot", 
 test("do'kon nomidagi qo'shimchalar: format, betlar, qavs", () => {
   assert.equal(cleanTitle("O'tkan kunlar (А5, qattiq) 400 bet"), "O'tkan kunlar");
   assert.equal(cleanTitle("Shaytanat (2-kitob)"), "Shaytanat 2-kitob");
+  assert.equal(cleanTitle("Hadis va Hayot (Namoz) (7-juz)"), "Hadis va Hayot 7-juz");
   assert.equal(matchItem(item({ title: "Navoiy (A5, yumshoq) 424 bet", author: "Oybek" }), index).editionId, "e3");
   assert.equal(matchItem(item({ title: "Navoiy nazmi rangin", author: "Oybek" }), index).bookId, null);
   assert.equal(matchItem(item({ title: "Shum bola (2-kitob)", author: "G'afur G'ulom" }), index).bookId, null);

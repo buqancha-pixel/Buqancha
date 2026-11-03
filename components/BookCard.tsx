@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Cover } from "./Cover";
-import { priceRange, type BookCardData } from "@/lib/books";
+import { bookImage, priceRange, type BookCardData } from "@/lib/books";
 import { formatNumber } from "@/lib/format";
 
 export function BookCard({ book }: { book: BookCardData }) {
@@ -14,6 +14,7 @@ export function BookCard({ book }: { book: BookCardData }) {
         title={book.title}
         author={book.author.name}
         color={book.coverColor}
+        image={bookImage(book)?.url}
         className="w-full transition-transform duration-300 group-hover:-translate-y-1"
       />
       <div className="min-w-0 px-0.5">

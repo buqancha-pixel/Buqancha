@@ -55,6 +55,7 @@ export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {
         source: "AUTO",
         fullCatalog: false,
         createBooks: { sellerName: seller.name },
+        sellerSlug: seller.slug,
       });
       await prisma.collectorRun.update({ where: { id: run.id }, data: { stats: { ...stats, errors: stats.errors.slice(0, 50) } } });
       opts.onBatch?.(Math.min(i + batchSize, queue.length), queue.length, stats);

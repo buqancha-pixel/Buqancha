@@ -33,11 +33,16 @@ export type ApplyOptions = {
   knownEditions?: Map<string, string>;
   /** bazada yo'q kitoblar uchun yangi kitob yaratilsinmi (katalog importi) */
   createBooks?: { sellerName: string };
+  /** sotuvchi slug'i — muqova rasmi manbasi sifatida yoziladi */
+  sellerSlug?: string;
   now?: Date;
 };
 
 export async function applyItems(sellerId: string, items: CollectedItem[], stats: RunStats, opts: ApplyOptions) {
   const now = opts.now ?? new Date();
+  // sotuvchi rasmlariga rozilik bekor qilingan bo'lsa — rasm saqlanmaydi
+  const sellerRow = await prisma.seller.findUnique({ where: { id: sellerId }, select: { allowImages: true } });
+  if (sellerRow && !sellerRow.allowImages) items = items.map((i) => ({ ...i, image: undefined }));
   const index = await loadIndex();
   const existing = await prisma.offer.findMany({ where: { sellerId } });
   const byEdition = new Map(existing.map((o) => [o.editionId, o]));
@@ -75,6 +80,8 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
             pages: item.pages ?? null,
             cover: item.cover ?? null,
             year: item.year ?? null,
+            imageUrl: item.image ?? null,
+            imageSource: item.image ? (opts.sellerSlug ?? null) : null,
           },
         });
         const book = index.books.find((b) => b.bookId === m.bookId)!;
@@ -90,7 +97,7 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
           await recordUnmatched(sellerId, item);
           return;
         }
-        editionId = await createBookFromItem(item, isbn!, index);
+        editionId = await createBookFromItem(item, isbn!, index, opts.sellerSlug ?? "");
         stats.newBooks++;
       } else {
         stats.unmatched++;
@@ -100,6 +107,7 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
     }
     if (seenEditions.has(editionId)) return;
     seenEditions.add(editionId);
+    if (item.image && opts.sellerSlug) await fillImage(editionId, item.image, opts.sellerSlug);
 
     const current = byEdition.get(editionId) ?? null;
     const d = decide(current, item);
@@ -177,6 +185,11 @@ async function markMissing(
     await prisma.priceSnapshot.create({ data: { offerId: o.id, price: o.price, inStock: false, recordedAt: now } });
     stats.markedOut++;
   }
+}
+
+/** Nashrda rasm bo'lmasa — sotuvchi rasmini yozadi (o'z suratimiz hech qachon almashtirilmaydi). */
+async function fillImage(editionId: string, image: string, sellerSlug: string) {
+  await prisma.edition.updateMany({ where: { id: editionId, imageUrl: null }, data: { imageUrl: image, imageSource: sellerSlug } });
 }
 
 async function recordUnmatched(sellerId: string, item: CollectedItem) {

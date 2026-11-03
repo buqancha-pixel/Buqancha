@@ -3,7 +3,7 @@ import { SearchForm } from "@/components/SearchForm";
 import { BookCard } from "@/components/BookCard";
 import { Cover } from "@/components/Cover";
 import { JsonLd } from "@/components/JsonLd";
-import { catalogCounts, getMostComparedBooks, getPopularBooks, getSellers } from "@/lib/books";
+import { bookImage, catalogCounts, getMostComparedBooks, getPopularBooks, getSellers } from "@/lib/books";
 import { formatNumber } from "@/lib/format";
 import { SELLER_TYPE_LABEL } from "@/lib/format";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
@@ -52,7 +52,7 @@ export default async function HomePage() {
         <div className="float-covers pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
           {popular.slice(0, 4).map((b, i) => (
             <div key={b.id} className={`floating absolute opacity-80 ${FLOAT_SLOTS[i]}`}>
-              <Cover title={b.title} color={b.coverColor} size="sm" />
+              <Cover title={b.title} color={b.coverColor} size="sm" image={bookImage(b)?.url} />
             </div>
           ))}
         </div>

@@ -82,6 +82,10 @@ model Edition {
   year      Int?
   pages     Int?
   cover     String? // qattiq / yumshoq
+  // muqova rasmi: sotuvchi saytidagi havola yoki o'zimizning surat (/covers/...)
+  imageUrl  String?
+  // rasm manbasi: sotuvchi slug'i yoki "own" (o'z suratimiz)
+  imageSource String?
   offers    Offer[]
 
   @@index([bookId])
@@ -110,6 +114,8 @@ model Seller {
   // katalog importi uchun: sitemap'dagi qaysi manzillar kitob sahifasi (regex)
   productUrlPattern String?
   crawlDelayMs Int           @default(3000)
+  // sotuvchi rasmlarini ko'rsatishga rozilik (so'rov bo'lsa — false)
+  allowImages  Boolean       @default(true)
   offers   Offer[]
   runs     CollectorRun[]
   unmatched UnmatchedItem[]

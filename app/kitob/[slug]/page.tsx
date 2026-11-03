@@ -10,6 +10,7 @@ import {
   filterOffers,
   flattenOffers,
   getAuthorBySlug,
+  bookImage,
   getBookBySlug,
   offerStats,
   splitOffers,
@@ -92,6 +93,9 @@ export default async function BookPage({ params, searchParams }: { params: Param
     TYPE_PARAMS.map(([p, t]) => [p, allOffers.filter((o) => o.seller.type === t).length]),
   );
 
+  const cover = bookImage(book);
+  const coverSeller = cover?.source && cover.source !== "own" ? everyOffer.find((o) => o.seller.slug === cover.source)?.seller : null;
+
   const author = await getAuthorBySlug(book.author.slug);
   const moreByAuthor = author?.books.filter((b) => b.id !== book.id).slice(0, 4) ?? [];
   const pageUrl = absoluteUrl(`/kitob/${book.slug}`);
@@ -122,9 +126,25 @@ export default async function BookPage({ params, searchParams }: { params: Param
       </nav>
 
       <header className="mt-6 grid grid-cols-[96px_1fr] gap-4 sm:grid-cols-[180px_1fr] sm:gap-8 lg:grid-cols-[220px_1fr_320px]">
-        <div className="koinot-float">
-          <Cover title={book.title} author={book.author.name} color={book.coverColor} size="lg" className="w-full" />
-        </div>
+        <figure>
+          <div className="koinot-float">
+            <Cover title={book.title} author={book.author.name} color={book.coverColor} size="lg" className="w-full" image={cover?.url} />
+          </div>
+          {cover && (
+            <figcaption className="mt-2 text-center text-[11px] text-muted">
+              Rasm:{" "}
+              {cover.source === "own" ? (
+                "Buqancha"
+              ) : coverSeller?.website ? (
+                <a href={coverSeller.website} target="_blank" rel="nofollow noopener noreferrer" className="underline">
+                  {coverSeller.name}
+                </a>
+              ) : (
+                (coverSeller?.name ?? cover.source)
+              )}
+            </figcaption>
+          )}
+        </figure>
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-4xl [text-wrap:balance]">{book.title}</h1>
           {book.titleCyrl && (
@@ -254,7 +274,9 @@ export default async function BookPage({ params, searchParams }: { params: Param
         <h2 id="editions-h" className="text-xl sm:text-2xl">Nashrlar</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {book.editions.map((e) => (
-            <dl key={e.id} className="card grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 p-4 text-sm">
+            <div key={e.id} className="card flex gap-4 p-4">
+            {e.imageUrl && <Cover title="" color="#888" size="sm" image={e.imageUrl} className="w-16 shrink-0 self-start" />}
+            <dl className="grid flex-1 grid-cols-[auto_1fr] content-start gap-x-4 gap-y-1.5 text-sm">
               <dt className="text-muted">Nashriyot</dt>
               <dd className="font-semibold">{e.publisher}</dd>
               {e.year && (<><dt className="text-muted">Yil</dt><dd className="tabular">{e.year}</dd></>)}
@@ -263,6 +285,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
               <dt className="text-muted">ISBN</dt>
               <dd className="tabular">{e.isbn ?? "—"}</dd>
             </dl>
+            </div>
           ))}
         </div>
       </section>
@@ -302,6 +325,9 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
     <li className={`card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 ${o.inStock ? "" : "opacity-70"}`}>
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <span className="tabular mt-0.5 hidden w-6 shrink-0 text-center font-heading text-lg text-muted sm:block">{rank}</span>
+        {o.edition.imageUrl && (
+          <Cover title="" color="#888" size="sm" image={o.edition.imageUrl} className="w-11 shrink-0 sm:w-12" />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-base font-semibold">{o.seller.name}</span>
@@ -388,6 +414,7 @@ function bookJsonLd(
     name: book.title,
     alternateName: book.titleCyrl ?? undefined,
     description: book.description || undefined,
+    image: bookImage(book)?.url,
     inLanguage: "uz",
     url,
     author: {

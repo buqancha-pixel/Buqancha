@@ -18,7 +18,8 @@
     "test:db": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://buqancha:buqancha@localhost:5432/buqancha_test} tsx --test lib/collector/collector.itest.ts",
     "db:sellers": "tsx scripts/sync-sellers.ts",
     "import-catalog": "tsx scripts/import-catalog.ts",
-    "merge-duplicates": "tsx scripts/merge-duplicates.ts"
+    "merge-duplicates": "tsx scripts/merge-duplicates.ts",
+    "images": "tsx scripts/images.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

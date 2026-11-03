@@ -16,7 +16,7 @@ export async function importFeed(sellerSlug: string, body: string, format?: "csv
   return withRun(seller, "FEED", async (stats) => {
     const { items, errors } = parseFeed(body, format);
     stats.errors.push(...errors);
-    await applyItems(seller.id, items, stats, { source: "PARTNER", fullCatalog: true });
+    await applyItems(seller.id, items, stats, { source: "PARTNER", fullCatalog: true, sellerSlug: seller.slug });
   });
 }
 
@@ -88,7 +88,7 @@ async function discover(seller: Seller, fetcher: PoliteFetcher, stats: RunStats,
       stats.errors.push(`${url}: ${(e as Error).message}`);
     }
   }
-  await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false });
+  await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, sellerSlug: seller.slug });
 }
 
 export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): Promise<RunResult> {
@@ -103,7 +103,7 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
       const fmt = res.contentType.includes("json") ? "json" : res.contentType.includes("csv") ? "csv" : undefined;
       const { items, errors } = parseFeed(res.body, fmt);
       stats.errors.push(...errors);
-      await applyItems(seller.id, items, stats, { source: "PARTNER", fullCatalog: true });
+      await applyItems(seller.id, items, stats, { source: "PARTNER", fullCatalog: true, sellerSlug: seller.slug });
     });
   }
 
@@ -143,7 +143,7 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
           stats.errors.push(`${o.url}: ${(e as Error).message}`);
         }
       }
-      await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, knownEditions: known });
+      await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, knownEditions: known, sellerSlug: seller.slug });
     });
   }
 
@@ -162,7 +162,7 @@ export async function trackProductUrl(sellerSlug: string, url: string, opts: Fet
     if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
     const items = extractJsonLdItems(res.body, url).map((i) => ({ ...i, key: url, url }));
     if (!items.length) throw new Error("Sahifada schema.org Product/Offer topilmadi");
-    await applyItems(seller.id, items.slice(0, 1), stats, { source: "AUTO", fullCatalog: false });
+    await applyItems(seller.id, items.slice(0, 1), stats, { source: "AUTO", fullCatalog: false, sellerSlug: seller.slug });
   });
 }
 
