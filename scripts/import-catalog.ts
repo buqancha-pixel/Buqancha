@@ -22,7 +22,7 @@ async function main() {
       const min = ((Date.now() - started) / 60000).toFixed(1);
       console.log(
         `[${slug}] ${done}/${total} (${min} daq): yangi kitob ${s.newBooks}, yangi nashr ${s.newEditions}, ` +
-          `taklif ${s.created}, yangilandi ${s.updated}, moslanmadi ${s.unmatched}, xato ${s.errors.length}`,
+          `taklif ${s.created}, yangilandi ${s.updated}, diniy (o'tkazildi) ${s.religious}, moslanmadi ${s.unmatched}, xato ${s.errors.length}`,
       );
     },
   });
