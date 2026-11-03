@@ -6,14 +6,14 @@ import type { CollectedItem } from "./types";
 
 const PALETTE = ["#7a2e2e", "#4a3b6b", "#1d3557", "#e09f3e", "#2a6f97", "#9b2226", "#6c757d", "#588157", "#3a5a40", "#bc6c25", "#f4a261", "#212529", "#0f4c5c", "#8d5a97", "#386641", "#6d597a"];
 
-function colorFor(s: string): string {
+export function colorFor(s: string): string {
   let h = 0;
   for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return PALETTE[h % PALETTE.length];
 }
 
 /** Ko'rsatish uchun nom: kirill bo'lsa — lotinga, tinish belgilari tozalangan. */
-function displayPair(raw: string): { latin: string; cyrl: string | null } {
+export function displayPair(raw: string): { latin: string; cyrl: string | null } {
   const t = raw.replace(/[\s:;,.–—-]+$/, "").replace(/^[\s"«“]+|[\s"»”]+$/g, "").replace(/\s+/g, " ").trim();
   if (hasCyrillic(t)) return { latin: tidyCase(toLatinDisplay(t)), cyrl: t };
   return { latin: tidyCase(t), cyrl: null };
@@ -37,7 +37,7 @@ export function canCreateBook(item: CollectedItem, isbn: string | null, sellerNa
   return { ok: true };
 }
 
-async function uniqueSlug(base: string, table: "book" | "author", fallbackSuffix?: string): Promise<string> {
+export async function uniqueSlug(base: string, table: "book" | "author", fallbackSuffix?: string): Promise<string> {
   const exists = (slug: string) =>
     table === "book"
       ? prisma.book.findUnique({ where: { slug }, select: { id: true } })
@@ -51,7 +51,7 @@ async function uniqueSlug(base: string, table: "book" | "author", fallbackSuffix
   for (let i = 2; ; i++) if (!(await exists(`${root}-${i}`))) return `${root}-${i}`;
 }
 
-async function findOrCreateAuthor(rawName: string) {
+export async function findOrCreateAuthor(rawName: string) {
   // bir nechta muallif bo'lsa — birinchisi asosiy muallif
   const first = rawName.split(/\s*[,;&]\s*|\s+va\s+|\s+и\s+/)[0];
   const { latin, cyrl } = displayPair(first);

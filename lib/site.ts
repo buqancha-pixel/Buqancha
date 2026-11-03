@@ -14,3 +14,6 @@ export const ALLOW_INDEXING = indexingEnv ? indexingEnv === "true" : process.env
 export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/** Hamkorlik bo'yicha aloqa (saytda shaxsiy ma'lumot saqlanmasligi uchun forma o'rniga). */
+export const PARTNER_TELEGRAM = "Shohruh_Fayzullayev";

@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
     return { rules: { userAgent: "*", disallow: "/" } };
   }
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/qidiruv", "/api/"] },
+    rules: { userAgent: "*", allow: "/", disallow: ["/qidiruv", "/api/", "/admin"] },
     sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

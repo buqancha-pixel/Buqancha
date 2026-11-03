@@ -25,6 +25,7 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 | `DATABASE_URL_UNPOOLED` | Ixtiyoriy: migratsiyalar uchun to'g'ridan-to'g'ri ulanish (Neon integratsiyasi o'zi qo'yadi) |
 | `CRON_SECRET` | `/api/cron/collect` uchun maxfiy kalit |
 | `COLLECTOR_USER_AGENT` | Ixtiyoriy: bot User-Agent'i (sukut: `BuqanchaBot/1.0 (+SITE_URL/bot)`) |
+| `ADMIN_PASSWORD` | Admin panel (`/admin`) paroli, kamida 8 belgi. O'rnatilmasa panel o'chiq |
 | `GOOGLE_SITE_VERIFICATION` | Ixtiyoriy: Google Search Console "HTML tag" tasdiqlash kodi (`content` qiymati) |
 | `ALLOW_INDEXING` | Google indeksatsiyasi. Sukut: Vercel production'da yoqiq, boshqa joyda o'chiq (robots.txt `Disallow: /`, `noindex`). `true`/`false` bilan majburlash mumkin |
 
@@ -124,6 +125,22 @@ Topar Cloudflare bot himoyasidan foydalanadi — chetlab o'tilmaydi, ular bilan 
 
 Testlar: `npm test` (unit) va `npm run test:db` (alohida `buqancha_test` bazasida integratsiya; bazani seed qiladi).
 
+## Admin panel (`/admin`)
+
+Vercel'da `ADMIN_PASSWORD` o'rnatilgach, `/admin` da parol bilan kiriladi (sessiya 30 kun, parol o'zgarsa bekor bo'ladi).
+
+- **Kitoblar:** qidirish, yangi kitob (lotin yoki kirill nomi — kirill avtomatik lotinga o'giriladi), tahrirlash, o'chirish;
+  nashrlar (ISBN, nashriyot, yil, muqova, rasm havolasi va manbasi); muallif ma'lumotlari.
+- **Narxlar:** sotuvchini tanlab narx, havola, mavjudligi. Havolasi bor narxlar kechki yig'ishda o'zi yangilanadi.
+- **Ko'rib chiqish:** 70% dan ko'p o'zgargan narxlarni qabul/rad qilish; moslanmagan va e'tiborsiz mahsulotlarni
+  mavjud kitob/nashrga bog'lash yoki ulardan yangi kitob yaratish (diniy adabiyot shu yerdan qo'lda qo'shiladi).
+- **Sotuvchilar:** qo'shish, tahrirlash, muqova rasmlarini ko'rsatishni o'chirish.
+
+Qo'lda qo'shilgan yoki tahrirlangan kitoblar `origin = "manual"` — avtomatik tozalash va diniy filtr ularga tegmaydi.
+O'chirilgan narx havolasi `IGNORED` sifatida eslab qolinadi, shuning uchun katalog importi kitobni qayta yaratmaydi.
+
+Hamkorlik sahifasida forma yo'q (shaxsiy ma'lumot saqlanmaydi) — Telegram havolasi (`PARTNER_TELEGRAM`, `lib/site.ts`).
+
 ## Internetga chiqarish (Vercel + Neon)
 
 1. **Vercel:** vercel.com → GitHub bilan kirish → *Add New → Project* → `Buqancha` reposini tanlash → *Deploy*.
@@ -142,13 +159,13 @@ Testlar: `npm test` (unit) va `npm run test:db` (alohida `buqancha_test` bazasid
 Katalog nusxasini yangilash (mahalliy bazadan): `npm run snapshot -- export`. Nusxa faqat **bo'sh** bazaga yuklanadi —
 ishlayotgan bazadagi ma'lumot ustidan yozilmaydi.
 
-> Hamkorlik arizalarida shaxsiy ma'lumot (ism, telefon) bor. O'zbekiston qonunchiligiga ko'ra fuqarolarning shaxsiy
-> ma'lumotlari mamlakat ichidagi serverlarda saqlanishi talab qilinadi — Neon (Yevropa) bunga mos emas. Sayt rasman
-> ishga tushishidan oldin arizalarni mahalliy serverga ko'chirish yoki formani vaqtincha o'chirish kerak.
+> Sayt foydalanuvchilarning shaxsiy ma'lumotini saqlamaydi (hamkorlik formasi Telegram havolasiga almashtirilgan).
+> O'zbekiston qonunchiligiga ko'ra fuqarolarning shaxsiy ma'lumotlari mamlakat ichida saqlanishi kerak — kelajakda
+> ro'yxatdan o'tish yoki forma qo'shilsa, buni hisobga oling.
 
 ## Keyingi qadamlar
 
 - Real sotuvchilar uchun adapterlar (sayt HTML'ini ko'rib, kerak bo'lsa JSON-LD'dan tashqari parser) —
   muhit tarmog'ida sotuvchi domenlari ochilgandan keyin
-- Admin panel: arizalar, ko'rib chiqish navbati, sotuvchi sozlamalari
+- Admin panel: muqova rasmini telefondan yuklash (Vercel Blob)
 - ISBN ma'lumotlari va haqiqiy muqova rasmlari
