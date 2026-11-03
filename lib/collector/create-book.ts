@@ -92,6 +92,7 @@ export async function createBookFromItem(item: CollectedItem, isbn: string, inde
       title,
       titleCyrl,
       description: "",
+      origin: "import",
       authorId: author.id,
       coverColor: colorFor(title),
       searchKey: buildSearchKey(title, titleCyrl, author.name, author.nameCyrl),

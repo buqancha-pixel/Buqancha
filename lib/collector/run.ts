@@ -5,7 +5,8 @@ import { PoliteFetcher } from "./fetcher";
 import { parseFeed } from "./parsers/feed";
 import { extractJsonLdItems } from "./parsers/jsonld";
 import { emptyStats, type CollectedItem, type RunStats } from "./types";
-import { loadIndex } from "./apply";
+import { loadIndex, removeOffersByUrl } from "./apply";
+import { extractCategories, isReligious } from "./religion";
 import { searchKey } from "../normalize";
 
 export type RunResult = { seller: string; kind: CollectorKind; status: string; stats: RunStats; error?: string };
@@ -83,12 +84,12 @@ async function discover(seller: Seller, fetcher: PoliteFetcher, stats: RunStats,
       const res = await fetcher.get(url);
       if (res.status !== 200) continue;
       const found = extractJsonLdItems(res.body, url);
-      if (found[0]) items.push({ ...found[0], key: url, url });
+      if (found[0]) items.push({ ...found[0], key: url, url, categories: extractCategories(res.body) });
     } catch (e) {
       stats.errors.push(`${url}: ${(e as Error).message}`);
     }
   }
-  await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, sellerSlug: seller.slug });
+  await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, sellerSlug: seller.slug, skipReligious: true });
 }
 
 export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): Promise<RunResult> {
@@ -120,9 +121,11 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
           url: { not: null },
           OR: [{ checkedAt: null }, { checkedAt: { lt: started } }],
         },
+        include: { edition: { select: { book: { select: { origin: true } } } } },
       });
       const items: CollectedItem[] = [];
       const known = new Map<string, string>();
+      const religiousUrls: string[] = [];
       for (const o of offers) {
         try {
           const res = await fetcher.get(o.url!);
@@ -136,7 +139,11 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
             stats.errors.push(`${o.url}: sahifada JSON-LD narx topilmadi`);
             continue;
           }
-          const item = { ...found[0], key: o.url!, url: o.url! };
+          const item = { ...found[0], key: o.url!, url: o.url!, categories: extractCategories(res.body) };
+          if (isReligious(item) && o.edition.book.origin === "import") {
+            religiousUrls.push(o.url!);
+            continue;
+          }
           items.push(item);
           known.set(item.key, o.editionId);
         } catch (e) {
@@ -144,6 +151,8 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
         }
       }
       await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, knownEditions: known, sellerSlug: seller.slug });
+      // diniy adabiyot avtomatik ko'rsatilmaydi (sayt egasi qo'lda kiritadi)
+      stats.religious += await removeOffersByUrl(seller.id, religiousUrls);
     });
   }
 

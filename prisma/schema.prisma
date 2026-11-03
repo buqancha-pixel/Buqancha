@@ -65,6 +65,8 @@ model Book {
   searchKey    String
   searchCount  Int       @default(0)
   coverColor   String    @default("#1f6f5c")
+  // "manual" — qo'lda kiritilgan, "import" — katalog importida avtomatik yaratilgan
+  origin       String    @default("manual")
   editions     Edition[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

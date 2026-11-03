@@ -5,6 +5,7 @@ import { buildIndex, matchItem, type MatchIndex } from "./match";
 import { decide } from "./decide";
 import { normalizeIsbn } from "./isbn";
 import { canCreateBook, createBookFromItem } from "./create-book";
+import { isReligious } from "./religion";
 
 /** Ko'rinmay qolganlarni "mavjud emas" qilish chegarasi: bundan ko'p bo'lsa feed buzuq deb hisoblanadi. */
 const MAX_MARK_OUT_RATIO = 0.5;
@@ -33,6 +34,8 @@ export type ApplyOptions = {
   knownEditions?: Map<string, string>;
   /** bazada yo'q kitoblar uchun yangi kitob yaratilsinmi (katalog importi) */
   createBooks?: { sellerName: string };
+  /** diniy adabiyot o'tkazib yuborilsin (avtomatik import qilinmaydi) */
+  skipReligious?: boolean;
   /** sotuvchi slug'i — muqova rasmi manbasi sifatida yoziladi */
   sellerSlug?: string;
   now?: Date;
@@ -44,6 +47,10 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
   const sellerRow = await prisma.seller.findUnique({ where: { id: sellerId }, select: { allowImages: true } });
   if (sellerRow && !sellerRow.allowImages) items = items.map((i) => ({ ...i, image: undefined }));
   const index = await loadIndex();
+  // qo'lda kiritilgan kitoblar: diniy bo'lsa ham narxi yig'iladi
+  const manualBooks = opts.skipReligious
+    ? new Set((await prisma.book.findMany({ where: { origin: "manual" }, select: { id: true } })).map((b) => b.id))
+    : new Set<string>();
   const existing = await prisma.offer.findMany({ where: { sellerId } });
   const byEdition = new Map(existing.map((o) => [o.editionId, o]));
   const byUrl = new Map(existing.filter((o) => o.url && !o.isSample).map((o) => [o.url!, o]));
@@ -65,6 +72,15 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
 
   async function applyOne(item: CollectedItem) {
     stats.seen++;
+    if (opts.skipReligious && isReligious(item)) {
+      // diniy adabiyot avtomatik qo'shilmaydi; faqat sayt egasi qo'lda kiritgan kitobga bog'lanishi mumkin
+      const m = matchItem(item, index);
+      if (!m.bookId || !manualBooks.has(m.bookId)) {
+        stats.religious++;
+        await recordUnmatched(sellerId, item, "IGNORED");
+        return;
+      }
+    }
     let editionId = opts.knownEditions?.get(item.key) ?? (item.url ? byUrl.get(item.url)?.editionId : undefined) ?? null;
     if (!editionId) {
       const m = matchItem(item, index);
@@ -187,12 +203,43 @@ async function markMissing(
   }
 }
 
+/**
+ * Berilgan havolalardagi takliflarni olib tashlaydi (masalan, diniy adabiyot):
+ * takliflar o'chiriladi, havolalar "e'tiborsiz" deb belgilanadi (qayta yuklanmaydi),
+ * importda yaratilgan va taklifsiz qolgan nashr/kitoblar o'chiriladi. Qo'lda kiritilganlarga tegilmaydi.
+ */
+export async function removeOffersByUrl(sellerId: string, urls: string[]) {
+  if (!urls.length) return 0;
+  const offers = await prisma.offer.findMany({
+    where: { sellerId, url: { in: urls } },
+    include: { edition: { include: { book: true } } },
+  });
+  for (const o of offers) {
+    await prisma.unmatchedItem.upsert({
+      where: { sellerId_key: { sellerId, key: o.url! } },
+      create: { sellerId, key: o.url!, title: o.edition.book.title, price: o.price, inStock: o.inStock, url: o.url, status: "IGNORED" },
+      update: { status: "IGNORED" },
+    });
+  }
+  await prisma.offer.deleteMany({ where: { id: { in: offers.map((o) => o.id) } } });
+  await cleanupOrphans();
+  return offers.length;
+}
+
+/** Importda yaratilgan, taklifsiz qolgan nashr va kitoblarni o'chiradi. */
+export async function cleanupOrphans() {
+  await prisma.edition.deleteMany({ where: { offers: { none: {} }, book: { origin: "import" } } });
+  await prisma.book.deleteMany({ where: { origin: "import", editions: { none: {} } } });
+  // importda yaratilgan (tavsifsiz) va kitobsiz qolgan mualliflar
+  await prisma.author.deleteMany({ where: { books: { none: {} }, bio: null } });
+}
+
 /** Nashrda rasm bo'lmasa — sotuvchi rasmini yozadi (o'z suratimiz hech qachon almashtirilmaydi). */
 async function fillImage(editionId: string, image: string, sellerSlug: string) {
   await prisma.edition.updateMany({ where: { id: editionId, imageUrl: null }, data: { imageUrl: image, imageSource: sellerSlug } });
 }
 
-async function recordUnmatched(sellerId: string, item: CollectedItem) {
+async function recordUnmatched(sellerId: string, item: CollectedItem, status: "PENDING" | "IGNORED" = "PENDING") {
   const data = {
     title: item.title.slice(0, 300),
     author: item.author?.slice(0, 200) ?? null,
@@ -203,8 +250,8 @@ async function recordUnmatched(sellerId: string, item: CollectedItem) {
   };
   await prisma.unmatchedItem.upsert({
     where: { sellerId_key: { sellerId, key: item.key.slice(0, 500) } },
-    create: { sellerId, key: item.key.slice(0, 500), ...data },
+    create: { sellerId, key: item.key.slice(0, 500), status, ...data },
     // IGNORED holati saqlanib qoladi
-    update: data,
+    update: status === "IGNORED" ? { ...data, status } : data,
   });
 }

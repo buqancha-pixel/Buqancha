@@ -19,7 +19,8 @@
     "db:sellers": "tsx scripts/sync-sellers.ts",
     "import-catalog": "tsx scripts/import-catalog.ts",
     "merge-duplicates": "tsx scripts/merge-duplicates.ts",
-    "images": "tsx scripts/images.ts"
+    "images": "tsx scripts/images.ts",
+    "remove-religious": "tsx scripts/remove-religious.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

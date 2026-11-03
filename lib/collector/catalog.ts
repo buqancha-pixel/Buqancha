@@ -2,6 +2,7 @@ import { prisma } from "../db";
 import { applyItems } from "./apply";
 import { PoliteFetcher, type FetcherOptions } from "./fetcher";
 import { extractJsonLdItems } from "./parsers/jsonld";
+import { extractCategories } from "./religion";
 import { sitemapLocs } from "./run";
 import { emptyStats, type CollectedItem, type RunStats } from "./types";
 
@@ -46,7 +47,7 @@ export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {
           const res = await fetcher.get(url);
           if (res.status !== 200) continue;
           const found = extractJsonLdItems(res.body, url);
-          if (found[0]) items.push({ ...found[0], key: url, url });
+          if (found[0]) items.push({ ...found[0], key: url, url, categories: extractCategories(res.body) });
         } catch (e) {
           if (stats.errors.length < 200) stats.errors.push(`${url}: ${(e as Error).message}`);
         }
@@ -55,6 +56,7 @@ export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {
         source: "AUTO",
         fullCatalog: false,
         createBooks: { sellerName: seller.name },
+        skipReligious: true,
         sellerSlug: seller.slug,
       });
       await prisma.collectorRun.update({ where: { id: run.id }, data: { stats: { ...stats, errors: stats.errors.slice(0, 50) } } });

@@ -94,6 +94,15 @@ Qoidalar:
   bo'yicha. Do'kon qo'shimchalari ("(А5, qattiq) 400 bet") olib tashlanadi; nomda boshqa so'z qolsa ("Ufq
   bo'sag'asida"), to'plam/jild yoki boshqa til bo'lsa — moslanmaydi va `UnmatchedItem` navbatiga tushadi
   (`npm run review -- link <id> <kitob-slug>`). Kitob ma'lum, ISBN esa yangi bo'lsa — yangi nashr yaratiladi.
+- **Diniy adabiyot avtomatik qo'shilmaydi** — sayt egasi qo'lda kiritadi. Do'kon kategoriyasi (Qamar:
+  "Diniy-ma'rifiy adabiyot", "Qur'on"; Barakot: "Bo'lim") va nom/nashriyotdagi aniq belgilar bo'yicha
+  aniqlanadi; bunday havolalar "e'tiborsiz" deb belgilanadi. Qo'lda kiritilgan (`origin = "manual"`) kitobga
+  mos kelsa — narxi yig'iladi. Avval import qilinganlarini olib tashlash: `npm run remove-religious -- --apply`.
+- **Katalog importi** (`npm run import-catalog -- <sotuvchi>`): sitemap'dagi barcha kitob sahifalari;
+  ISBN va muallif bo'lsa yangi kitob yaratiladi (`origin = "import"`), do'kon tavsiflari ko'chirilmaydi.
+  Keyin: `npm run merge-duplicates -- --apply` (takrorlarni birlashtirish, jildlarni ajratish).
+- **Muqova rasmlari:** sotuvchi saytidan ko'rsatiladi (ko'chirilmaydi), "Rasm: <sotuvchi>" bilan;
+  o'z suratlari: `npm run images -- own <papka>` (fayl nomi = ISBN); so'rov bo'lsa: `npm run images -- block <sotuvchi>`.
 - **Sitemap orqali topish:** faqat manzilida bazadagi kitob nomi uchraydigan va avval ko'rilmagan sahifalar yuklanadi.
 - **Namunaviy narxlar:** kitobda haqiqiy narx bo'lsa, eng arzon/qimmat, sarlavha va JSON-LD faqat haqiqiylardan
   hisoblanadi; namunaviylar alohida yig'ilgan bo'limda.

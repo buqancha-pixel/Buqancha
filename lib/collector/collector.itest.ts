@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
 import { prisma } from "../db";
 import { importFeed, collectSeller, trackProductUrl } from "./run";
+import { importCatalog } from "./catalog";
 
 before(() => {
   if (!process.env.DATABASE_URL?.includes("_test")) throw new Error("Faqat test bazasida ishga tushiring (DATABASE_URL ..._test)");
@@ -173,4 +174,56 @@ test("sitemap orqali topish: yangi nashr, to'plam navbatga, aloqasiz sahifa yukl
   assert.equal(r2.stats.newEditions, 0);
   assert.equal(r2.stats.unchanged, 1);
   assert.equal(fetched.filter((u) => u.includes("1-2-3-jild")).length, 0);
+});
+
+test("katalog importi: yangi kitob yaratiladi, diniy adabiyot o'tkazib yuboriladi", async () => {
+  await prisma.seller.update({
+    where: { slug: "barakot" },
+    data: { crawlDelayMs: 0, sitemapUrls: ["https://barakot.uz/sitemap.xml"], productUrlPattern: "^https://barakot\\.uz/book/" },
+  });
+  // qo'lda kiritilgan diniy kitob (sayt egasi o'zi qo'shgan)
+  const author = await prisma.author.create({ data: { slug: "test-muallif", name: "Test Muallif", bio: "qo'lda", searchKey: " test muallif " } });
+  await prisma.book.create({
+    data: {
+      slug: "namoz-kitobi", title: "Namoz kitobi", description: "qo'lda", authorId: author.id, origin: "manual",
+      searchKey: " namoz kitobi | test muallif ", editions: { create: { publisher: "Hilol Nashr" } },
+    },
+  });
+  const page = (name: string, author: string, isbn: string, category: string, price: number) =>
+    `<script type="application/ld+json">${JSON.stringify({
+      "@type": ["Product", "Book"], name, isbn, author: { "@type": "Person", name: author },
+      publisher: { "@type": "Organization", name: "Biror nashriyot" },
+      image: ["https://barakot.uz/api/image-proxy/x.jpg"],
+      offers: { "@type": "Offer", price, priceCurrency: "UZS", availability: "https://schema.org/InStock" },
+    })}</script><a href="/catalog/${category}?itemType=book">Bo'lim</a>`;
+  const fake = (async (u: string) => {
+    const url = String(u);
+    if (url.endsWith("/robots.txt")) return new Response("User-agent: *\nDisallow: /api/");
+    if (url.endsWith("/sitemap.xml"))
+      return new Response(
+        ["yangi-roman-1", "hadislar-toplami-2", "namoz-kitobi-3", "boshqa-sahifa"].map((p) => `<url><loc>https://barakot.uz/${p === "boshqa-sahifa" ? "about" : `book/${p}`}</loc></url>`).join(""),
+      );
+    if (url.endsWith("yangi-roman-1")) return new Response(page("Yangi roman (А5, qattiq) 300 bet", "Ali Valiyev", "9789943562943", "jahon-adabiyoti", 40000));
+    if (url.endsWith("hadislar-toplami-2")) return new Response(page("Bir kitob", "Kimdir", "9780306406157", "diniy-adabiyot", 30000));
+    if (url.endsWith("namoz-kitobi-3")) return new Response(page("Namoz kitobi", "Test Muallif", "9789943000117", "diniy-adabiyot", 25000));
+    return new Response("", { status: 404 });
+  }) as typeof fetch;
+
+  const r = await importCatalog("barakot", { fetchImpl: fake, sleep: async () => {} });
+  assert.equal(r.status, "SUCCESS");
+  assert.equal(r.stats.newBooks, 1);
+  assert.equal(r.stats.religious, 1, "diniy kategoriyadagi yangi kitob yaratilmaydi");
+
+  const created = await prisma.book.findFirstOrThrow({ where: { title: "Yangi roman" }, include: { editions: true, author: true } });
+  assert.equal(created.origin, "import");
+  assert.equal(created.author.name, "Ali Valiyev");
+  assert.equal(created.editions[0].cover, "qattiq");
+  assert.equal(created.editions[0].imageSource, "barakot");
+
+  // qo'lda kiritilgan diniy kitobning narxi baribir yig'iladi
+  const manual = await prisma.offer.findFirst({ where: { seller: { slug: "barakot" }, edition: { book: { slug: "namoz-kitobi" } } } });
+  assert.equal(manual?.price, 25000);
+  const ignored = await prisma.unmatchedItem.findFirstOrThrow({ where: { key: "https://barakot.uz/book/hadislar-toplami-2" } });
+  assert.equal(ignored.status, "IGNORED");
+  assert.equal(await prisma.book.count({ where: { title: "Bir kitob" } }), 0);
 });
