@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SellerType {
+  STORE       // do'kon
+  PUBLISHER   // nashriyot
+  MARKETPLACE // marketpleys
+}
+
+enum OfferSource {
+  PARTNER // hamkor
+  AUTO    // avtomatik
+  MANUAL  // qo'lda
+}
+
+model Author {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  nameCyrl    String?
+  bio         String?
+  birthYear   Int?
+  deathYear   Int?
+  // normallashtirilgan nom (qidiruv uchun)
+  searchKey   String
+  books       Book[]
+
+  @@index([searchKey])
+}
+
+model Book {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  title        String
+  titleCyrl    String?
+  description  String
+  authorId     String
+  author       Author    @relation(fields: [authorId], references: [id])
+  // normallashtirilgan nom + muallif + kirill varianti (qidiruv uchun)
+  searchKey    String
+  searchCount  Int       @default(0)
+  coverColor   String    @default("#1f6f5c")
+  editions     Edition[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([searchKey])
+  @@index([searchCount])
+}
+
+model Edition {
+  id        String  @id @default(cuid())
+  bookId    String
+  book      Book    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  isbn      String? @unique
+  publisher String
+  year      Int?
+  pages     Int?
+  cover     String? // qattiq / yumshoq
+  offers    Offer[]
+
+  @@index([bookId])
+}
+
+model Seller {
+  id       String     @id @default(cuid())
+  slug     String     @unique
+  name     String
+  type     SellerType
+  city     String
+  website  String?
+  // qidiruv havolasi shabloni, {q} o'rniga kitob nomi qo'yiladi
+  searchUrlTemplate String?
+  description String?
+  offers   Offer[]
+}
+
+model Offer {
+  id          String      @id @default(cuid())
+  editionId   String
+  edition     Edition     @relation(fields: [editionId], references: [id], onDelete: Cascade)
+  sellerId    String
+  seller      Seller      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  price       Int         // so'mda, butun son
+  inStock     Boolean     @default(true)
+  url         String?
+  source      OfferSource @default(MANUAL)
+  // namunaviy (haqiqiy emas) narx belgisi
+  isSample    Boolean     @default(false)
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([editionId, sellerId])
+  @@index([sellerId])
+}
+
+model PartnerApplication {
+  id          String     @id @default(cuid())
+  orgName     String
+  type        SellerType
+  city        String
+  website     String?
+  contactName String
+  phone       String
+  email       String?
+  message     String?
+  createdAt   DateTime   @default(now())
+}

@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+/* ---------- Mavzu tokenlari ---------- */
+
+:root,
+[data-theme="sodda"] {
+  --bg: #ffffff;
+  --bg-soft: #f6f4ef;
+  --surface: #ffffff;
+  --surface-2: #f6f4ef;
+  --border: #e7e3da;
+  --text: #1c1b19;
+  --muted: #6b6760;
+  --accent: #1f6f5c;
+  --accent-contrast: #ffffff;
+  --accent-soft: #e3f0ec;
+  --price: #1f6f5c;
+  --warn-bg: #fff6e0;
+  --warn-text: #7a5600;
+  --danger: #b4443c;
+  --shadow: 0 1px 2px rgb(28 27 25 / 0.04), 0 8px 24px -12px rgb(28 27 25 / 0.12);
+  --font-heading: var(--font-literata), Georgia, serif;
+  --heading-weight: 600;
+  --radius: 14px;
+  color-scheme: light;
+}
+
+[data-theme="koinot"] {
+  --bg: #060816;
+  --bg-soft: #0b0f26;
+  --surface: rgb(18 22 52 / 0.72);
+  --surface-2: rgb(255 255 255 / 0.06);
+  --border: rgb(160 170 255 / 0.16);
+  --text: #eef0ff;
+  --muted: #a7add3;
+  --accent: #ffcf5a;
+  --accent-contrast: #1a1405;
+  --accent-soft: rgb(255 207 90 / 0.14);
+  --price: #ffd977;
+  --warn-bg: rgb(255 207 90 / 0.12);
+  --warn-text: #ffe2a0;
+  --danger: #ff8a80;
+  --shadow: 0 10px 40px -16px rgb(0 0 0 / 0.8);
+  --font-heading: var(--font-unbounded), var(--font-manrope), system-ui, sans-serif;
+  --heading-weight: 600;
+  --radius: 18px;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: var(--accent-soft);
+  --color-price: var(--price);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-text: var(--warn-text);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-manrope), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-heading);
+  --radius-card: var(--radius);
+  --shadow-card: var(--shadow);
+}
+
+@layer base {
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, .font-heading {
+  font-family: var(--font-heading);
+  font-weight: var(--heading-weight);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+[data-theme="koinot"] h1,
+[data-theme="koinot"] h2 {
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+[data-theme="koinot"] .card {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Koinot: yulduzli fon ---------- */
+
+.space-bg {
+  display: none;
+}
+
+[data-theme="koinot"] .space-bg {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgb(120 90 255 / 0.22), transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, rgb(0 170 255 / 0.12), transparent 60%),
+    radial-gradient(800px 600px at 50% 120%, rgb(255 120 180 / 0.10), transparent 60%),
+    var(--bg);
+}
+
+.stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  background: transparent;
+  will-change: transform;
+}
+
+.stars-1 { animation: drift 160s linear infinite; }
+.stars-2 { width: 2px; height: 2px; animation: drift 240s linear infinite; }
+.stars-3 { width: 2px; height: 2px; animation: drift 120s linear infinite, twinkle 4s ease-in-out infinite; }
+
+@keyframes drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-1200px); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* Suzib yuruvchi muqovalar (faqat Koinot) */
+[data-theme="sodda"] .float-covers {
+  display: none !important;
+}
+
+.floating {
+  animation: float 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, -6deg)); }
+  50% { transform: translateY(-14px) rotate(calc(var(--r, -6deg) + 3deg)); }
+}
+
+/* Sodda: muqovalar tekis ro'yxat bo'lib ko'rinadi */
+.sodda-only { display: none; }
+[data-theme="sodda"] .sodda-only { display: block; }
+[data-theme="sodda"] .koinot-only { display: none; }
+
+[data-theme="koinot"] .koinot-float {
+  --r: -2deg;
+  animation: float 10s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stars, .floating, .koinot-float {
+    animation: none !important;
+  }
+}
+
+/* ---------- Muqova ---------- */
+
+.cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px 10px 10px 6px;
+  overflow: hidden;
+  color: #fff;
+  box-shadow:
+    inset 4px 0 0 rgb(255 255 255 / 0.12),
+    inset 7px 0 8px -4px rgb(0 0 0 / 0.35),
+    0 10px 24px -10px rgb(0 0 0 / 0.45);
+}
+
+[data-theme="koinot"] .cover {
+  box-shadow:
+    inset 4px 0 0 rgb(255 255 255 / 0.12),
+    inset 7px 0 8px -4px rgb(0 0 0 / 0.35),
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 18px 40px -12px rgb(110 90 255 / 0.45);
+}
