@@ -169,7 +169,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
         <h2 id="offers-h" className="text-xl sm:text-2xl">
           {book.title} narxlari
         </h2>
-        {stats?.hasSample && <SampleNotice className="mt-4" />}
+        {stats?.hasSample && <SampleNotice all={allOffers.every((o) => o.isSample)} className="mt-4" />}
 
         <div className="mt-5 flex flex-col gap-3">
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="group" aria-label="Sotuvchi turi">
@@ -286,6 +286,9 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
             <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
               {SELLER_TYPE_LABEL[o.seller.type]}
             </span>
+            {o.source === "PARTNER" && !o.isSample && (
+              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">Hamkor</span>
+            )}
             {isCheapest && o.inStock && (
               <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">Eng arzon</span>
             )}
@@ -297,7 +300,7 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
             {o.edition.cover ? `, ${o.edition.cover} muqova` : ""}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {o.seller.city} · yangilangan {formatRelative(o.updatedAt)} · manba: {SOURCE_LABEL[o.source]}
+            {o.seller.city} · tekshirilgan {formatRelative(o.checkedAt ?? o.updatedAt)} · manba: {SOURCE_LABEL[o.source]}
             {o.isSample ? " · namunaviy narx" : ""}
           </p>
         </div>
@@ -310,6 +313,7 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
           <p className={`text-xs font-medium ${o.inStock ? "text-accent" : "text-danger"}`}>
             {o.inStock ? "Mavjud" : "Hozir mavjud emas"}
           </p>
+          <PriceChange offer={o} />
         </div>
         {o.url ? (
           <a
@@ -328,6 +332,24 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
         )}
       </div>
     </li>
+  );
+}
+
+/** Oxirgi narx o'zgarishi: "oldin 49 000 so'm" (↓/↑ foiz bilan). */
+function PriceChange({ offer: o }: { offer: OfferRow }) {
+  if (o.isSample || o.history.length < 2) return null;
+  const prev = o.history[1].price;
+  if (prev === o.price) return null;
+  const pct = Math.round(((o.price - prev) / prev) * 100);
+  const down = o.price < prev;
+  return (
+    <p className="tabular text-xs text-muted" title={`O'zgargan: ${formatDate(o.history[0].recordedAt)}`}>
+      oldin {formatPrice(prev)}{" "}
+      <span className={down ? "font-semibold text-accent" : "font-semibold text-danger"}>
+        {down ? "↓" : "↑"}
+        {Math.abs(pct) || "<1"}%
+      </span>
+    </p>
   );
 }
 

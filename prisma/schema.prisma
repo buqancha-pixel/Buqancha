@@ -13,6 +13,25 @@ enum SellerType {
   MARKETPLACE // marketpleys
 }
 
+enum CollectorKind {
+  NONE         // yig'ilmaydi (qo'lda)
+  FEED         // hamkor feed'i (CSV/JSON)
+  PRODUCT_PAGE // mahsulot sahifasidan (JSON-LD)
+}
+
+enum RunStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum UnmatchedStatus {
+  PENDING
+  MATCHED
+  IGNORED
+}
+
 enum OfferSource {
   PARTNER // hamkor
   AUTO    // avtomatik
@@ -78,7 +97,13 @@ model Seller {
   // qidiruv havolasi shabloni, {q} o'rniga kitob nomi qo'yiladi
   searchUrlTemplate String?
   description String?
+  // narx yig'ish sozlamalari
+  collector    CollectorKind @default(NONE)
+  feedUrl      String?
+  crawlDelayMs Int           @default(3000)
   offers   Offer[]
+  runs     CollectorRun[]
+  unmatched UnmatchedItem[]
 }
 
 model Offer {
@@ -93,7 +118,13 @@ model Offer {
   source      OfferSource @default(MANUAL)
   // namunaviy (haqiqiy emas) narx belgisi
   isSample    Boolean     @default(false)
+  // oxirgi marta manbada ko'rilgan / tekshirilgan vaqt
+  lastSeenAt  DateTime?
+  checkedAt   DateTime?
+  // shubhali narx: qo'llanmagan, ko'rib chiqish kerak
+  pendingPrice Int?
   updatedAt   DateTime    @updatedAt
+  history     PriceSnapshot[]
 
   @@unique([editionId, sellerId])
   @@index([sellerId])
@@ -110,4 +141,50 @@ model PartnerApplication {
   email       String?
   message     String?
   createdAt   DateTime   @default(now())
+}
+
+model PriceSnapshot {
+  id         String   @id @default(cuid())
+  offerId    String
+  offer      Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  price      Int
+  inStock    Boolean
+  recordedAt DateTime @default(now())
+
+  @@index([offerId, recordedAt])
+}
+
+model CollectorRun {
+  id         String    @id @default(cuid())
+  sellerId   String
+  seller     Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  kind       CollectorKind
+  status     RunStatus @default(RUNNING)
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  // { seen, updated, unchanged, created, unmatched, flagged, failed, markedOut }
+  stats      Json?
+  error      String?
+
+  @@index([sellerId, startedAt])
+}
+
+model UnmatchedItem {
+  id        String          @id @default(cuid())
+  sellerId  String
+  seller    Seller          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  // sotuvchi tomonidagi kalit: havola yoki ISBN
+  key       String
+  title     String
+  author    String?
+  isbn      String?
+  price     Int
+  inStock   Boolean
+  url       String?
+  status    UnmatchedStatus @default(PENDING)
+  firstSeen DateTime        @default(now())
+  lastSeen  DateTime        @updatedAt
+
+  @@unique([sellerId, key])
+  @@index([status])
 }

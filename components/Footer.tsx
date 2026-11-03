@@ -10,8 +10,8 @@ export function Footer() {
             O'zbekistondagi kitob do'konlari, nashriyotlar va marketpleyslarda bir kitobning narxini solishtiring.
           </p>
           <p className="mt-3 max-w-sm text-xs">
-            Hozircha ko'rsatilgan narxlar namunaviy — ular sotuvchilarning haqiqiy narxlari emas. Sotib olishdan oldin
-            narxni sotuvchi saytida tekshiring.
+            Narxlar hamkor feed'lari va sotuvchi sahifalaridan yig'iladi; namunaviy narxlar alohida belgilangan. Sotib
+            olishdan oldin narxni sotuvchi saytida tekshiring.
           </p>
         </div>
         <nav className="flex flex-col gap-2" aria-label="Sayt bo'limlari">

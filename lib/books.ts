@@ -65,7 +65,14 @@ export const getBookBySlug = cache(async (slug: string) => {
       author: true,
       editions: {
         orderBy: { year: "desc" },
-        include: { offers: { include: { seller: true } } },
+        include: {
+          offers: {
+            include: {
+              seller: true,
+              history: { orderBy: { recordedAt: "desc" }, take: 2, select: { price: true, recordedAt: true } },
+            },
+          },
+        },
       },
     },
   });
@@ -113,7 +120,7 @@ export function offerStats(offers: OfferRow[]) {
     count: offers.length,
     inStockCount: inStock.length,
     hasSample: offers.some((o) => o.isSample),
-    lastUpdated: new Date(Math.max(...offers.map((o) => o.updatedAt.getTime()))),
+    lastUpdated: new Date(Math.max(...offers.map((o) => (o.checkedAt ?? o.updatedAt).getTime()))),
   };
 }
 
@@ -127,6 +134,9 @@ export const getAuthorBySlug = cache(async (slug: string) => {
 export async function getSellers() {
   return prisma.seller.findMany({
     orderBy: [{ type: "asc" }, { name: "asc" }],
-    include: { _count: { select: { offers: true } } },
+    include: {
+      _count: { select: { offers: true } },
+      runs: { orderBy: { startedAt: "desc" }, take: 1, select: { startedAt: true, status: true } },
+    },
   });
 }

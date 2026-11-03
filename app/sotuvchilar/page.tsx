@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { SellerType } from "@prisma/client";
 import { getSellers } from "@/lib/books";
-import { SELLER_TYPE_LABEL, SELLER_TYPE_PLURAL } from "@/lib/format";
+import { SELLER_TYPE_LABEL, SELLER_TYPE_PLURAL, formatRelative } from "@/lib/format";
+
+const COLLECTOR_LABEL = {
+  FEED: "Narxlar hamkor feed'idan",
+  PRODUCT_PAGE: "Narxlar sayt sahifalaridan avtomatik",
+  NONE: "Narxlar qo'lda kiritiladi",
+} as const;
 
 export const metadata: Metadata = {
   title: "Sotuvchilar — kitob do'konlari, nashriyotlar va marketpleyslar",
@@ -45,6 +51,10 @@ export default async function SellersPage() {
                   </div>
                   <p className="mt-1 text-sm text-muted">{s.city}</p>
                   {s.description && <p className="mt-3 text-sm">{s.description}</p>}
+                  <p className="mt-3 text-xs text-muted">
+                    {COLLECTOR_LABEL[s.collector]}
+                    {s.runs[0] && ` · oxirgi yangilanish ${formatRelative(s.runs[0].startedAt)}`}
+                  </p>
                   <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-sm">
                     <span className="tabular text-muted">{s._count.offers} ta taklif</span>
                     {s.website && (

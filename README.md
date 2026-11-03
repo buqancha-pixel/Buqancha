@@ -22,6 +22,8 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL ulanishi |
 | `NEXT_PUBLIC_SITE_URL` | Canonical, sitemap va JSON-LD uchun domen (sukut: `https://buqancha.uz`) |
+| `CRON_SECRET` | `/api/cron/collect` uchun maxfiy kalit |
+| `COLLECTOR_USER_AGENT` | Ixtiyoriy: bot User-Agent'i (sukut: `BuqanchaBot/1.0 (+SITE_URL/bot)`) |
 | `ALLOW_INDEXING` | `true` bo'lsa Google indekslaydi. Sukut bo'yicha o'chiq: robots.txt `Disallow: /`, sahifalarda `noindex` |
 
 > **Muhim:** seed'dagi sotuvchilar real (Asaxiy, Uzum Market, Topar, Akademnashr, G'afur G'ulom nomidagi NMIU),
@@ -54,8 +56,45 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 serverda o'qiladi, shuning uchun sahifa ochilganda miltillamaydi. Animatsiyalar faqat `transform`/`opacity` bilan
 ishlaydi va `prefers-reduced-motion` hurmat qilinadi.
 
-## Keyingi bosqich
+## Narx yig'ish (2-bosqich)
 
-- Narxlarni avtomatik yig'ish (scraping/API), `source = AUTO`
-- Admin panel: arizalar, sotuvchilar, takliflar
+Har bir sotuvchida `collector` maydoni bor:
+
+| `collector` | Qanday ishlaydi | Manba belgisi |
+| --- | --- | --- |
+| `NONE` | narxlar qo'lda kiritiladi | `MANUAL` |
+| `FEED` | hamkorning CSV/JSON feed'i (`feedUrl` yoki fayl) — butun katalog | `PARTNER` |
+| `PRODUCT_PAGE` | kuzatuvdagi mahsulot sahifalaridan schema.org JSON-LD (`Product` + `Offer`) | `AUTO` |
+
+Buyruqlar:
+
+```bash
+npm run import-feed -- topar docs/feed-namuna.csv   # hamkor feed'ini import qilish
+npm run track-url -- asaxiy https://asaxiy.uz/...   # mahsulot sahifasini kuzatuvga qo'shish
+npm run collect                                      # barcha yoqilgan sotuvchilar (yoki: npm run collect -- asaxiy)
+npm run review                                       # moslanmaganlar va shubhali narxlar navbati
+```
+
+Rejalashtirilgan ishga tushirish: `GET /api/cron/collect` + `Authorization: Bearer $CRON_SECRET`.
+
+Qoidalar:
+
+- **Moslashtirish:** avval ISBN, keyin normallashtirilgan nom + muallif; kitobning bir nechta nashri bo'lsa — nashriyot
+  bo'yicha. Aniq bo'lmasa, mahsulot `UnmatchedItem` navbatiga tushadi (`npm run review -- link <id> <kitob-slug>`).
+- **Xavfsizlik:** 1 000 – 10 000 000 so'mdan tashqari narx rad etiladi; 70% dan ortiq keskin o'zgarish qo'llanmaydi,
+  `pendingPrice` ga yoziladi (`npm run review -- accept|reject <offerId>`).
+- **Feed (butun katalog):** feed'da yo'q takliflar "mavjud emas" bo'ladi, lekin yarmidan ko'pi yo'qolsa — feed buzuq
+  deb hisoblanib, hech narsa belgilanmaydi. Sotuvchining namunaviy narxlari birinchi haqiqiy feed'da o'chiriladi.
+- **Narx tarixi:** narx yoki mavjudlik o'zgarganda `PriceSnapshot` yoziladi; kitob sahifasida "oldin … ↑/↓%" ko'rinadi.
+- **Bot odobi** (`BuqanchaBot`, `/bot` sahifasi): robots.txt va `Crawl-delay` hurmat qilinadi, robots.txt ochilmasa
+  sayt umuman yuklanmaydi; hostga so'rovlar orasida `Seller.crawlDelayMs` (sukut 3 s) kutiladi; 429/5xx da
+  `Retry-After` bilan qayta uriniladi. Bot saytni aylanib chiqmaydi — faqat kuzatuvdagi sahifalarni tekshiradi.
+
+Testlar: `npm test` (unit) va `npm run test:db` (alohida `buqancha_test` bazasida integratsiya; bazani seed qiladi).
+
+## Keyingi qadamlar
+
+- Real sotuvchilar uchun adapterlar (sayt HTML'ini ko'rib, kerak bo'lsa JSON-LD'dan tashqari parser) —
+  muhit tarmog'ida sotuvchi domenlari ochilgandan keyin
+- Admin panel: arizalar, ko'rib chiqish navbati, sotuvchi sozlamalari
 - ISBN ma'lumotlari va haqiqiy muqova rasmlari

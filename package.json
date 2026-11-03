@@ -7,10 +7,15 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types lib/*.test.ts",
+    "test": "node --test --experimental-strip-types \"lib/**/*.test.ts\"",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "collect": "tsx scripts/collect.ts",
+    "import-feed": "tsx scripts/import-feed.ts",
+    "track-url": "tsx scripts/track-url.ts",
+    "review": "tsx scripts/review.ts",
+    "test:db": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://buqancha:buqancha@localhost:5432/buqancha_test} tsx --test lib/collector/collector.itest.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
