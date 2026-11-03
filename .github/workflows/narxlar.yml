@@ -1,0 +1,55 @@
+# Narxlarni har kuni yangilash (Vercel funksiyasi uchun juda uzoq — shuning uchun GitHub Actions).
+# Kerakli sozlama: repo → Settings → Secrets and variables → Actions →
+#   Secret  DATABASE_URL — Neon bazasining to'g'ridan-to'g'ri (unpooled) manzili
+#   Variable SITE_URL     — sayt manzili (bot o'zini shu manzil bilan tanishtiradi)
+name: Narxlarni yangilash
+
+on:
+  schedule:
+    - cron: "17 21 * * *" # har kuni 02:17 (Toshkent vaqti)
+  workflow_dispatch: {}
+
+concurrency:
+  group: narxlar
+  cancel-in-progress: false
+
+jobs:
+  # baza ulanmagan bo'lsa, jim o'tkazib yuboriladi (xato bilan emas)
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      ok: ${{ steps.c.outputs.ok }}
+    steps:
+      - id: c
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -n "$DATABASE_URL" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::DATABASE_URL secret o'rnatilmagan — narxlar yig'ilmadi"; fi
+
+  collect:
+    needs: check
+    if: needs.check.outputs.ok == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
+      NODE_NO_WARNINGS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      # mavjud narxlarni qayta tekshirish (20 soatdan beri tekshirilmaganlar)
+      - name: Narxlar
+        run: npm run collect -- qamar barakot akademnashr --stale=20
+      # sotuvchilarda paydo bo'lgan yangi kitoblar (ma'lumi o'tkazib yuboriladi)
+      - name: Yangi kitoblar
+        run: |
+          npm run import-catalog -- qamar &
+          npm run import-catalog -- barakot &
+          wait

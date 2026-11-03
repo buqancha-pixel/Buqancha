@@ -21,14 +21,14 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 | O'zgaruvchi | Tavsif |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL ulanishi |
-| `NEXT_PUBLIC_SITE_URL` | Canonical, sitemap va JSON-LD uchun domen (sukut: `https://buqancha.uz`) |
+| `NEXT_PUBLIC_SITE_URL` | Canonical, sitemap va JSON-LD uchun domen (sukut: Vercel'dagi manzil, bo'lmasa `https://buqancha.uz`) |
+| `DATABASE_URL_UNPOOLED` | Ixtiyoriy: migratsiyalar uchun to'g'ridan-to'g'ri ulanish (Neon integratsiyasi o'zi qo'yadi) |
 | `CRON_SECRET` | `/api/cron/collect` uchun maxfiy kalit |
 | `COLLECTOR_USER_AGENT` | Ixtiyoriy: bot User-Agent'i (sukut: `BuqanchaBot/1.0 (+SITE_URL/bot)`) |
 | `ALLOW_INDEXING` | `true` bo'lsa Google indekslaydi. Sukut bo'yicha o'chiq: robots.txt `Disallow: /`, sahifalarda `noindex` |
 
-> **Muhim:** seed'dagi sotuvchilar real (Asaxiy, Uzum Market, Topar, Akademnashr, G'afur G'ulom nomidagi NMIU),
-> lekin **narxlar namunaviy**. Shuning uchun takliflar `isSample` bilan belgilangan va saytda ogohlantirish chiqadi.
-> Haqiqiy narxlar kiritilmaguncha `ALLOW_INDEXING` ni yoqmang.
+> **Muhim:** `npm run db:seed` dagi narxlar **namunaviy** (`isSample`, saytda ogohlantirish chiqadi) — faqat mahalliy
+> ishlab chiqish uchun. Internetdagi sayt haqiqiy narxlar nusxasidan (`prisma/data/catalog.json.gz`) boshlanadi.
 
 ## Tuzilma
 
@@ -122,6 +122,28 @@ Topar Cloudflare bot himoyasidan foydalanadi — chetlab o'tilmaydi, ular bilan 
 > `npm run db:seed` bazani to'liq qayta yaratadi — yig'ilgan narxlar ham o'chadi; keyin `npm run collect` ni qayta ishga tushiring.
 
 Testlar: `npm test` (unit) va `npm run test:db` (alohida `buqancha_test` bazasida integratsiya; bazani seed qiladi).
+
+## Internetga chiqarish (Vercel + Neon)
+
+1. **Vercel:** vercel.com → GitHub bilan kirish → *Add New → Project* → `Buqancha` reposini tanlash → *Deploy*.
+   Birinchi build xato bilan tugaydi (baza hali yo'q) — bu kutilgan holat.
+2. **Neon bazasi:** loyiha → *Storage* → *Create Database* → **Neon** → hudud: Frankfurt (`eu-central-1`) →
+   loyihaga ulash. Integratsiya `DATABASE_URL` va `DATABASE_URL_UNPOOLED` ni o'zi qo'yadi.
+3. *Deployments* → oxirgisi → *Redeploy*. `vercel-build` ([scripts/vercel-build.sh](scripts/vercel-build.sh))
+   migratsiyalarni qo'llaydi, baza bo'sh bo'lsa katalog nusxasini yuklaydi, so'ng saytni yig'adi.
+4. **Narxlarni har kuni yangilash** ([.github/workflows/narxlar.yml](.github/workflows/narxlar.yml)) — GitHub repo →
+   *Settings → Secrets and variables → Actions*: secret `DATABASE_URL` (= Neon'dagi `DATABASE_URL_UNPOOLED`),
+   variable `SITE_URL` (sayt manzili). Qo'lda ishga tushirish: *Actions → Narxlarni yangilash → Run workflow*.
+5. **Google:** sayt tayyor bo'lgach Vercel'da `ALLOW_INDEXING=true` qo'yib, qayta deploy qiling; Google Search
+   Console'ga saytni qo'shib, `sitemap.xml` ni yuboring. O'z domeni (masalan `buqancha.uz`) ulangach
+   `NEXT_PUBLIC_SITE_URL` ni ham o'rnating.
+
+Katalog nusxasini yangilash (mahalliy bazadan): `npm run snapshot -- export`. Nusxa faqat **bo'sh** bazaga yuklanadi —
+ishlayotgan bazadagi ma'lumot ustidan yozilmaydi.
+
+> Hamkorlik arizalarida shaxsiy ma'lumot (ism, telefon) bor. O'zbekiston qonunchiligiga ko'ra fuqarolarning shaxsiy
+> ma'lumotlari mamlakat ichidagi serverlarda saqlanishi talab qilinadi — Neon (Yevropa) bunga mos emas. Sayt rasman
+> ishga tushishidan oldin arizalarni mahalliy serverga ko'chirish yoki formani vaqtincha o'chirish kerak.
 
 ## Keyingi qadamlar
 

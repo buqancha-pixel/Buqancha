@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "vercel-build": "bash scripts/vercel-build.sh",
     "start": "next start",
     "lint": "tsc --noEmit",
     "test": "node --test --experimental-strip-types \"lib/**/*.test.ts\"",
@@ -20,7 +21,8 @@
     "import-catalog": "tsx scripts/import-catalog.ts",
     "merge-duplicates": "tsx scripts/merge-duplicates.ts",
     "images": "tsx scripts/images.ts",
-    "remove-religious": "tsx scripts/remove-religious.ts"
+    "remove-religious": "tsx scripts/remove-religious.ts",
+    "snapshot": "tsx scripts/snapshot.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
