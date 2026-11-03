@@ -36,7 +36,11 @@ export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {
     const [offers, unmatched] = await Promise.all([
       prisma.offer.findMany({ where: { sellerId: seller.id, url: { not: null } }, select: { url: true } }),
       prisma.unmatchedItem.findMany({
-        where: { sellerId: seller.id, ...(opts.retryPending ? { status: { not: "PENDING" } } : {}) },
+        // qayta ko'rishda: faqat ISBN va muallifi bor PENDING'lar (qolganlaridan baribir kitob yaratilmaydi)
+        where: {
+          sellerId: seller.id,
+          ...(opts.retryPending ? { NOT: { status: "PENDING", isbn: { not: null }, author: { not: null } } } : {}),
+        },
         select: { key: true },
       }),
     ]);
