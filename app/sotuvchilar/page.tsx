@@ -89,7 +89,9 @@ function SellerCard({ s }: { s: SellerRow }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <SellerLogo name={s.name} src={sellerPhotoSrc(s)} size={44} />
-          <h3 className="min-w-0 text-lg font-semibold">{s.name}</h3>
+          <h3 className="min-w-0 text-lg font-semibold">
+            <Link href={`/sotuvchilar/${s.slug}`} className="hover:underline">{s.name}</Link>
+          </h3>
         </div>
         <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
           {SELLER_TYPE_LABEL[s.type]}
@@ -107,7 +109,16 @@ function SellerCard({ s }: { s: SellerRow }) {
         </p>
       )}
       <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-sm">
-        <span className="tabular text-muted">{s._count.offers ? `${s._count.offers} ta taklif` : "Narx yo'q"}</span>
+        {s._count.offers ? (
+          <span className="tabular text-muted">{s._count.offers} ta narx</span>
+        ) : null}
+        {s._count.offers ? (
+          <Link href={`/sotuvchilar/${s.slug}`} className="rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-accent-contrast">
+            Kitoblarini ko&apos;rish →
+          </Link>
+        ) : (
+          <span className="tabular text-muted">Narx yo&apos;q</span>
+        )}
         {!contacts.length && link && (
           <a href={link} target="_blank" rel="nofollow noopener noreferrer" className="truncate font-semibold text-accent hover:underline">
             {link.replace(/^https?:\/\//, "")} ↗

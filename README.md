@@ -192,6 +192,11 @@ bekor qiladi. `Seller.partnerUntil` — birinchi marta 30 kun bepul, keyin admin
 muddat tugasa narxlar qoladi, tahrirlash va "Hamkor" belgisi yopiladi. Hamkor narxini kechki avtomatik yig'ish
 almashtirmaydi. Sessiya imzosi: `PARTNER_SECRET` (bo'lmasa `ADMIN_PASSWORD`).
 
+**Sotuvchi sahifasi** (`/sotuvchilar/<slug>`): sotuvchi ma'lumoti va aloqalari, uning kitoblari shu do'kondagi narx bilan
+("yana N ta do'konda X so'mdan", eng arzon bo'lsa — "Eng arzon shu yerda"), do'kon ichida qidiruv va tartib
+(`lib/sellers.ts`). Kitobni bosish — barcha do'konlar bilan solishtirish sahifasi. Sotuvchilar ro'yxati, kitob
+sahifasidagi sotuvchi nomi va bosh sahifadagi sotuvchilar shu sahifaga olib boradi; sitemap'da bor.
+
 **Sotuvchilar boshqaruvi** (admin → Sotuvchilar): "+ Yangi sotuvchi qo'shish"; turlar — do'kon, onlayn do'kon
 (`ONLINE`, faqat internetda sotadiganlar; saytda "Onlayn do'konlar" bo'limi va kitob sahifasida filtr), nashriyot,
 marketpleys. Ro'yxatda tur va "Faqat narxi yo'qlar" filtri, belgilab birdaniga o'chirish; sotuvchi sahifasida ham

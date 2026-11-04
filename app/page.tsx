@@ -178,10 +178,12 @@ export default async function HomePage() {
         </div>
         <ul className="mt-5 flex flex-wrap gap-2">
           {sellers.map((s) => (
-            <li key={s.id} className={`flex items-center gap-2 rounded-full border border-border bg-surface-2 py-2 pr-4 text-sm ${s.photoAt ? "pl-2" : "pl-4"}`}>
+            <li key={s.id}>
+              <Link href={`/sotuvchilar/${s.slug}`} className={`flex items-center gap-2 rounded-full border border-border bg-surface-2 py-2 pr-4 text-sm hover:border-accent ${s.photoAt ? "pl-2" : "pl-4"}`}>
               {s.photoAt && <SellerLogo name={s.name} src={sellerPhotoSrc(s)} size={22} />}
               <span className="font-semibold">{s.name}</span>
               <span className="text-muted"> · {SELLER_TYPE_LABEL[s.type]}</span>
+              </Link>
             </li>
           ))}
         </ul>

@@ -384,7 +384,7 @@ function OfferCard({ offer: o, rank, isCheapest, bookTitle }: { offer: OfferRow;
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {o.seller.photoAt && <SellerLogo name={o.seller.name} src={sellerPhotoSrc(o.seller)} size={28} />}
-            <span className="text-base font-semibold">{o.seller.name}</span>
+            <Link href={`/sotuvchilar/${o.seller.slug}`} className="text-base font-semibold hover:underline">{o.seller.name}</Link>
             <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
               {SELLER_TYPE_LABEL[o.seller.type]}
             </span>

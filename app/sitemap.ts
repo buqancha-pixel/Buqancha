@@ -1,6 +1,7 @@
 import { LANGUAGES } from "@/lib/categories";
 import { getCategoryCounts } from "@/lib/catalog";
 import { getPromoters } from "@/lib/promoters";
+import { getSellers } from "@/lib/books";
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { cached } from "@/lib/cache";
@@ -20,10 +21,11 @@ const sitemapAuthors = cached(() => prisma.author.findMany({ select: { slug: tru
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [books, authors] = await Promise.all([sitemapBooks(), sitemapAuthors()]);
   const now = new Date();
-  const [counts, promoters] = await Promise.all([getCategoryCounts(), getPromoters()]);
+  const [counts, promoters, sellers] = await Promise.all([getCategoryCounts(), getPromoters(), getSellers()]);
   return [
     { url: absoluteUrl("/"), lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/sotuvchilar"), changeFrequency: "weekly", priority: 0.5 },
+    ...sellers.filter((s) => s._count.offers > 0).map((s) => ({ url: absoluteUrl(`/sotuvchilar/${s.slug}`), changeFrequency: "daily" as const, priority: 0.6 })),
     { url: absoluteUrl("/manzillar"), changeFrequency: "weekly", priority: 0.5 },
     { url: absoluteUrl("/targibotchilar"), changeFrequency: "weekly", priority: 0.5 },
     ...promoters.map((p) => ({ url: absoluteUrl(`/targibotchilar/${p.slug}`), changeFrequency: "weekly" as const, priority: 0.4 })),
