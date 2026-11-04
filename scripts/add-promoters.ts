@@ -1,7 +1,8 @@
 /**
  * Targ'ibotchilarni Instagram username'lari bo'yicha qo'shish (mavjudlari o'tkazib yuboriladi).
  *   npm run add-promoters -- janob_kutubxonaci gafurov.0ff +shakhreads
- * "+" bilan boshlangani — rozilik olingan (darhol saytda ko'rinadi); qolganlari rozilik belgisisiz qo'shiladi.
+ * "+" bilan boshlangani — rozilik olingan (darhol saytda ko'rinadi; mavjud bo'lsa rozilik belgisi qo'yiladi);
+ * qolganlari rozilik belgisisiz qo'shiladi.
  * Ism sifatida username yoziladi — haqiqiy ism, tavsif va obunachilar admin panelda to'ldiriladi.
  */
 import { prisma } from "../lib/db";
@@ -25,7 +26,10 @@ async function main() {
     }
     const exists = await prisma.promoter.findFirst({ where: { instagram: { equals: handle, mode: "insensitive" } } });
     if (exists) {
-      console.log(`  = @${handle}: allaqachon bor`);
+      if (consent && !exists.consent) {
+        await prisma.promoter.update({ where: { id: exists.id }, data: { consent: true } });
+        console.log(`  ✓ @${handle}: rozilik belgilandi — endi saytda`);
+      } else console.log(`  = @${handle}: allaqachon bor${exists.consent ? " (saytda)" : ""}`);
       continue;
     }
     const base = slugify(handle.replace(/[._]+/g, " ")) || "bloger";
