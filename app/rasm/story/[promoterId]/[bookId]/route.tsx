@@ -49,7 +49,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ promoter
   const [medium, bold, cover, avatar] = await Promise.all([
     readFile(join(process.cwd(), "assets/fonts/Manrope-500.ttf")),
     readFile(join(process.cwd(), "assets/fonts/Manrope-800.ttf")),
-    asPng(bookImage(book)?.url ?? null, 600, 900),
+    asPng(bookImage(book)?.url ?? null, 520, 780),
     asPng(p.photo?.data ?? null, 160, 160),
   ]);
   const range = priceRange(book);
@@ -60,20 +60,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ promoter
     (
       <div
         style={{
-          width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: "110px 80px 90px",
+          width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: "100px 70px 80px",
           background: `linear-gradient(160deg, ${color} 0%, #0b1026 55%, #05070f 100%)`, color: "white", fontFamily: "Manrope",
         }}
       >
         <div style={{ display: "flex", fontSize: 34, fontWeight: 800, letterSpacing: 6, opacity: 0.85 }}>TAVSIYA QILAMAN</div>
-        <div style={{ display: "flex", marginTop: 60, width: 600, height: 900, borderRadius: 28, overflow: "hidden", boxShadow: "0 40px 120px rgba(0,0,0,.55)", background: "#20263f" }}>
+        <div style={{ display: "flex", marginTop: 50, width: 520, height: 780, borderRadius: 28, overflow: "hidden", boxShadow: "0 40px 120px rgba(0,0,0,.55)", background: "#20263f" }}>
           {cover ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={cover} width={600} height={900} alt="" style={{ objectFit: "cover" }} />
+            <img src={cover} width={520} height={780} alt="" style={{ objectFit: "cover" }} />
           ) : (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: 50, fontSize: 56, fontWeight: 800, textAlign: "center" }}>{book.title}</div>
           )}
         </div>
-        <div style={{ display: "flex", marginTop: 56, fontSize: 64, fontWeight: 800, textAlign: "center", lineHeight: 1.1, maxWidth: 920 }}>{clip(book.title, 60)}</div>
+        <div style={{ display: "flex", marginTop: 48, fontSize: 60, fontWeight: 800, textAlign: "center", lineHeight: 1.1, maxWidth: 920 }}>{clip(book.title, 48)}</div>
         <div style={{ display: "flex", marginTop: 14, fontSize: 38, opacity: 0.75 }}>{clip(book.author.name, 50)}</div>
         {range && (
           <div style={{ display: "flex", marginTop: 36, padding: "16px 40px", borderRadius: 999, background: "#ffd166", color: "#1a1300", fontSize: 44, fontWeight: 800 }}>
@@ -81,11 +81,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ promoter
           </div>
         )}
         {rec.note && (
-          <div style={{ display: "flex", marginTop: 44, fontSize: 36, lineHeight: 1.35, textAlign: "center", opacity: 0.92, maxWidth: 900 }}>
-            “{clip(rec.note.replace(/\s+/g, " "), 170)}”
+          <div style={{ display: "flex", marginTop: 36, fontSize: 34, lineHeight: 1.35, textAlign: "center", opacity: 0.92, maxWidth: 900 }}>
+            “{clip(rec.note.replace(/\s+/g, " "), 120)}”
           </div>
         )}
-        <div style={{ display: "flex", flexGrow: 1 }} />
+        <div style={{ display: "flex", flexGrow: 1, minHeight: 36 }} />
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -98,7 +98,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ promoter
             <div style={{ display: "flex", fontSize: 30, opacity: 0.75 }}>Narxlarni solishtiring:</div>
           </div>
         </div>
-        <div style={{ display: "flex", marginTop: 26, padding: "18px 36px", borderRadius: 24, background: "rgba(255,255,255,.12)", fontSize: 36, fontWeight: 800 }}>
+        <div style={{ display: "flex", marginTop: 24, padding: "16px 32px", borderRadius: 24, background: "rgba(255,255,255,.12)", fontSize: host.length + p.slug.length > 34 ? 28 : 34, fontWeight: 800, whiteSpace: "nowrap" }}>
           {host}/targibotchilar/{p.slug}
         </div>
       </div>
