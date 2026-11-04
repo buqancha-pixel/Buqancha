@@ -26,6 +26,10 @@ export type SellerSeed = {
   website: string | null;
   searchUrlTemplate?: string | null;
   social?: string | null;
+  /** buyurtma uchun aloqa (sotuvchi ochiq e'lon qilgan): +998XXXXXXXXX, Telegram/Instagram username */
+  phone?: string | null;
+  telegram?: string | null;
+  instagram?: string | null;
   address?: string | null;
   description: string;
   sources: string[];
@@ -155,7 +159,7 @@ export const SELLERS: SellerSeed[] = [
     name: "BOOK.UZ",
     type: "STORE",
     city: "Toshkent",
-    website: null,
+    website: "https://book.uz",
     address: "Chilonzor tumani, Chilonzor-8, Qatortol ko'chasi, 60",
     description: "Kitob do'koni; Uzum Market'da ham do'koni bor.",
     sources: ["https://www.goldenpages.uz/en/rubrics/?Id=3583", "https://uzum.uz/uz/shop/bookuz", "https://www.goldenpages.uz/uz/company/?Id=110750"],
@@ -663,8 +667,22 @@ export const SELLERS: SellerSeed[] = [
     type: "PUBLISHER",
     city: "Toshkent",
     website: null,
+    // kanalidagi "Xarid uchun" aloqasi (t.me/ZabarjadMedia)
+    telegram: "Sotuv_Zabarjad",
+    phone: "+998904400560",
+    instagram: "zabarjadmed",
     description: "Tarjima adabiyoti nashriyoti; Yoshlar ishlari agentligining hamkori sifatida tilga olingan.",
-    sources: ["https://api-portal.gov.uz/uploads/64/2026/02/11/5f6edd95-dba0-d63c-89f4-8945ccf56b80_media_.pdf"],
+    sources: ["https://api-portal.gov.uz/uploads/64/2026/02/11/5f6edd95-dba0-d63c-89f4-8945ccf56b80_media_.pdf", "https://t.me/ZabarjadMedia"],
+  },
+  {
+    slug: "ibook",
+    name: "iBook.uz",
+    type: "ONLINE",
+    city: "Toshkent",
+    website: null,
+    telegram: "iBook_Uzbekistan",
+    description: "Onlayn kitob do'koni: buyurtma Telegram orqali, Uzum Market'da ham do'koni bor. Narxlar t.me/iBook_uz kanalidan.",
+    sources: ["https://t.me/iBook_uz"],
   },
   {
     slug: "tamaddun",

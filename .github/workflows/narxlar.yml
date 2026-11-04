@@ -50,7 +50,7 @@ jobs:
       # sotuvchilarning ochiq Telegram kanallaridagi narxlar (sayti bot himoyasida bo'lganlar)
       - name: Telegram kanallar
         continue-on-error: true
-        run: npm run collect-telegram -- asaxiy asaxiybooks
+        run: npm run collect-telegram
       # sotuvchilarda paydo bo'lgan yangi kitoblar (ma'lumi o'tkazib yuboriladi)
       - name: Yangi kitoblar
         run: |

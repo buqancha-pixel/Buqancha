@@ -122,7 +122,11 @@ Hozir avtomatik yig'iladigan sotuvchilar: **Qamar**, **Barakot** (sitemap + JSON
 **Telegram kanallar:** sayti bot himoyasida bo'lgan sotuvchining ochiq kanali (`t.me/s/<kanal>`) — sotuvchi o'zi e'lon
 qilgan narxlar: TOP ro'yxat qatorlari (havola + narx) va «"Nom" kitobi … Narxi: N so'm» postlari, oxirgi 30 kun
 (`lib/collector/parsers/telegram.ts`). Kitob yaratilmaydi, moslanmagani "Ko'rib chiqish"ga. Kechki yig'ishda
-`npm run collect-telegram -- asaxiy asaxiybooks`; qo'lda — Texnik xizmat → `telegram-narxlar` (sotuvchi, kanal).
+`npm run collect-telegram` — `scripts/collect-telegram.ts` dagi `TELEGRAM_SOURCES` (asaxiy/asaxiybooks,
+book-uz/bookuzbekistan, zabarjad-media/ZabarjadMedia, ibook/iBook_uz); qo'lda — Texnik xizmat → `telegram-narxlar`
+(bo'sh — hammasi, yoki sotuvchi + kanal). Formatlar: havola + narx qatori, «1. "Nom" — 56.000 soʻm», «1. Nom - 82.000 soʻm»,
+«"Nom" kitobi … Narxi: N», «Kitob nomi: X … Narxi: N»; bitta postdagi har bir kitob alohida havola (`…/post#nom`)
+oladi; diniy adabiyot o'tkaziladi.
 
 Topar Cloudflare bot himoyasidan foydalanadi — chetlab o'tilmaydi, ular bilan feed orqali ishlash kerak.
 

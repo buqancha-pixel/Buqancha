@@ -93,7 +93,7 @@ jobs:
             moslanmaganlarni-qayta-urinish)   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" --retry-pending ;;
             rasmlar-statistikasi)             npm run --silent images -- stats ;;
             sotuvchilar-sinxron)              npm run --silent db:sellers ;;
-            telegram-narxlar)                 npm run --silent collect-telegram -- "${SOTUVCHI:-asaxiy}" "${PARAMETR:-asaxiybooks}" ;;
+            telegram-narxlar)                 if [ -n "$SOTUVCHI" ]; then npm run --silent collect-telegram -- "$SOTUVCHI" "$PARAMETR"; else npm run --silent collect-telegram; fi ;;
             kitob-birlashtirish-korish)       merge_args; npm run --silent merge-book -- "${MERGE[@]}" ;;
             kitob-birlashtirish-qollash)      merge_args; npm run --silent merge-book -- "${MERGE[@]}" --apply ;;
             ruscha-belgilash-korish)          npm run --silent fix-russian ;;

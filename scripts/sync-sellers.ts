@@ -35,6 +35,7 @@ async function main() {
     }
     const data = {
       name: s.name, type: s.type, city: s.city, website: s.website, social: s.social ?? null,
+      phone: s.phone ?? null, telegram: s.telegram ?? null, instagram: s.instagram ?? null,
       address: s.address ?? null, description: s.description, sources: s.sources,
       searchUrlTemplate: s.searchUrlTemplate ?? null,
       ...(s.collector ? { collector: s.collector } : {}),
@@ -65,6 +66,9 @@ async function main() {
         ...(s.productUrlPattern ? { productUrlPattern: s.productUrlPattern } : {}),
         ...fillIfEmpty("website", data.website),
         ...fillIfEmpty("social", data.social),
+        ...fillIfEmpty("phone", data.phone),
+        ...fillIfEmpty("telegram", data.telegram),
+        ...fillIfEmpty("instagram", data.instagram),
         ...fillIfEmpty("address", data.address),
         ...fillIfEmpty("description", data.description),
       },

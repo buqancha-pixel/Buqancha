@@ -4,7 +4,7 @@ import type { CollectedItem } from "../types.ts";
  * Sotuvchining ochiq Telegram kanali (t.me/s/<kanal> — Telegram'ning ochiq veb-ko'rinishi) postlaridan narxlar.
  * Sotuvchi o'zi e'lon qilgan narxlar olinadi:
  *   1) ro'yxat qatorlari: «<havola>Kitob nomi</havola> - 30 000 so'm» (TOP-5 kabi postlar);
- *   2) bitta kitob posti: «"Kitob nomi" kitobi ... Narxi: 58 700 so'm».
+ *   2) bitta kitob posti: «"Kitob nomi" kitobi ... Narxi: 58 700 so'm» yoki «Kitob nomi: X … Narxi: N so'm».
  * Eski postlar (maxAgeDays dan oshgan) olinmaydi — aksiya narxlari eskirib qoladi.
  */
 export type TelegramPost = { id: string; date: Date; html: string };
@@ -42,10 +42,28 @@ function price(raw: string): number | null {
 }
 
 const SOM = String.raw`so[‘'ʻ’\`]?m`;
-const LIST_LINE = new RegExp(String.raw`⟦([^|⟧]+)\|([^⟧]+)⟧\s*[-–—:]\s*([\d][\d\s ]{2,10})\s*${SOM}`, "gi");
-const NARX = new RegExp(String.raw`Narx(?:i)?\s*:?\s*([\d][\d\s ]{2,10})(?:\s*${SOM})?`, "gi");
+const LIST_LINE = new RegExp(String.raw`⟦([^|⟧]+)\|([^⟧]+)⟧\s*[-–—:]\s*([\d][\d\s .,]{2,10})\s*${SOM}`, "gi");
+const NARX = new RegExp(String.raw`Narx(?:i)?\s*:?\s*([\d][\d\s .,]{2,10})(?:\s*${SOM})?`, "gi");
 // nom — qo'shtirnoqdagi va ortidan "kitob" so'zi keladigan qism («"Ibratli imlo" kitobi»), oddiy iqtibos emas
+// havolasiz raqamli ro'yxat: «1. "Gannibal" — 56.000 soʻm;»
+const QUOTED_LINE = new RegExp(String.raw`^\s*\d{1,2}[.)]\s*[«"“„]([^«»"“”„\n]{2,100})[»"”]\s*[-–—:]\s*([\d][\d\s\u00a0.,]{2,10})\s*${SOM}`, "gim");
+// tirnoqsiz raqamli ro'yxat: «1. Qulogʻim senda qizim - 82.000 soʻm»
+const PLAIN_LINE = new RegExp(String.raw`^\s*\d{1,2}[.)]\s*([^\n«"“”»]{2,100}?)\s+[-–—]\s+([\d][\d\s\u00a0.,]{2,10})\s*${SOM}`, "gim");
+const NAMED = /(?:Kitob|Asar)\s+nomi\s*:\s*([^\n]{2,140})/i;
 const QUOTED = /[«"“„]([^«»"“”„\n]{2,80})[»"”]\s*(?:nomli\s+)?kitob/i;
+
+/** Sotuvchi saytidagi aniq sahifa havolasi (bosh sahifa yoki boshqa sayt emas). */
+function productUrl(href: string, host?: string): string | undefined {
+  try {
+    const u = new URL(href);
+    if (host && !u.hostname.replace(/^www\./, "").endsWith(host)) return undefined;
+    if (!host && u.hostname === "t.me") return undefined;
+    if (u.pathname.replace(/\/+$/, "").length < 2) return undefined;
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return undefined;
+  }
+}
 
 export function parseTelegramChannel(page: string, opts: { channel: string; sellerHost?: string; now?: Date; maxAgeDays?: number }): CollectedItem[] {
   const now = opts.now ?? new Date();
@@ -66,17 +84,30 @@ export function parseTelegramChannel(page: string, opts: { channel: string; sell
       const p = price(rawPrice);
       const title = rawTitle.replace(/^\s*\d+[.)]?\s*/, "").trim();
       if (!p || title.length < 2) continue;
-      const url = !host || href.includes(host) ? href.split("?")[0] : undefined;
+      const url = productUrl(href, host);
       add({ key: url ?? `tg:${opts.channel}:${title.toLowerCase()}`, title, price: p, inStock: true, url });
+      found++;
+    }
+    const lines = text.replace(/⟦[^|]+\|([^⟧]*)⟧/g, "$1");
+    for (const m of [...lines.matchAll(QUOTED_LINE), ...lines.matchAll(PLAIN_LINE)]) {
+      const p = price(m[2]);
+      const title = m[1].trim();
+      if (!p || title.length < 2) continue;
+      // bitta postda bir nechta kitob: havola har biri uchun alohida (yig'uvchi narxni havola bo'yicha taniydi)
+      const url = `https://t.me/${post.id}#${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-").slice(0, 60))}`;
+      add({ key: url, title, price: p, inStock: true, url });
       found++;
     }
     if (found) continue;
     // bitta kitob posti: aniq bitta narx va qo'shtirnoqdagi nom
     const prices = [...text.matchAll(NARX)].map((m) => price(m[1])).filter((x): x is number => !!x);
-    const title = text.replace(/⟦[^|]+\|([^⟧]*)⟧/g, "$1").match(QUOTED)?.[1]?.trim();
+    const plain = text.replace(/⟦[^|]+\|([^⟧]*)⟧/g, "$1");
+    // "Kitob nomi: X" qatori (nashriyot postlari) yoki «"X" kitobi»
+    const title = (plain.match(NAMED)?.[1] ?? plain.match(QUOTED)?.[1])?.replace(/\s+/g, " ").trim();
     if (prices.length !== 1 || !title) continue;
-    const href = [...text.matchAll(/⟦([^|⟧]+)\|/g)].map((m) => m[1]).find((h) => !host || h.includes(host));
-    const url = href?.split("?")[0] ?? `https://t.me/${post.id}`;
+    // sotuvchi saytidagi kitob sahifasi bo'lsa — o'sha, aks holda postning o'zi (heshteg va kontakt havolalari emas)
+    const href = host ? [...text.matchAll(/⟦(https?:\/\/[^|⟧]+)\|/g)].map((m) => productUrl(m[1], host)).find(Boolean) : undefined;
+    const url = href || `https://t.me/${post.id}`;
     add({ key: url, title, price: prices[0], inStock: true, url });
   }
   return [...items.values()];

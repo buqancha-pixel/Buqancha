@@ -59,7 +59,8 @@ export async function importTelegram(sellerSlug: string, channel: string, opts: 
     const host = seller.website ? new URL(seller.website).hostname.replace(/^www\./, "") : undefined;
     const items = parseTelegramChannel(pages, { channel, sellerHost: host });
     if (!items.length) stats.errors.push("Oxirgi 30 kundagi postlarda narx topilmadi");
-    await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, sellerSlug: seller.slug });
+    // diniy adabiyot avtomatik qo'shilmaydi (sayt egasi qo'lda kiritgan kitoblardan tashqari)
+    await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, sellerSlug: seller.slug, skipReligious: true });
   });
 }
 
