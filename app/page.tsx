@@ -7,7 +7,7 @@ import { bookImage, catalogCounts, getBannerBooks, getMostComparedBooks, getPopu
 import { NewBooksBanner } from "@/components/NewBooksBanner";
 import { formatNumber } from "@/lib/format";
 import { SELLER_TYPE_LABEL } from "@/lib/format";
-import { SITE_NAME, absoluteUrl } from "@/lib/site";
+import { INSTAGRAM_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
 
 export const metadata = {
   title: { absolute: "Buqancha — kitob narxlarini solishtirish: do'kon, nashriyot, marketpleys" },
@@ -35,6 +35,16 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: SITE_NAME,
+          url: absoluteUrl("/"),
+          logo: absoluteUrl("/icon.svg"),
+          sameAs: [INSTAGRAM_URL],
+        }}
+      />
       <JsonLd
         data={{
           "@context": "https://schema.org",

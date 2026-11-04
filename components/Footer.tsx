@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { INSTAGRAM, INSTAGRAM_URL } from "@/lib/site";
+import { InstagramIcon } from "./InstagramIcon";
 
 export function Footer() {
   return (
@@ -10,9 +12,18 @@ export function Footer() {
             O'zbekistondagi kitob do'konlari, nashriyotlar va marketpleyslarda bir kitobning narxini solishtiring.
           </p>
           <p className="mt-3 max-w-sm text-xs">
-            Narxlar hamkor feed'lari va sotuvchi sahifalaridan yig'iladi; namunaviy narxlar alohida belgilangan. Sotib
-            olishdan oldin narxni sotuvchi saytida tekshiring.
+            Narxlar sotuvchilar sahifalaridan va hamkorlardan har kuni yangilanadi. Sotib olishdan oldin narxni
+            sotuvchi saytida tekshiring.
           </p>
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer me"
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-4 py-2 font-semibold text-text transition-colors hover:border-accent"
+          >
+            <InstagramIcon />
+            Instagram: @{INSTAGRAM}
+          </a>
         </div>
         <nav className="flex flex-col gap-2" aria-label="Sayt bo'limlari">
           <Link href="/" className="hover:text-text">Bosh sahifa</Link>

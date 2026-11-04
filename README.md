@@ -141,6 +141,9 @@ Vercel'da `ADMIN_PASSWORD` o'rnatilgach, `/admin` da parol bilan kiriladi (sessi
 Qo'lda qo'shilgan yoki tahrirlangan kitoblar `origin = "manual"` — avtomatik tozalash va diniy filtr ularga tegmaydi.
 O'chirilgan narx havolasi `IGNORED` sifatida eslab qolinadi, shuning uchun katalog importi kitobni qayta yaratmaydi.
 
+Instagram (`INSTAGRAM`, `lib/site.ts`): sarlavhada belgi, sayt pastida tugma, bosh sahifada schema.org
+`Organization.sameAs` (Google sahifani sayt bilan bog'laydi).
+
 Hamkorlik sahifasida forma yo'q (shaxsiy ma'lumot saqlanmaydi) — Telegram havolasi (`PARTNER_TELEGRAM`, `lib/site.ts`).
 
 ## Internetga chiqarish (Vercel + Neon)

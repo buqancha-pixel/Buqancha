@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ThemeToggle, type Theme } from "./ThemeToggle";
 import { SearchForm } from "./SearchForm";
+import { InstagramIcon } from "./InstagramIcon";
+import { INSTAGRAM, INSTAGRAM_URL } from "@/lib/site";
 
 export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?: boolean }) {
   return (
@@ -22,6 +24,9 @@ export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?
           <Link href="/hamkorlik" className="hover:text-text">
             Hamkorlik
           </Link>
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer me" aria-label={`Instagram: @${INSTAGRAM}`} className="hover:text-text">
+            <InstagramIcon />
+          </a>
         </nav>
         <div className="ml-auto sm:ml-0">
           <ThemeToggle initial={theme} />
@@ -39,6 +44,9 @@ export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?
             Qidiruv
           </Link>
         )}
+        <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer me" aria-label={`Instagram: @${INSTAGRAM}`} className="ml-auto hover:text-text">
+          <InstagramIcon />
+        </a>
       </nav>
     </header>
   );

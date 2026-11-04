@@ -17,3 +17,7 @@ export function absoluteUrl(path = "/"): string {
 
 /** Hamkorlik bo'yicha aloqa (saytda shaxsiy ma'lumot saqlanmasligi uchun forma o'rniga). */
 export const PARTNER_TELEGRAM = "Shohruh_Fayzullayev";
+
+/** Buqanchaning Instagram sahifasi (sayt pastida, sarlavhada va Google uchun schema.org sameAs). */
+export const INSTAGRAM = "shakhreads";
+export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM}/`;
