@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { sellerContacts } from "@/lib/contacts";
 import type { SellerType } from "@prisma/client";
 import { getSellers } from "@/lib/books";
 import { SELLER_TYPE_LABEL, SELLER_TYPE_PLURAL, formatRelative } from "@/lib/format";
@@ -80,6 +81,7 @@ export default async function SellersPage() {
 
 function SellerCard({ s }: { s: SellerRow }) {
   const link = s.website ?? (s.social ? `https://${s.social}` : null);
+  const contacts = sellerContacts(s);
   return (
     <li className="card flex flex-col p-5">
       <div className="flex items-start justify-between gap-3">
@@ -101,12 +103,21 @@ function SellerCard({ s }: { s: SellerRow }) {
       )}
       <div className="mt-auto flex items-center justify-between gap-3 pt-4 text-sm">
         <span className="tabular text-muted">{s._count.offers ? `${s._count.offers} ta taklif` : "Narx yo'q"}</span>
-        {link && (
+        {!contacts.length && link && (
           <a href={link} target="_blank" rel="nofollow noopener noreferrer" className="truncate font-semibold text-accent hover:underline">
             {link.replace(/^https?:\/\//, "")} ↗
           </a>
         )}
       </div>
+      {contacts.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2 text-sm">
+          {contacts.map((c) => (
+            <a key={c.href} href={c.href} target={c.kind === "phone" ? undefined : "_blank"} rel="nofollow noopener noreferrer" className="rounded-full border border-border px-3 py-1 font-medium hover:border-accent">
+              {c.label}
+            </a>
+          ))}
+        </div>
+      )}
     </li>
   );
 }

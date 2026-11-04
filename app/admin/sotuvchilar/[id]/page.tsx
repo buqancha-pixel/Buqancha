@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { deleteSellerAction, partnerLinkAction, partnerTermAction, saveSellerAction } from "../../actions";
 import { formatDate } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
+import { CopyBox } from "@/components/CopyBox";
+import { PARTNER_TERMS, isForever } from "@/lib/partner/auth";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, Select, type SP } from "../../ui";
 
 export default async function EditSeller({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
@@ -21,6 +23,14 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
     <div>
       <PageTitle back={{ href: "/admin/sotuvchilar", label: "Sotuvchilar" }}>{seller?.name ?? "Yangi sotuvchi"}</PageTitle>
       <Flash sp={sp} />
+      {seller && sp.havola && (
+        <div className="mb-5 grid gap-3 rounded-xl border border-accent bg-accent-soft p-3 text-sm">
+          <p className="font-semibold">1. Kirish havolasi (faqat hozir ko&apos;rinadi — sahifadan chiqsangiz, qayta ko&apos;rsatilmaydi):</p>
+          <CopyBox text={`${SITE_URL}/hamkor/kirish?k=${sp.havola}`} label="Havolani nusxalash" />
+          <p className="font-semibold">2. Do&apos;konga yuboriladigan tayyor xabar (havola ichida):</p>
+          <CopyBox text={storeGuide(seller.name, `${SITE_URL}/hamkor/kirish?k=${sp.havola}`, seller.partnerUntil)} rows={14} label="Xabarni nusxalash" />
+        </div>
+      )}
       <form action={saveSellerAction}>
         {seller && <input type="hidden" name="id" value={seller.id} />}
         <Section title="Ma'lumotlar">
@@ -43,7 +53,10 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
               className="sm:col-span-2"
               hint="Google Maps'da do'kon ustiga barmoqni bosib turing — tepada koordinata chiqadi, nusxalab shu yerga qo'ying. Yoki brauzerdagi to'liq xarita havolasi. Bo'sh qolsa, xaritada nuqta chiqmaydi."
             />
-            <Field label="Ijtimoiy tarmoq" name="social" defaultValue={seller?.social ?? ""} placeholder="Telegram: @…" className="sm:col-span-2" />
+            <Field label="Telefon" name="phone" type="tel" defaultValue={seller?.phone ?? ""} placeholder="+998 90 123 45 67" />
+            <Field label="Telegram" name="telegram" defaultValue={seller?.telegram ? `@${seller.telegram}` : ""} placeholder="@dokon" />
+            <Field label="Instagram" name="instagram" defaultValue={seller?.instagram ? `@${seller.instagram}` : ""} placeholder="@dokon" />
+            <Field label="Boshqa tarmoq (eski maydon)" name="social" defaultValue={seller?.social ?? ""} placeholder="Telegram: @…" />
             <Area label="Tavsif" name="description" defaultValue={seller?.description ?? ""} className="sm:col-span-2" />
             <div className="sm:col-span-2">
               <Check label="Muqova rasmlarini shu sotuvchi saytidan ko'rsatish" name="allowImages" defaultChecked={seller?.allowImages ?? true} />
@@ -55,16 +68,10 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
       </form>
       {seller && (
         <Section title="Hamkor kabineti" id="hamkor">
-          {sp.havola && (
-            <div className="mb-4 rounded-xl border border-accent bg-accent-soft p-3 text-sm">
-              <p className="font-semibold">Kirish havolasi (faqat hozir ko&apos;rinadi — nusxalab, hamkorga Telegram orqali yuboring):</p>
-              <input readOnly value={`${SITE_URL}/hamkor/kirish?k=${sp.havola}`} className="mt-2 h-10 w-full rounded-lg border border-border bg-bg px-2 font-mono text-xs" />
-            </div>
-          )}
           <p className="mb-3 text-sm">
             {seller.partnerTokenHash ? (
               seller.partnerUntil && seller.partnerUntil > new Date() ? (
-                <span className="font-semibold text-accent">Faol — {formatDate(seller.partnerUntil)} gacha</span>
+                <span className="font-semibold text-accent">{isForever(seller.partnerUntil) ? "Faol — muddatsiz" : `Faol — ${formatDate(seller.partnerUntil)} gacha`}</span>
               ) : (
                 <span className="font-semibold text-warn-text">Muddati tugagan{seller.partnerUntil ? ` (${formatDate(seller.partnerUntil)})` : ""}</span>
               )
@@ -79,7 +86,7 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
               <Button className="h-10">{seller.partnerTokenHash ? "Yangi havola (eskisi o'chadi)" : "Kabinet ochish (30 kun bepul)"}</Button>
             </form>
             {seller.partnerTokenHash &&
-              ([["30", "+30 kun"], ["365", "+1 yil"], ["0", "Bekor qilish"]] as const).map(([d, label]) => (
+              ([...PARTNER_TERMS.map(([v, l]) => [v, v === "muddatsiz" ? l : `+${l}`] as const), ["0", "Bekor qilish"] as const]).map(([d, label]) => (
                 <form key={d} action={partnerTermAction}>
                   <input type="hidden" name="id" value={seller.id} />
                   <input type="hidden" name="days" value={d} />
@@ -130,4 +137,26 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
       )}
     </div>
   );
+}
+
+/** Do'konga havola bilan yuboriladigan yo'riqnoma. */
+function storeGuide(name: string, link: string, until: Date | null) {
+  const term = !until ? "" : isForever(until) ? " (muddatsiz)" : ` (${formatDate(until)} gacha)`;
+  return [
+    `Assalomu alaykum! Buqancha — kitob narxlarini solishtirish saytida «${name}» uchun shaxsiy kabinet ochildi${term}.`,
+    "Xaridorlar kitob qidirganda sizning narxlaringizni ko'radi va siz bilan to'g'ridan-to'g'ri bog'lanadi.",
+    "",
+    "Kabinetga kirish havolasi:",
+    link,
+    "",
+    "Qanday ishlatiladi:",
+    "1. Havolani oching va \"Kabinetga kirish\" tugmasini bosing. Login va parol kerak emas — havola parol o'rnida, uni hech kimga bermang.",
+    "2. \"Do'kon ma'lumotlari va aloqa\" bo'limida telefon, Telegram yoki Instagram'ingizni yozing — xaridor \"Buyurtma berish\" tugmasini bosganda shular chiqadi.",
+    "3. \"Qo'shish\" bo'limida kitob nomi yoki ISBN'ni qidiring, narxingizni yozib \"Qo'shish\"ni bosing.",
+    "4. Kitob ko'p bo'lsa — \"Fayl\" bo'limidagi Excel namunani yuklab oling, to'ldirib, bitta fayl bilan yuklang.",
+    "5. Saytda yo'q kitobni \"Yangi kitob\" bo'limida ISBN, nom va muallif bilan qo'shasiz.",
+    "6. Narx o'zgarsa yoki kitob tugasa — \"Narxlar\" ro'yxatida yangilang.",
+    "",
+    "Kabinet telefonda ham ishlaydi. Savollar bo'lsa, shu yerga yozing.",
+  ].join("\n");
 }

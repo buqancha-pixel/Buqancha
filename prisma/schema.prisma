@@ -117,6 +117,10 @@ model Seller {
   address  String?
   // Instagram / Telegram (sayti bo'lmaganlar uchun)
   social   String?
+  // buyurtma uchun aloqa (do'kon o'zi kabinetda kiritadi): +998XXXXXXXXX, Telegram/Instagram username
+  phone     String?
+  telegram  String?
+  instagram String?
   // xaritadagi joylashuv (admin panelda qo'lda kiritiladi; avtomatik geokodlash O'zbekistonda ishonchsiz)
   lat      Float?
   lng      Float?

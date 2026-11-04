@@ -12,7 +12,8 @@ import {
 } from "@/lib/admin/books";
 import { buildSearchKey, slugify } from "@/lib/normalize";
 import { parseLocation } from "@/lib/geo";
-import { hashToken, newToken } from "@/lib/partner/auth";
+import { hashToken, newToken, termUntil } from "@/lib/partner/auth";
+import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram } from "@/lib/contacts";
 import { cleanNote } from "@/lib/promoters";
 import { deletePromoterPhoto, savePromoterPhoto } from "@/lib/promoter/photo";
 
@@ -196,6 +197,16 @@ export async function setUnmatchedStatusAction(data: FormData) {
 
 const TYPES: SellerType[] = ["STORE", "ONLINE", "PUBLISHER", "MARKETPLACE"];
 
+/** Telefon, Telegram, Instagram — formatini tekshirib. */
+function contactFields(d: FormData) {
+  try {
+    return { phone: normalizePhone(s(d, "phone")), telegram: normalizeTelegram(s(d, "telegram")), instagram: normalizeInstagram(s(d, "instagram")) };
+  } catch (e) {
+    if (e instanceof ContactError) throw new AdminError(e.message);
+    throw e;
+  }
+}
+
 function sellerFields(d: FormData) {
   const name = s(d, "name");
   if (name.length < 2) throw new AdminError("Nomini kiriting.");
@@ -217,6 +228,7 @@ function sellerFields(d: FormData) {
     description: s(d, "description") || null,
     address: s(d, "address") || null,
     social: s(d, "social") || null,
+    ...contactFields(d),
     allowImages: d.get("allowImages") === "on",
   };
 }
@@ -322,23 +334,55 @@ export async function partnerLinkAction(data: FormData) {
       },
     });
     // havola faqat bir marta ko'rsatiladi (bazada saqlanmaydi)
-    return `/admin/sotuvchilar/${id}?havola=${encodeURIComponent(token)}#hamkor`;
+    return `/admin/sotuvchilar/${id}?havola=${encodeURIComponent(token)}`;
   }, "Yangi kirish havolasi yaratildi. Eski havola endi ishlamaydi.");
 }
 
 export async function partnerTermAction(data: FormData) {
   const id = s(data, "id");
-  const days = Number(s(data, "days"));
+  const term = s(data, "days");
   await run(`/admin/sotuvchilar/${id}#hamkor`, async () => {
     const seller = await prisma.seller.findUniqueOrThrow({ where: { id } });
-    if (days === 0) {
+    if (term === "0") {
       await prisma.seller.update({ where: { id }, data: { partnerTokenHash: null, partnerUntil: null } });
       return;
     }
-    if (!Number.isInteger(days) || days < 1 || days > 800) throw new AdminError("Muddat noto'g'ri.");
-    const base = seller.partnerUntil && seller.partnerUntil > new Date() ? seller.partnerUntil : new Date();
-    await prisma.seller.update({ where: { id }, data: { partnerUntil: new Date(base.getTime() + days * 864e5), partnerSince: seller.partnerSince ?? new Date() } });
-  }, days === 0 ? "Hamkorlik bekor qilindi, havola o'chirildi." : `Muddat ${days} kunga uzaytirildi.`);
+    let until: Date;
+    try {
+      until = termUntil(term, seller.partnerUntil);
+    } catch {
+      throw new AdminError("Muddat noto'g'ri.");
+    }
+    await prisma.seller.update({ where: { id }, data: { partnerUntil: until, partnerSince: seller.partnerSince ?? new Date() } });
+  }, term === "0" ? "Hamkorlik bekor qilindi, havola o'chirildi." : term === "muddatsiz" ? "Muddatsiz qilindi." : "Muddat uzaytirildi.");
+}
+
+/**
+ * Tez ochish: faqat nom va muddat. Sotuvchi (sukut — onlayn do'kon) yaratiladi, kabinet havolasi beriladi;
+ * aloqa, kitoblar va narxlarni do'kon o'zi kabinetda kiritadi.
+ */
+export async function quickPartnerAction(data: FormData) {
+  let token = "";
+  await run("/admin/sotuvchilar", async () => {
+    const name = s(data, "name").slice(0, 80);
+    if (name.length < 2) throw new AdminError("Do'kon nomini kiriting.");
+    const type = (TYPES.includes(s(data, "type") as SellerType) ? s(data, "type") : "ONLINE") as SellerType;
+    let until: Date;
+    try {
+      until = termUntil(s(data, "term") || "30", null);
+    } catch {
+      throw new AdminError("Muddatni tanlang.");
+    }
+    const exists = await prisma.seller.findFirst({ where: { name: { equals: name, mode: "insensitive" } } });
+    if (exists) throw new AdminError(`«${exists.name}» allaqachon bor — uning sahifasidan kabinet oching.`);
+    const slug = await uniqueSellerSlug(name);
+    token = newToken();
+    const created = await prisma.seller.create({
+      data: { name, slug, type, city: type === "ONLINE" ? "Onlayn" : "Toshkent", partnerTokenHash: hashToken(token), partnerSince: new Date(), partnerUntil: until },
+    });
+    await prisma.removedSeller.deleteMany({ where: { slug } });
+    return `/admin/sotuvchilar/${created.id}?havola=${encodeURIComponent(token)}`;
+  }, "Do'kon ochildi. Havolani va yo'riqnomani do'konga yuboring.");
 }
 
 // ---------- kitob targ'ibotchilari ----------

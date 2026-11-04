@@ -90,3 +90,25 @@ export async function requirePartner(): Promise<Seller> {
 export function partnerActive(seller: Pick<Seller, "partnerUntil">, now = new Date()): boolean {
   return !!seller.partnerUntil && seller.partnerUntil > now;
 }
+
+/** "Muddatsiz" hamkorlik — uzoq kelajakdagi sana sifatida saqlanadi. */
+export const PARTNER_FOREVER = new Date("2999-12-31T00:00:00Z");
+export function isForever(d: Date | null | undefined): boolean {
+  return !!d && new Date(d).getUTCFullYear() >= 2900;
+}
+
+/** Admin tanlaydigan muddatlar: kun soni yoki "muddatsiz". */
+export const PARTNER_TERMS = [
+  ["30", "30 kun"],
+  ["182", "6 oy"],
+  ["365", "1 yil"],
+  ["muddatsiz", "Muddatsiz"],
+] as const;
+
+export function termUntil(term: string, from: Date | null | undefined, now = new Date()): Date {
+  if (term === "muddatsiz") return PARTNER_FOREVER;
+  const days = Number(term);
+  if (!Number.isInteger(days) || days < 1 || days > 800) throw new Error("Muddat noto'g'ri.");
+  const base = from && from > now && !isForever(from) ? from : now;
+  return new Date(base.getTime() + days * 864e5);
+}

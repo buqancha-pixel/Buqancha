@@ -194,6 +194,12 @@ marketpleys. Ro'yxatda tur va "Faqat narxi yo'qlar" filtri, belgilab birdaniga o
 muqova rasmlarini olib tashlaydi, kitoblar qoladi. Slug `RemovedSeller` ga yoziladi: `npm run db:sellers` uni fayldan
 qayta yaratmaydi, kechki `collect`/`import-catalog` esa o'tkazib yuboradi. Admin shu nom bilan qayta yaratsa — yozuv o'chadi.
 
+**Do'konga tez kabinet ochish** (admin → Sotuvchilar → "Do'konga kabinet ochish"): faqat nom, tur (sukut — onlayn
+do'kon) va muddat — 30 kun, 6 oy, 1 yil yoki muddatsiz (`PARTNER_FOREVER`, 2999-yil). Sotuvchi yaratiladi, sahifaning
+tepasida kirish havolasi va do'konga yuboriladigan tayyor yo'riqnoma chiqadi. Do'kon kabinetda nomi va aloqalarini
+o'zi kiritadi: telefon, Telegram, Instagram, sayt (`Seller.phone/telegram/instagram`, `lib/contacts.ts`; kamida
+bittasi majburiy). Narxida havola bo'lmasa, kitob sahifasida "Buyurtma berish" tugmasi shu aloqalarni ochadi.
+
 **Bloger kabineti** (`/bloger`): admin → Targ'ibotchilar → bloger → "Kabinet ochish" maxfiy havola beradi
 (`Promoter.tokenHash`, hamkor kabinetidagi kabi faqat xesh; yangi havola eskisini bekor qiladi, "Kabinetni yopish" o'chiradi).
 Bloger faqat o'zining tavsiyalarini (kitob qidirib qo'shish, izoh, olib tashlash) va ism/rasm/tavsif/obunachilarni

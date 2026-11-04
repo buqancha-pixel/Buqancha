@@ -3,7 +3,8 @@ import type { Prisma, SellerType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { SELLER_TYPE_LABEL, SELLER_TYPE_PARAM, SELLER_TYPE_PLURAL, formatNumber } from "@/lib/format";
-import { bulkDeleteSellersAction } from "../actions";
+import { bulkDeleteSellersAction, quickPartnerAction } from "../actions";
+import { PARTNER_TERMS, isForever } from "@/lib/partner/auth";
 import { Flash, PageTitle, type SP } from "../ui";
 import { SelectAllSellers } from "./SelectAll";
 
@@ -38,8 +39,28 @@ export default async function AdminSellers({ searchParams }: { searchParams: SP 
     <div>
       <PageTitle>Sotuvchilar</PageTitle>
       <Flash sp={sp} />
-      <Link href="/admin/sotuvchilar/yangi" className="mb-4 inline-flex h-10 items-center rounded-full bg-accent px-4 text-sm font-semibold text-accent-contrast">
-        + Yangi sotuvchi qo&apos;shish
+      <form action={quickPartnerAction} className="card mb-4 grid gap-3 p-4">
+        <div>
+          <h2 className="text-lg font-semibold">Do&apos;konga kabinet ochish</h2>
+          <p className="text-sm text-muted">Faqat nomini yozing — telefon, Telegram, kitoblar va narxlarni do&apos;kon o&apos;zi kabinetda kiritadi.</p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
+          <input name="name" required minLength={2} maxLength={80} placeholder="Do'kon nomi" aria-label="Do'kon nomi" className="h-11 rounded-full border border-border bg-surface-2 px-4 text-sm" />
+          <select name="type" defaultValue="ONLINE" aria-label="Turi" className="h-11 rounded-full border border-border bg-surface-2 px-3 text-sm">
+            <option value="ONLINE">Onlayn do&apos;kon</option>
+            <option value="STORE">Do&apos;kon</option>
+            <option value="PUBLISHER">Nashriyot</option>
+          </select>
+          <select name="term" defaultValue="30" aria-label="Muddat" className="h-11 rounded-full border border-border bg-surface-2 px-3 text-sm">
+            {PARTNER_TERMS.map(([v, label]) => (
+              <option key={v} value={v}>{label}</option>
+            ))}
+          </select>
+          <button className="h-11 rounded-full bg-accent px-5 text-sm font-semibold text-accent-contrast">Ochish</button>
+        </div>
+      </form>
+      <Link href="/admin/sotuvchilar/yangi" className="mb-4 inline-block text-sm font-semibold text-accent underline">
+        + To&apos;liq ma&apos;lumot bilan sotuvchi qo&apos;shish
       </Link>
 
       <div className="no-scrollbar -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-1">
@@ -66,7 +87,7 @@ export default async function AdminSellers({ searchParams }: { searchParams: SP 
                   <span className="block truncate text-xs text-muted">
                     {SELLER_TYPE_LABEL[s.type]} · {s.city}
                     {s.collector !== "NONE" ? " · narxlar avtomatik" : ""}
-                    {s.partnerUntil && s.partnerUntil > new Date() ? " · hamkor" : s.partnerTokenHash ? " · hamkorlik muddati tugagan" : ""}
+                    {s.partnerUntil && s.partnerUntil > new Date() ? (isForever(s.partnerUntil) ? " · hamkor (muddatsiz)" : " · hamkor") : s.partnerTokenHash ? " · hamkorlik muddati tugagan" : ""}
                   </span>
                 </span>
                 <span className={`shrink-0 text-sm tabular ${s._count.offers ? "text-muted" : "text-warn-text"}`}>

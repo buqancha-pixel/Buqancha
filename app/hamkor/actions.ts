@@ -10,6 +10,7 @@ import { isReligiousText } from "@/lib/collector/religion";
 import { importFeed } from "@/lib/collector/run";
 import { docxRows, rowsToCsv, xlsxRows } from "@/lib/collector/parsers/office";
 import { parseLocation } from "@/lib/geo";
+import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram } from "@/lib/contacts";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 
@@ -142,15 +143,26 @@ export async function savePartnerProfile(data: FormData) {
     const locRaw = s(data, "location");
     const loc = locRaw ? parseLocation(locRaw) : null;
     if (locRaw && !loc) throw new AdminError("Joylashuv tushunarsiz: \"41.311, 69.240\" ko'rinishida yoki Google/Yandex xarita havolasini kiriting.");
-    const city = s(data, "city");
-    if (city.length < 2) throw new AdminError("Shaharni kiriting.");
+    const name = s(data, "name").slice(0, 80);
+    if (name.length < 2) throw new AdminError("Do'kon nomini kiriting.");
+    const city = s(data, "city").slice(0, 40) || "Onlayn";
+    let contacts;
+    try {
+      contacts = { phone: normalizePhone(s(data, "phone")), telegram: normalizeTelegram(s(data, "telegram")), instagram: normalizeInstagram(s(data, "instagram")) };
+    } catch (e) {
+      throw new AdminError(e instanceof ContactError ? e.message : "Aloqa ma'lumotlari noto'g'ri.");
+    }
+    const website = optionalUrl(s(data, "website"), "Sayt");
+    if (!contacts.phone && !contacts.telegram && !contacts.instagram && !website)
+      throw new AdminError("Kamida bitta aloqa kiriting: telefon, Telegram, Instagram yoki sayt — xaridor shu orqali buyurtma beradi.");
     await prisma.seller.update({
       where: { id: sellerId },
       data: {
+        name,
         city,
+        ...contacts,
         address: s(data, "address") || null,
-        website: optionalUrl(s(data, "website"), "Sayt"),
-        social: s(data, "social") || null,
+        website,
         description: s(data, "description").slice(0, 500) || null,
         lat: loc?.lat ?? null,
         lng: loc?.lng ?? null,

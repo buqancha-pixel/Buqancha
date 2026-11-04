@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { partnerActive, requirePartner } from "@/lib/partner/auth";
+import { isForever, partnerActive, requirePartner } from "@/lib/partner/auth";
+import { sellerContacts } from "@/lib/contacts";
 import { searchBooks } from "@/lib/books";
 import { normalizeIsbn } from "@/lib/collector/isbn";
 import { LANGUAGE_LABEL, formatDate, formatNumber, formatPrice } from "@/lib/format";
@@ -57,6 +58,35 @@ export default async function PartnerHome({ searchParams }: { searchParams: SP }
     }));
   }
 
+  const hasContact = sellerContacts(seller).length > 0;
+  const profile = (
+      <Section title="Do'kon ma'lumotlari va aloqa" id="malumot">
+        <form action={savePartnerProfile} className="grid gap-4 sm:grid-cols-2">
+          <Field label="Do'kon nomi (saytda ko'rinadi)" name="name" defaultValue={seller.name} required maxLength={80} className="sm:col-span-2" />
+          <p className="text-sm text-muted sm:col-span-2">
+            <b className="text-text">Xaridor qanday buyurtma beradi?</b> Kitob narxi yonida &quot;Buyurtma berish&quot; tugmasi chiqadi — bosilganda shu yerga
+            yozgan aloqalaringiz ko&apos;rinadi. Qaysi biri qulay bo&apos;lsa, o&apos;shani yozing (kamida bittasi).
+          </p>
+          <Field label="Telefon" name="phone" type="tel" defaultValue={seller.phone ?? ""} placeholder="+998 90 123 45 67" />
+          <Field label="Telegram" name="telegram" defaultValue={seller.telegram ? `@${seller.telegram}` : ""} placeholder="@kitob_dokonim" />
+          <Field label="Instagram" name="instagram" defaultValue={seller.instagram ? `@${seller.instagram}` : ""} placeholder="@kitob_dokonim" />
+          <Field label="Sayt (bo'lsa)" name="website" type="url" defaultValue={seller.website ?? ""} placeholder="https://" />
+          <Field label="Shahar (ixtiyoriy)" name="city" defaultValue={seller.city} placeholder="Onlayn" hint="Butun O'zbekiston bo'ylab yetkazsangiz — Onlayn" />
+          <Field label="Manzil (do'koningiz bo'lsa)" name="address" defaultValue={seller.address ?? ""} />
+          <Field
+            label="Xaritadagi joylashuv (do'koningiz bo'lsa)"
+            name="location"
+            defaultValue={seller.lat != null && seller.lng != null ? `${seller.lat}, ${seller.lng}` : ""}
+            placeholder="41.311081, 69.240562"
+            hint="Google Maps'da do'koningiz ustiga barmoqni bosib turing — chiqqan raqamlarni nusxalang"
+            className="sm:col-span-2"
+          />
+          <Area label="Qisqacha (500 belgigacha): yetkazib berish, to'lov, ish vaqti" name="description" defaultValue={seller.description ?? ""} className="sm:col-span-2" />
+          <Button disabled={!active} className="w-fit">Saqlash</Button>
+        </form>
+      </Section>
+  );
+
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
@@ -64,7 +94,11 @@ export default async function PartnerHome({ searchParams }: { searchParams: SP }
           <p className="text-sm text-muted">Hamkor kabineti</p>
           <h1 className="text-2xl sm:text-3xl">{seller.name}</h1>
           <p className={`mt-1 text-sm font-semibold ${active ? "text-accent" : "text-warn-text"}`}>
-            {active ? `Faol — ${formatDate(seller.partnerUntil!)} gacha` : "Muddati tugagan — narxlaringiz saytda qoladi, lekin o'zgartirib bo'lmaydi"}
+            {active
+              ? isForever(seller.partnerUntil)
+                ? "Faol — muddatsiz"
+                : `Faol — ${formatDate(seller.partnerUntil!)} gacha`
+              : "Muddati tugagan — narxlaringiz saytda qoladi, lekin o'zgartirib bo'lmaydi"}
           </p>
         </div>
         <form action={partnerLogout}>
@@ -72,6 +106,23 @@ export default async function PartnerHome({ searchParams }: { searchParams: SP }
         </form>
       </div>
       <Flash sp={sp} />
+      <details open={!hasContact || offerTotal === 0} className="card mb-5 p-4 text-sm [&_summary::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer list-none font-semibold">📖 Kabinet qanday ishlaydi?</summary>
+        <ol className="mt-3 grid list-decimal gap-2 pl-5 text-muted">
+          <li><b className="text-text">Aloqa</b> — &quot;Do&apos;kon ma&apos;lumotlari va aloqa&quot; bo&apos;limida telefon, Telegram yoki Instagram&apos;ingizni yozing. Xaridor shu orqali buyurtma beradi.</li>
+          <li><b className="text-text">Kitob qo&apos;shish</b> — &quot;Qo&apos;shish&quot; bo&apos;limida kitob nomi yoki ISBN&apos;ni qidiring, narxini yozib &quot;Qo&apos;shish&quot;ni bosing.</li>
+          <li><b className="text-text">Ko&apos;p kitob bo&apos;lsa</b> — &quot;Fayl&quot; bo&apos;limidagi Excel namunani yuklab oling, to&apos;ldirib, bitta fayl bilan yuklang.</li>
+          <li><b className="text-text">Saytda yo&apos;q kitob</b> — &quot;Yangi kitob&quot; bo&apos;limida ISBN, nom va muallif bilan qo&apos;shasiz.</li>
+          <li><b className="text-text">Narx o&apos;zgarsa yoki tugasa</b> — &quot;Narxlar&quot; ro&apos;yxatida yangilang yoki &quot;sotuvda yo&apos;q&quot; deb belgilang.</li>
+        </ol>
+        <p className="mt-3 text-muted">Bu havola parol o&apos;rnida — uni hech kimga bermang.</p>
+      </details>
+      {!hasContact && (
+        <p className="mb-5 rounded-xl bg-warn-bg px-4 py-3 text-sm text-warn-text">
+          Avval aloqa ma&apos;lumotini kiriting — busiz xaridor sizga buyurtma bera olmaydi.
+        </p>
+      )}
+      {!hasContact && profile}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className="card p-4"><p className="text-xs text-muted">Narxlaringiz</p><p className="text-2xl font-semibold tabular">{formatNumber(offerTotal)}</p></div>
         <div className="card p-4"><p className="text-xs text-muted">Sotuvda</p><p className="text-2xl font-semibold tabular">{formatNumber(inStock)}</p></div>
@@ -197,24 +248,7 @@ export default async function PartnerHome({ searchParams }: { searchParams: SP }
         )}
       </Section>
 
-      <Section title="Do'kon ma'lumotlari" id="malumot">
-        <form action={savePartnerProfile} className="grid gap-4 sm:grid-cols-2">
-          <Field label="Shahar" name="city" defaultValue={seller.city} required />
-          <Field label="Sayt" name="website" type="url" defaultValue={seller.website ?? ""} placeholder="https://" />
-          <Field label="Manzil" name="address" defaultValue={seller.address ?? ""} className="sm:col-span-2" />
-          <Field label="Telegram/Instagram" name="social" defaultValue={seller.social ?? ""} placeholder="instagram.com/dokonim" className="sm:col-span-2" />
-          <Field
-            label="Xaritadagi joylashuv"
-            name="location"
-            defaultValue={seller.lat != null && seller.lng != null ? `${seller.lat}, ${seller.lng}` : ""}
-            placeholder="41.311081, 69.240562"
-            hint="Google Maps'da do'koningiz ustiga barmoqni bosib turing — chiqqan raqamlarni nusxalang"
-            className="sm:col-span-2"
-          />
-          <Area label="Qisqacha (500 belgigacha)" name="description" defaultValue={seller.description ?? ""} className="sm:col-span-2" />
-          <Button disabled={!active} className="w-fit">Saqlash</Button>
-        </form>
-      </Section>
+      {hasContact && profile}
     </div>
   );
 }

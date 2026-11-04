@@ -33,6 +33,7 @@ import {
 import { absoluteUrl } from "@/lib/site";
 import { avatarColor, getBookPromoters, promoterPhotoSrc } from "@/lib/promoters";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
+import { OrderMenu } from "@/components/OrderMenu";
 
 type Params = Promise<{ slug: string }>;
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -263,7 +264,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
         {offers.length ? (
           <ol className="mt-5 flex flex-col gap-3">
             {offers.map((o, i) => (
-              <OfferCard key={o.id} offer={o} rank={i + 1} isCheapest={o.id === stats?.cheapest.id} />
+              <OfferCard key={o.id} offer={o} rank={i + 1} isCheapest={o.id === stats?.cheapest.id} bookTitle={book.title} />
             ))}
           </ol>
         ) : (
@@ -367,9 +368,9 @@ function Count({ n }: { n: number }) {
   return <span className="tabular ml-0.5 opacity-70">{n}</span>;
 }
 
-function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: number; isCheapest: boolean }) {
+function OfferCard({ offer: o, rank, isCheapest, bookTitle }: { offer: OfferRow; rank: number; isCheapest: boolean; bookTitle: string }) {
   return (
-    <li className={`card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-5 ${o.inStock ? "" : "opacity-70"}`}>
+    <li className={`card relative flex flex-col gap-3 p-4 has-[details[open]]:z-30 sm:flex-row sm:items-center sm:gap-5 ${o.inStock ? "" : "opacity-70"}`}>
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <span className="tabular mt-0.5 hidden w-6 shrink-0 text-center font-heading text-lg text-muted sm:block">{rank}</span>
         {o.edition.imageUrl && (
@@ -428,7 +429,7 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
             <span className="sr-only"> ({o.seller.name}, yangi oynada)</span>
           </a>
         ) : (
-          <span className="shrink-0 px-2 text-xs text-muted">Sayt havolasi yo'q</span>
+          <OrderMenu seller={o.seller} title={bookTitle} inStock={o.inStock} />
         )}
       </div>
     </li>
