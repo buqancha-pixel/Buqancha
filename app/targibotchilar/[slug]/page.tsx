@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BookCard } from "@/components/BookCard";
 import { JsonLd } from "@/components/JsonLd";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
+import { SocialLinks } from "@/components/SocialLinks";
 import { avatarColor, getPromoter, instagramUrl, promoterPhotoSrc } from "@/lib/promoters";
 import { absoluteUrl } from "@/lib/site";
 
@@ -30,7 +31,7 @@ export default async function PromoterPage({ params }: Props) {
           "@type": "Person",
           name: p.name,
           url: absoluteUrl(`/targibotchilar/${p.slug}`),
-          sameAs: [instagramUrl(p.instagram)],
+          sameAs: [instagramUrl(p.instagram), ...(p.telegram ? [`https://t.me/${p.telegram}`] : []), ...(p.youtube ? [p.youtube] : [])],
         }}
       />
       <nav aria-label="Yo'l" className="text-sm text-muted">
@@ -46,6 +47,9 @@ export default async function PromoterPage({ params }: Props) {
             </a>
             {p.followers && <span className="text-muted"> · {p.followers} obunachi</span>}
           </p>
+          <div className="mt-3">
+            <SocialLinks instagram={p.instagram} telegram={p.telegram} youtube={p.youtube} />
+          </div>
         </div>
       </div>
       {p.about && <p className="mt-4 max-w-2xl text-muted">{p.about}</p>}

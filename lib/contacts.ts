@@ -55,3 +55,21 @@ export function sellerContacts(s: ContactFields): Contact[] {
   }
   return out;
 }
+
+/** YouTube kanali: "@kanal", "youtube.com/@kanal", "youtube.com/channel/UC…" → to'liq https havola */
+export function normalizeYoutube(raw: string): string | null {
+  const t = raw.trim();
+  if (!t) return null;
+  if (/^@[\w.-]{3,30}$/.test(t)) return `https://www.youtube.com/${t}`;
+  let u: URL;
+  try {
+    u = new URL(/^https?:\/\//i.test(t) ? t : `https://${t}`);
+  } catch {
+    throw new ContactError("YouTube havolasi noto'g'ri. Masalan: https://www.youtube.com/@kanalim");
+  }
+  const host = u.hostname.replace(/^(www\.|m\.)/, "");
+  if (host !== "youtube.com" && host !== "youtu.be") throw new ContactError("Bu YouTube havolasi emas. Masalan: https://www.youtube.com/@kanalim");
+  if (!/^\/(@[\w.-]{3,30}|channel\/[\w-]{10,40}|c\/[\w.-]{2,60}|user\/[\w.-]{2,60})\/?$/.test(u.pathname))
+    throw new ContactError("YouTube kanal havolasini kiriting (video emas). Masalan: https://www.youtube.com/@kanalim");
+  return `https://www.youtube.com${u.pathname.replace(/\/$/, "")}`;
+}

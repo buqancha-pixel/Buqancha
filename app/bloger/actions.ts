@@ -8,6 +8,7 @@ import { AdminError } from "@/lib/admin/books";
 import { endPromoterSession, promoterByToken, requirePromoter, startPromoterSession } from "@/lib/promoter/auth";
 import { deletePromoterPhoto, savePromoterPhoto } from "@/lib/promoter/photo";
 import { cleanNote } from "@/lib/promoters";
+import { ContactError, normalizeTelegram, normalizeYoutube } from "@/lib/contacts";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 
@@ -50,9 +51,15 @@ export async function savePromoterProfile(data: FormData) {
   await run("/bloger#malumot", async (id) => {
     const name = s(data, "name");
     if (name.length < 2 || name.length > 60) throw new AdminError("Ismingizni kiriting (60 belgigacha).");
+    let socials;
+    try {
+      socials = { telegram: normalizeTelegram(s(data, "telegram")), youtube: normalizeYoutube(s(data, "youtube")) };
+    } catch (e) {
+      throw new AdminError(e instanceof ContactError ? e.message : "Havola noto'g'ri.");
+    }
     await prisma.promoter.update({
       where: { id },
-      data: { name, about: s(data, "about").slice(0, 600) || null, followers: s(data, "followers").slice(0, 30) || null },
+      data: { name, about: s(data, "about").slice(0, 600) || null, followers: s(data, "followers").slice(0, 30) || null, ...socials },
     });
   }, "Ma'lumotlar saqlandi.");
 }

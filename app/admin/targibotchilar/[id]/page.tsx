@@ -96,6 +96,8 @@ export default async function EditPromoter({ params, searchParams }: { params: P
             <Field label="Ism (sahifada ko'rinadi)" name="name" defaultValue={p?.name ?? ""} required />
             <Field label="Instagram username" name="instagram" defaultValue={p?.instagram ?? ""} required placeholder="kitobxon_qiz" hint="@ belgisisiz yoki profil havolasi" />
             <Field label="Obunachilar" name="followers" defaultValue={p?.followers ?? ""} placeholder="25 ming" />
+            <Field label="Telegram kanal" name="telegram" defaultValue={p?.telegram ? `@${p.telegram}` : ""} placeholder="@kanal" />
+            <Field label="YouTube kanal" name="youtube" defaultValue={p?.youtube ?? ""} placeholder="https://www.youtube.com/@kanal" />
             <Field label="Tartib raqami" name="position" type="number" defaultValue={p?.position ?? 0} hint="Kichigi oldinda" />
             <Field label="Rasm havolasi (ixtiyoriy)" name="photoUrl" type="url" defaultValue={p?.photoUrl ?? ""} className="sm:col-span-2" hint="Yuklangan rasm bo'lsa, u ko'rsatiladi; bo'lmasa shu havola, u ham bo'lmasa ism bosh harflari" />
             <Area label="Qisqacha (600 belgigacha)" name="about" defaultValue={p?.about ?? ""} className="sm:col-span-2" placeholder="Qanday kitoblar haqida yozadi, nimasi bilan qiziq" />

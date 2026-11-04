@@ -239,6 +239,8 @@ model Promoter {
   slug      String         @unique
   name      String
   instagram String         // username, @ belgisisiz
+  telegram  String?        // kanal/username (bloger kabinetda o'zi kiritadi)
+  youtube   String?        // kanal havolasi (https://www.youtube.com/@...)
   about     String?
   followers String?        // "120 ming" kabi matn
   photoUrl  String?

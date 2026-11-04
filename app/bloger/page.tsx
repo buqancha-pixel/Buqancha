@@ -5,6 +5,7 @@ import { requirePromoter } from "@/lib/promoter/auth";
 import { avatarColor, promoterPhotoSrc } from "@/lib/promoters";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { NoteField } from "@/components/NoteField";
+import { SocialLinks } from "@/components/SocialLinks";
 import { SITE_URL } from "@/lib/site";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { addPromoterRecommendation, promoterLogout, removePromoterPhoto, removePromoterRecommendation, savePromoterProfile, updatePromoterNote, uploadPromoterPhoto } from "./actions";
@@ -56,7 +57,7 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
           <li><b className="text-text">&quot;+ Tavsiya qilish&quot;</b> ni bosing — kitob sahifangizda chiqadi, kitobning o&apos;z sahifasida esa &quot;Tavsiya qiladi: @{me.instagram}&quot; bo&apos;lib ko&apos;rinadi.</li>
           <li><b className="text-text">Tavsiyalarim</b> — matnni o&apos;zgartirib &quot;Saqlash&quot;ni bosing yoki kitobni &quot;Olib tashlash&quot; mumkin.</li>
           <li><b className="text-text">Profil rasmi</b> — &quot;Rasm yuklash&quot; ni bosib, telefoningizdan rasm tanlang. U dumaloq qilib kesiladi.</li>
-          <li><b className="text-text">Sahifamdagi ma&apos;lumot</b> — ismingiz, o&apos;zingiz haqingizda qisqacha va obunachilar soni sahifangiz tepasida chiqadi.</li>
+          <li><b className="text-text">Sahifamdagi ma&apos;lumot</b> — ismingiz, o&apos;zingiz haqingizda, obunachilar soni, Telegram va YouTube kanalingiz (logolar bilan) sahifangiz tepasida chiqadi.</li>
         </ol>
         <p className="mt-3 text-muted">
           Kitob saytda topilmasa, nomini Buqanchaga yozing — qo&apos;shib beramiz. Bu havola parol o&apos;rnida: uni hech kimga bermang.
@@ -135,10 +136,16 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
         <form action={savePromoterProfile} className="grid gap-4 sm:grid-cols-2">
           <Field label="Ism (sahifada ko'rinadi)" name="name" defaultValue={me.name} required maxLength={60} />
           <Field label="Obunachilar" name="followers" defaultValue={me.followers ?? ""} placeholder="25 ming" maxLength={30} />
+          <div className="grid gap-2 sm:col-span-2">
+            <p className="text-sm font-medium">Tarmoqlarim — sahifangizda logolar bilan chiqadi</p>
+            <SocialLinks instagram={me.instagram} telegram={me.telegram} youtube={me.youtube} size="sm" />
+          </div>
+          <Field label="Telegram kanal yoki username" name="telegram" defaultValue={me.telegram ? `@${me.telegram}` : ""} placeholder="@kanalim yoki t.me/kanalim" />
+          <Field label="YouTube kanal havolasi" name="youtube" defaultValue={me.youtube ?? ""} placeholder="https://www.youtube.com/@kanalim" />
           <Area label="O'zim haqimda (600 belgigacha)" name="about" defaultValue={me.about ?? ""} maxLength={600} className="sm:col-span-2" placeholder="Qanday kitoblar haqida yozasiz" />
           <Button className="w-fit">Saqlash</Button>
         </form>
-        <p className="mt-3 text-xs text-muted">Instagram manzili va sahifaning saytda ko&apos;rinishi Buqanchada boshqariladi.</p>
+        <p className="mt-3 text-xs text-muted">Instagram (@{me.instagram}) va sahifaning saytda ko&apos;rinishi Buqanchada boshqariladi. Bo&apos;sh qoldirilgan tarmoq sahifada chiqmaydi.</p>
       </Section>
     </div>
   );

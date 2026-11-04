@@ -13,7 +13,7 @@ import {
 import { buildSearchKey, slugify } from "@/lib/normalize";
 import { parseLocation } from "@/lib/geo";
 import { hashToken, newToken, termUntil } from "@/lib/partner/auth";
-import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram } from "@/lib/contacts";
+import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram, normalizeYoutube } from "@/lib/contacts";
 import { cleanNote } from "@/lib/promoters";
 import { deletePromoterPhoto, savePromoterPhoto } from "@/lib/promoter/photo";
 
@@ -387,6 +387,14 @@ export async function quickPartnerAction(data: FormData) {
 
 // ---------- kitob targ'ibotchilari ----------
 
+function promoterSocials(d: FormData) {
+  try {
+    return { telegram: normalizeTelegram(s(d, "telegram")), youtube: normalizeYoutube(s(d, "youtube")) };
+  } catch (e) {
+    throw new AdminError(e instanceof ContactError ? e.message : "Havola noto'g'ri.");
+  }
+}
+
 function instagramHandle(raw: string): string {
   const h = raw.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/[/?#].*$/, "");
   if (!/^[A-Za-z0-9._]{1,30}$/.test(h)) throw new AdminError("Instagram username noto'g'ri (masalan: shakhreads).");
@@ -409,6 +417,7 @@ export async function savePromoterAction(data: FormData) {
       position: Number(s(data, "position")) || 0,
       consent: data.get("consent") === "on",
       active: data.get("active") === "on",
+      ...promoterSocials(data),
     };
     if (id) {
       await prisma.promoter.update({ where: { id }, data: fields });

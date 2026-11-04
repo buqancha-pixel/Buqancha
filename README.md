@@ -207,7 +207,9 @@ o'zgartiradi — `promoterId` sessiyadan olinadi, formadan emas.
 Profil rasmi: kabinetda (yoki admin sahifasida) "Rasm yuklash" — brauzer telefon rasmini 1200 px gacha kichraytiradi,
 server `sharp` bilan 400×400 WebP qilib `PromoterPhoto` jadvaliga yozadi; `/rasm/bloger/<id>?v=<vaqt>` dan uzoq
 keshlanib beriladi. Tavsiya matni 500 so'zgacha (`cleanNote`); to'liq matn kitob sahifasidagi "Kitob targ'ibotchilari
-tavsiyasi" bo'limida, bloger sahifasida qisqasi va "To'liq o'qish" havolasi. Instagram manzili, rozilik va saytda ko'rinish faqat adminda.
+tavsiyasi" bo'limida, bloger sahifasida qisqasi va "To'liq o'qish" havolasi.
+Tarmoqlar: Instagram (admin), Telegram va YouTube kanali (bloger kabinetda o'zi kiritadi, `normalizeTelegram`/
+`normalizeYoutube` — video havolasi emas, kanal) — bloger sahifasi va ro'yxatda logolar bilan (`SocialLinks`). Instagram manzili, rozilik va saytda ko'rinish faqat adminda.
 
 **Saytdan o'chirish:** admin kirgan brauzerda katalogdagi har bir muqovada 🗑 tugmasi, kitob sahifasida "Admin: Tahrirlash /
 Kitobni o'chirish" qatori, admin kitoblar ro'yxatida ham "Kitobni o'chirish". Tasdiqdan keyin kitob barcha nashr va

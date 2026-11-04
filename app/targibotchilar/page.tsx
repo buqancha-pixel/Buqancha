@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Cover } from "@/components/Cover";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
+import { SocialLinks } from "@/components/SocialLinks";
 import { bookImage } from "@/lib/books";
 import { avatarColor, getPromoters, instagramUrl, promoterPhotoSrc } from "@/lib/promoters";
 import { PARTNER_TELEGRAM } from "@/lib/site";
@@ -36,6 +37,9 @@ export default async function PromotersPage() {
                   </a>
                   {p.followers && <span className="text-sm text-muted"> · {p.followers} obunachi</span>}
                 </div>
+              </div>
+              <div className="mt-3">
+                <SocialLinks instagram={p.instagram} telegram={p.telegram} youtube={p.youtube} size="sm" />
               </div>
               {p.about && <p className="mt-3 line-clamp-3 text-sm text-muted">{p.about}</p>}
               {p.books.length > 0 && (
