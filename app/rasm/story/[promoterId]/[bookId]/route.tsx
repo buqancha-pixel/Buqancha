@@ -35,9 +35,12 @@ const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n).replace(
  */
 export async function GET(req: Request, { params }: { params: Promise<{ promoterId: string; bookId: string }> }) {
   const { promoterId, bookId } = await params;
-  if (!/^[a-z0-9_-]{1,40}$/i.test(promoterId) || !/^[a-z0-9_-]{1,40}$/i.test(bookId)) return new Response("Topilmadi", { status: 404 });
+  if (!/^[a-z0-9_-]{1,40}$/i.test(promoterId) || !/^[a-z0-9_-]{1,120}$/i.test(bookId)) return new Response("Topilmadi", { status: 404 });
+  // kitob ID'si yoki slug'i ("/rasm/story/<bloger>/otkan-kunlar")
+  const realBookId = (await prisma.book.findFirst({ where: { OR: [{ id: bookId }, { slug: bookId }] }, select: { id: true } }))?.id;
+  if (!realBookId) return new Response("Topilmadi", { status: 404 });
   const rec = await prisma.promoterBook.findUnique({
-    where: { promoterId_bookId: { promoterId, bookId } },
+    where: { promoterId_bookId: { promoterId, bookId: realBookId } },
     include: { promoter: { include: { photo: true } }, book: { include: bookCardInclude } },
   });
   if (!rec) return new Response("Topilmadi", { status: 404 });

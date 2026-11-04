@@ -179,12 +179,12 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
               </form>
               <div className="flex flex-wrap items-center gap-2">
                 <a
-                  href={`/rasm/story/${me.id}/${r.bookId}?yuklab=1`}
+                  href={`/rasm/story/${me.id}/${r.book.slug}?yuklab=1`}
                   className="inline-flex h-9 items-center rounded-full bg-[radial-gradient(circle_at_30%_110%,#fdf497_0%,#fd5949_45%,#d6249f_60%,#285aeb_90%)] px-4 text-xs font-semibold text-white"
                 >
                   📲 Story rasmi
                 </a>
-                <a href={`/rasm/story/${me.id}/${r.bookId}`} target="_blank" className="text-xs text-muted underline">ko&apos;rish</a>
+                <a href={`/rasm/story/${me.id}/${r.book.slug}`} target="_blank" className="text-xs text-muted underline">ko&apos;rish</a>
                 <form action={setReadingBook}>
                   <input type="hidden" name="bookId" value={me.readingBookId === r.bookId ? "" : r.bookId} />
                   <button className="h-9 rounded-full border border-border px-3 text-xs">
