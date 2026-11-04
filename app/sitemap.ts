@@ -2,15 +2,22 @@ import { CATEGORIES, LANGUAGES } from "@/lib/categories";
 import { getCategoryCounts } from "@/lib/catalog";
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
+import { cached } from "@/lib/cache";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
+// sitemap har soatda yangilanadi (har bir bot so'rovida bazaga bormaydi)
+export const revalidate = 3600;
+
+const sitemapBooks = cached(
+  () => prisma.book.findMany({ select: { slug: true, updatedAt: true, editions: { select: { offers: { select: { updatedAt: true } } } } } }),
+  "sitemap-books",
+);
+const sitemapAuthors = cached(() => prisma.author.findMany({ select: { slug: true } }), "sitemap-authors");
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [books, authors] = await Promise.all([
-    prisma.book.findMany({ select: { slug: true, updatedAt: true, editions: { select: { offers: { select: { updatedAt: true } } } } } }),
-    prisma.author.findMany({ select: { slug: true } }),
-  ]);
+  const [books, authors] = await Promise.all([sitemapBooks(), sitemapAuthors()]);
   const now = new Date();
   const counts = await getCategoryCounts();
   return [

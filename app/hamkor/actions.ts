@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
+import { CATALOG_TAG } from "@/lib/cache";
 import { prisma } from "@/lib/db";
 import { AdminError, createBook, deleteOffer, optionalUrl, saveOffer } from "@/lib/admin/books";
 import { endPartnerSession, partnerActive, requirePartner, sellerByToken, startPartnerSession } from "@/lib/partner/auth";
@@ -28,6 +30,8 @@ async function run(back: string, fn: (sellerId: string, slug: string) => Promise
     if (!(e instanceof AdminError)) console.error(e);
     redirect(withMsg(back, "xato", text));
   }
+  // saytdagi keshlangan sahifalar darhol yangilansin
+  revalidateTag(CATALOG_TAG);
   redirect(withMsg(back, "ok", msg));
 }
 

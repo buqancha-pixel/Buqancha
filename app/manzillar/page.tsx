@@ -2,11 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma, SellerType } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { cached } from "@/lib/cache";
 import { JsonLd } from "@/components/JsonLd";
 import { GoogleMapEmbed } from "@/components/GoogleMapEmbed";
 import { SELLER_TYPE_LABEL, SELLER_TYPE_PARAM, plural } from "@/lib/format";
 import { googleMapsUrl, yandexMapsUrl } from "@/lib/geo";
 import { absoluteUrl } from "@/lib/site";
+
+const getPlaces = cached(
+  (where: Prisma.SellerWhereInput) =>
+    prisma.seller.findMany({
+      where,
+      orderBy: { name: "asc" },
+      select: { id: true, slug: true, name: true, type: true, city: true, address: true, website: true, social: true, lat: true, lng: true },
+    }),
+  "places",
+);
 
 export const metadata: Metadata = {
   title: "Kitob do'konlari manzillari — Toshkent va viloyatlar",
@@ -40,11 +51,7 @@ export default async function PlacesPage({ searchParams }: { searchParams: SP })
     type: type ?? { in: ["STORE", "PUBLISHER"] },
     OR: [{ address: { not: null } }, { lat: { not: null } }],
   };
-  const all = await prisma.seller.findMany({
-    where,
-    orderBy: { name: "asc" },
-    select: { id: true, slug: true, name: true, type: true, city: true, address: true, website: true, social: true, lat: true, lng: true },
-  });
+  const all = await getPlaces(where);
   const cities = Array.from(
     all.reduce((m, s) => m.set(s.city, (m.get(s.city) ?? 0) + 1), new Map<string, number>()),
   ).sort((a, b) => (a[0] === "Toshkent" ? -1 : b[0] === "Toshkent" ? 1 : b[1] - a[1] || a[0].localeCompare(b[0])));

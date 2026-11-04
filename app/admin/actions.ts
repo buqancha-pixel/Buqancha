@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateTag } from "next/cache";
+import { CATALOG_TAG } from "@/lib/cache";
 import type { SellerType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { checkPassword, endSession, requireAdmin, startSession, adminEnabled } from "@/lib/admin/auth";
@@ -32,6 +34,8 @@ async function run(back: string, fn: () => Promise<string | void>, okMsg: string
     if (!(e instanceof AdminError)) console.error(e);
     redirect(withMsg(back, "xato", msg));
   }
+  // saytdagi keshlangan sahifalar darhol yangilansin
+  revalidateTag(CATALOG_TAG);
   redirect(withMsg(to, "ok", okMsg));
 }
 

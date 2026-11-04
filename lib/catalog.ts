@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { cached } from "./cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./db";
 import { CATEGORIES, LANGUAGES } from "./categories";
@@ -26,7 +26,7 @@ function languageWhere(code: string | null): Prisma.Sql {
 export type CatalogFilter = { language: string | null; topic: string | null };
 
 /** Sotuvda bor kitoblar (til va mavzu bo'yicha), saralangan va sahifalangan. */
-export async function getCatalogPage(filter: CatalogFilter, sort: CatalogSort, page: number) {
+async function getCatalogPageRaw(filter: CatalogFilter, sort: CatalogSort, page: number) {
   const order =
     sort === "arzon"
       ? Prisma.sql`mp ASC, ns DESC`
@@ -64,7 +64,7 @@ export async function getCatalogPage(filter: CatalogFilter, sort: CatalogSort, p
 /**
  * Sotuvda bor kitoblar soni: kalitlar "all", "<til>", "<til>|<mavzu>", "*|<mavzu>" (10 daqiqa keshlanadi).
  */
-export const getCategoryCounts = unstable_cache(
+export const getCategoryCounts = cached(
   async (): Promise<Record<string, number>> => {
     const rows = await prisma.$queryRaw<Array<{ lang: string; topic: string | null; n: bigint }>>`
       WITH b AS (
@@ -92,8 +92,8 @@ export const getCategoryCounts = unstable_cache(
     }
     return out;
   },
-  ["category-counts-v2"],
-  { revalidate: 600 },
+  "category-counts-v2",
+  3600,
 );
 
 export type MenuLanguage = { slug: string; name: string; count: number; topics: Array<{ slug: string; name: string; count: number }> };
@@ -112,3 +112,5 @@ export function menuTree(counts: Record<string, number>): MenuLanguage[] {
 export function menuCategories(counts: Record<string, number>) {
   return CATEGORIES.map((c) => ({ slug: c.slug, name: c.name, count: counts[`*|${c.slug}`] ?? 0 })).filter((c) => c.count > 0);
 }
+
+export const getCatalogPage = cached(getCatalogPageRaw, "getCatalogPage", 3600);

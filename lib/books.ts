@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { Prisma, SellerType } from "@prisma/client";
 import { prisma } from "./db";
 import { searchKey } from "./normalize";
+import { cached } from "./cache";
 import { isUzbekEdition } from "./format";
 
 export const bookCardInclude = {
@@ -33,7 +34,7 @@ export function priceRange(book: BookCardData) {
 }
 
 /** Eng ko'p sotuvchida haqiqiy narxi bor kitoblar (solishtirish uchun eng qiziqarlilari). */
-export async function getMostComparedBooks(limit = 12) {
+async function getMostComparedBooksRaw(limit = 12) {
   const rows = await prisma.$queryRaw<Array<{ id: string; n: bigint }>>`
     SELECT e."bookId" AS id, COUNT(DISTINCT o."sellerId") AS n
     FROM "Offer" o JOIN "Edition" e ON e.id = o."editionId"
@@ -52,7 +53,7 @@ export async function getMostComparedBooks(limit = 12) {
  * Bosh sahifa banneri: avval admin tanlagan kitoblar (oxirgi tanlangani birinchi),
  * kam bo'lsa — saytga eng so'nggi qo'shilgan, rasmi va haqiqiy narxi bor kitoblar.
  */
-export async function getBannerBooks(limit = 6) {
+async function getBannerBooksRaw(limit = 6) {
   const featured = await prisma.book.findMany({
     where: { featuredAt: { not: null } },
     orderBy: { featuredAt: "desc" },
@@ -90,7 +91,7 @@ export async function getBannerBooks(limit = 6) {
 
 export type BannerBook = Awaited<ReturnType<typeof getBannerBooks>>[number];
 
-export async function catalogCounts() {
+async function catalogCountsRaw() {
   const [books, real] = await Promise.all([
     prisma.book.count(),
     prisma.offer.count({ where: { isSample: false } }),
@@ -98,7 +99,7 @@ export async function catalogCounts() {
   return { books, realOffers: real };
 }
 
-export async function getPopularBooks(limit = 8) {
+async function getPopularBooksRaw(limit = 8) {
   return prisma.book.findMany({
     orderBy: { searchCount: "desc" },
     take: limit,
@@ -110,7 +111,7 @@ export async function getPopularBooks(limit = 8) {
  * Qidiruv: so'rov normallashtiriladi va har bir so'z kitob nomi, kirillcha
  * nomi yoki muallif ismidan topilishi kerak.
  */
-export async function searchBooks(query: string, limit = 30) {
+async function searchBooksRaw(query: string, limit = 30) {
   const tokens = searchKey(query).split(" ").filter(Boolean).slice(0, 8);
   if (!tokens.length) return [];
 
@@ -137,7 +138,7 @@ export async function bumpSearchCount(ids: string[]) {
   await prisma.book.updateMany({ where: { id: { in: ids } }, data: { searchCount: { increment: 1 } } });
 }
 
-export const getBookBySlug = cache(async (slug: string) => {
+export const getBookBySlug = cache(cached(async (slug: string) => {
   return prisma.book.findUnique({
     where: { slug },
     include: {
@@ -155,7 +156,7 @@ export const getBookBySlug = cache(async (slug: string) => {
       },
     },
   });
-});
+}, "getBookBySlug"));
 
 export type BookFull = NonNullable<Awaited<ReturnType<typeof getBookBySlug>>>;
 export type OfferRow = BookFull["editions"][number]["offers"][number] & {
@@ -213,14 +214,14 @@ export function offerStats(all: OfferRow[]) {
   };
 }
 
-export const getAuthorBySlug = cache(async (slug: string) => {
+export const getAuthorBySlug = cache(cached(async (slug: string) => {
   return prisma.author.findUnique({
     where: { slug },
     include: { books: { include: bookCardInclude, orderBy: { searchCount: "desc" } } },
   });
-});
+}, "getAuthorBySlug"));
 
-export async function getSellers() {
+async function getSellersRaw() {
   return prisma.seller.findMany({
     orderBy: [{ offers: { _count: "desc" } }, { type: "asc" }, { name: "asc" }],
     include: {
@@ -229,3 +230,15 @@ export async function getSellers() {
     },
   });
 }
+
+export const getMostComparedBooks = cached(getMostComparedBooksRaw, "getMostComparedBooks", 3600);
+
+export const getBannerBooks = cached(getBannerBooksRaw, "getBannerBooks", 3600);
+
+export const catalogCounts = cached(catalogCountsRaw, "catalogCounts", 3600);
+
+export const getPopularBooks = cached(getPopularBooksRaw, "getPopularBooks", 3600);
+
+export const searchBooks = cached(searchBooksRaw, "searchBooks", 600);
+
+export const getSellers = cached(getSellersRaw, "getSellers", 3600);
