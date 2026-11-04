@@ -135,6 +135,12 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
     if (item.categories?.length) await addCategories(editionId, mapSellerCategories(item.categories), languageFromSellerCategories(item.categories));
 
     const current = byEdition.get(editionId) ?? null;
+    // hamkor o'zi kiritgan narx avtomatik yig'ish bilan almashtirilmaydi
+    if (current && current.source === "PARTNER" && opts.source === "AUTO") {
+      await prisma.offer.update({ where: { id: current.id }, data: { lastSeenAt: now } });
+      stats.unchanged++;
+      return;
+    }
     const d = decide(current, item);
     switch (d.action) {
       case "reject":

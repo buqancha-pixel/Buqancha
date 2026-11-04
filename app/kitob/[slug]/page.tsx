@@ -336,7 +336,7 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
             <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
               {SELLER_TYPE_LABEL[o.seller.type]}
             </span>
-            {o.source === "PARTNER" && !o.isSample && (
+            {o.source === "PARTNER" && !o.isSample && o.seller.partnerUntil && o.seller.partnerUntil > new Date() && (
               <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">Hamkor</span>
             )}
             {isCheapest && o.inStock && (

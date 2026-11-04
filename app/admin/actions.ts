@@ -11,6 +11,7 @@ import {
 import { buildSearchKey, slugify } from "@/lib/normalize";
 import { parseLocation } from "@/lib/geo";
 import { CATEGORY_BY_SLUG } from "@/lib/categories";
+import { hashToken, newToken } from "@/lib/partner/auth";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 
@@ -300,4 +301,42 @@ export async function quickCategoryAction(data: FormData) {
 export async function removeCategoryAction(data: FormData) {
   const [id, slug] = s(data, "remove").split("|");
   await run(safeBack(data), () => setCategories([id], slug, "remove").then(() => undefined), "Bo'limdan olib tashlandi.");
+}
+
+// ---------- hamkorlar kabineti ----------
+
+export async function partnerLinkAction(data: FormData) {
+  const id = s(data, "id");
+  let token = "";
+  await run(`/admin/sotuvchilar/${id}#hamkor`, async () => {
+    const seller = await prisma.seller.findUniqueOrThrow({ where: { id } });
+    token = newToken();
+    const now = new Date();
+    await prisma.seller.update({
+      where: { id },
+      data: {
+        partnerTokenHash: hashToken(token),
+        partnerSince: seller.partnerSince ?? now,
+        // birinchi marta — 30 kunlik bepul sinov
+        partnerUntil: seller.partnerUntil ?? new Date(now.getTime() + 30 * 864e5),
+      },
+    });
+    // havola faqat bir marta ko'rsatiladi (bazada saqlanmaydi)
+    return `/admin/sotuvchilar/${id}?havola=${encodeURIComponent(token)}#hamkor`;
+  }, "Yangi kirish havolasi yaratildi. Eski havola endi ishlamaydi.");
+}
+
+export async function partnerTermAction(data: FormData) {
+  const id = s(data, "id");
+  const days = Number(s(data, "days"));
+  await run(`/admin/sotuvchilar/${id}#hamkor`, async () => {
+    const seller = await prisma.seller.findUniqueOrThrow({ where: { id } });
+    if (days === 0) {
+      await prisma.seller.update({ where: { id }, data: { partnerTokenHash: null, partnerUntil: null } });
+      return;
+    }
+    if (!Number.isInteger(days) || days < 1 || days > 800) throw new AdminError("Muddat noto'g'ri.");
+    const base = seller.partnerUntil && seller.partnerUntil > new Date() ? seller.partnerUntil : new Date();
+    await prisma.seller.update({ where: { id }, data: { partnerUntil: new Date(base.getTime() + days * 864e5), partnerSince: seller.partnerSince ?? new Date() } });
+  }, days === 0 ? "Hamkorlik bekor qilindi, havola o'chirildi." : `Muddat ${days} kunga uzaytirildi.`);
 }

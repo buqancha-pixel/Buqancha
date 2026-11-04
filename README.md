@@ -26,6 +26,7 @@ Testlar: `npm test` (qidiruv normallashtirish va narx formati).
 | `CRON_SECRET` | `/api/cron/collect` uchun maxfiy kalit |
 | `COLLECTOR_USER_AGENT` | Ixtiyoriy: bot User-Agent'i (sukut: `BuqanchaBot/1.0 (+SITE_URL/bot)`) |
 | `ADMIN_PASSWORD` | Admin panel (`/admin`) paroli, kamida 8 belgi. O'rnatilmasa panel o'chiq |
+| `PARTNER_SECRET` | Ixtiyoriy: hamkor sessiyalarini imzolash kaliti (bo'lmasa `ADMIN_PASSWORD`; o'zgarsa hamkorlar qayta kiradi) |
 | `GOOGLE_SITE_VERIFICATION` | Ixtiyoriy: Google Search Console "HTML tag" tasdiqlash kodi (`content` qiymati) |
 | `ALLOW_INDEXING` | Google indeksatsiyasi. Sukut: Vercel production'da yoqiq, boshqa joyda o'chiq (robots.txt `Disallow: /`, `noindex`). `true`/`false` bilan majburlash mumkin |
 
@@ -167,6 +168,15 @@ ko'rinishida bo'lsa, ikki nuqtagacha qism bazadagi muallif bilan solishtiriladi.
 
 Instagram (`INSTAGRAM`, `lib/site.ts`): sarlavhada belgi, sayt pastida tugma, bosh sahifada schema.org
 `Organization.sameAs` (Google sahifani sayt bilan bog'laydi).
+
+**Hamkorlar kabineti** (`/hamkor`): do'kon/nashriyot o'z narxlarini o'zi boshqaradi — kitob qo'shish (ISBN yoki nom
+bo'yicha qidirib), narx/mavjudlikni tahrirlash, bazada yo'q kitobni qo'shish (ISBN bilan; diniy adabiyot — faqat
+sayt egasi orqali), CSV/JSON fayl yuklash ("to'liq ro'yxat" belgilansa faylda yo'qlari "sotuvda yo'q"), do'kon
+ma'lumotlari va xaritadagi joylashuv. Kirish — admin panelda (Sotuvchilar → sotuvchi → Hamkor kabineti) yaratiladigan
+maxfiy havola; bazada faqat kalit xeshi, login/parol/telefon saqlanmaydi; yangi havola eskisini va sessiyalarni
+bekor qiladi. `Seller.partnerUntil` — birinchi marta 30 kun bepul, keyin admin "+30 kun"/"+1 yil" bilan uzaytiradi;
+muddat tugasa narxlar qoladi, tahrirlash va "Hamkor" belgisi yopiladi. Hamkor narxini kechki avtomatik yig'ish
+almashtirmaydi. Sessiya imzosi: `PARTNER_SECRET` (bo'lmasa `ADMIN_PASSWORD`).
 
 Hamkorlik sahifasida forma yo'q (shaxsiy ma'lumot saqlanmaydi) — Telegram havolasi (`PARTNER_TELEGRAM`, `lib/site.ts`).
 

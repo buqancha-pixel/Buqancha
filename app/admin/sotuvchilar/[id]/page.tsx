@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
-import { saveSellerAction } from "../../actions";
+import { partnerLinkAction, partnerTermAction, saveSellerAction } from "../../actions";
+import { formatDate } from "@/lib/format";
+import { SITE_URL } from "@/lib/site";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, Select, type SP } from "../../ui";
 
 export default async function EditSeller({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
@@ -45,6 +47,45 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
           <Button className="mt-4">Saqlash</Button>
         </Section>
       </form>
+      {seller && (
+        <Section title="Hamkor kabineti" id="hamkor">
+          {sp.havola && (
+            <div className="mb-4 rounded-xl border border-accent bg-accent-soft p-3 text-sm">
+              <p className="font-semibold">Kirish havolasi (faqat hozir ko&apos;rinadi — nusxalab, hamkorga Telegram orqali yuboring):</p>
+              <input readOnly value={`${SITE_URL}/hamkor/kirish?k=${sp.havola}`} className="mt-2 h-10 w-full rounded-lg border border-border bg-bg px-2 font-mono text-xs" />
+            </div>
+          )}
+          <p className="mb-3 text-sm">
+            {seller.partnerTokenHash ? (
+              seller.partnerUntil && seller.partnerUntil > new Date() ? (
+                <span className="font-semibold text-accent">Faol — {formatDate(seller.partnerUntil)} gacha</span>
+              ) : (
+                <span className="font-semibold text-warn-text">Muddati tugagan{seller.partnerUntil ? ` (${formatDate(seller.partnerUntil)})` : ""}</span>
+              )
+            ) : (
+              <span className="text-muted">Kabinet ochilmagan.</span>
+            )}
+            {seller.partnerSince && <span className="text-muted"> · hamkor {formatDate(seller.partnerSince)} dan</span>}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <form action={partnerLinkAction}>
+              <input type="hidden" name="id" value={seller.id} />
+              <Button className="h-10">{seller.partnerTokenHash ? "Yangi havola (eskisi o'chadi)" : "Kabinet ochish (30 kun bepul)"}</Button>
+            </form>
+            {seller.partnerTokenHash &&
+              ([["30", "+30 kun"], ["365", "+1 yil"], ["0", "Bekor qilish"]] as const).map(([d, label]) => (
+                <form key={d} action={partnerTermAction}>
+                  <input type="hidden" name="id" value={seller.id} />
+                  <input type="hidden" name="days" value={d} />
+                  <Button variant={d === "0" ? "danger" : "ghost"} className="h-10">{label}</Button>
+                </form>
+              ))}
+          </div>
+          <p className="mt-3 text-xs text-muted">
+            Hamkor havola orqali kiradi (login va parol yo&apos;q). Muddat tugasa narxlari qoladi, faqat tahrirlash va &quot;Hamkor&quot; belgisi yopiladi.
+          </p>
+        </Section>
+      )}
       {seller && (
         <p className="text-sm text-muted">
           {seller._count.offers} ta narx.{" "}

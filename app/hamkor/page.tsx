@@ -1,0 +1,211 @@
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { partnerActive, requirePartner } from "@/lib/partner/auth";
+import { searchBooks } from "@/lib/books";
+import { normalizeIsbn } from "@/lib/collector/isbn";
+import { LANGUAGE_LABEL, formatDate, formatNumber, formatPrice } from "@/lib/format";
+import { addPartnerOffer, createPartnerBook, deletePartnerOffer, partnerLogout, savePartnerOffer, savePartnerProfile, uploadPartnerFeed } from "./actions";
+import { Area, Button, Check, Field, Flash, Section, Select, inputCls } from "../admin/ui";
+
+type SP = Promise<Record<string, string | undefined>>;
+const PER_PAGE = 40;
+
+export default async function PartnerHome({ searchParams }: { searchParams: SP }) {
+  const seller = await requirePartner();
+  const sp = await searchParams;
+  const active = partnerActive(seller);
+  const n = (sp.n ?? "").trim();
+  const page = Math.max(1, Number(sp.sahifa) || 1);
+  const qidir = (sp.qidir ?? "").trim();
+
+  const offerWhere = {
+    sellerId: seller.id,
+    isSample: false,
+    ...(n ? { edition: { book: { OR: [{ title: { contains: n, mode: "insensitive" as const } }, { author: { name: { contains: n, mode: "insensitive" as const } } }] } } } : {}),
+  };
+  const [offers, offerTotal, inStock] = await Promise.all([
+    prisma.offer.findMany({
+      where: offerWhere,
+      include: { edition: { include: { book: { include: { author: true } } } } },
+      orderBy: { updatedAt: "desc" },
+      skip: (page - 1) * PER_PAGE,
+      take: PER_PAGE,
+    }),
+    prisma.offer.count({ where: offerWhere }),
+    prisma.offer.count({ where: { sellerId: seller.id, isSample: false, inStock: true } }),
+  ]);
+  const pages = Math.max(1, Math.ceil(offerTotal / PER_PAGE));
+  const back = `/hamkor?${new URLSearchParams({ ...(n ? { n } : {}), ...(page > 1 ? { sahifa: String(page) } : {}) })}#narxlar`;
+
+  // kitob qidirish: ISBN aniq yoki nom/muallif
+  let found: Array<{ id: string; slug: string; title: string; author: string; editions: Array<{ id: string; publisher: string; year: number | null; isbn: string | null; language: string | null; mine: number | null }> }> = [];
+  if (qidir) {
+    const isbn = normalizeIsbn(qidir);
+    const ids = isbn
+      ? (await prisma.edition.findMany({ where: { isbn }, select: { bookId: true } })).map((e) => e.bookId)
+      : (await searchBooks(qidir, 10)).map((b) => b.id);
+    const books = await prisma.book.findMany({
+      where: { id: { in: ids } },
+      include: { author: true, editions: { include: { offers: { where: { sellerId: seller.id }, select: { price: true } } } } },
+    });
+    found = books.map((b) => ({
+      id: b.id,
+      slug: b.slug,
+      title: b.title,
+      author: b.author.name,
+      editions: b.editions.map((e) => ({ id: e.id, publisher: e.publisher, year: e.year, isbn: e.isbn, language: e.language, mine: e.offers[0]?.price ?? null })),
+    }));
+  }
+
+  return (
+    <div>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm text-muted">Hamkor kabineti</p>
+          <h1 className="text-2xl sm:text-3xl">{seller.name}</h1>
+          <p className={`mt-1 text-sm font-semibold ${active ? "text-accent" : "text-warn-text"}`}>
+            {active ? `Faol — ${formatDate(seller.partnerUntil!)} gacha` : "Muddati tugagan — narxlaringiz saytda qoladi, lekin o'zgartirib bo'lmaydi"}
+          </p>
+        </div>
+        <form action={partnerLogout}>
+          <button className="text-sm text-muted underline">Chiqish</button>
+        </form>
+      </div>
+      <Flash sp={sp} />
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="card p-4"><p className="text-xs text-muted">Narxlaringiz</p><p className="text-2xl font-semibold tabular">{formatNumber(offerTotal)}</p></div>
+        <div className="card p-4"><p className="text-xs text-muted">Sotuvda</p><p className="text-2xl font-semibold tabular">{formatNumber(inStock)}</p></div>
+        <div className="card col-span-2 p-4 text-sm sm:col-span-1">
+          <p className="text-xs text-muted">Bo&apos;limlar</p>
+          <p className="mt-1 flex flex-wrap gap-x-3"><a href="#qoshish" className="underline">Qo&apos;shish</a><a href="#fayl" className="underline">Fayl</a><a href="#narxlar" className="underline">Narxlar</a><a href="#malumot" className="underline">Ma&apos;lumot</a></p>
+        </div>
+      </div>
+      {!active && (
+        <p className="mb-5 rounded-xl bg-warn-bg px-4 py-3 text-sm text-warn-text">
+          Kabinetni uzaytirish uchun Buqanchaga yozing. Muddat tugaganda narxlaringiz o&apos;chmaydi, faqat &quot;Hamkor&quot; belgisi va tahrirlash yopiladi.
+        </p>
+      )}
+
+      <Section title="Kitob qo'shish" id="qoshish">
+        <form className="mb-4 flex gap-2" action="/hamkor#qoshish">
+          <input name="qidir" defaultValue={qidir} placeholder="ISBN yoki kitob nomi" className={inputCls} />
+          <button className="h-11 shrink-0 rounded-full border border-border bg-surface-2 px-4 text-sm font-semibold">Qidirish</button>
+        </form>
+        {qidir && !found.length && <p className="text-sm text-muted">Topilmadi — pastdagi &quot;Bazada yo&apos;q kitob&quot; formasidan qo&apos;shing.</p>}
+        <ul className="grid gap-3">
+          {found.map((b) => (
+            <li key={b.id} className="rounded-xl border border-border p-3">
+              <Link href={`/kitob/${b.slug}`} target="_blank" className="font-medium hover:underline">{b.title}</Link>
+              <p className="mb-2 text-xs text-muted">{b.author}</p>
+              {b.editions.map((e) => (
+                <form key={e.id} action={addPartnerOffer} className="mt-2 grid gap-2 rounded-lg bg-surface-2 p-2 sm:grid-cols-[1fr_8rem_auto] sm:items-end">
+                  <input type="hidden" name="editionId" value={e.id} />
+                  <p className="text-xs">
+                    {e.publisher}{e.year ? `, ${e.year}` : ""}{e.isbn ? ` · ISBN ${e.isbn}` : ""}{e.language && LANGUAGE_LABEL[e.language] ? ` · ${LANGUAGE_LABEL[e.language]}` : ""}
+                    {e.mine != null && <b className="ml-1 text-accent">· sizdagi narx: {formatPrice(e.mine)}</b>}
+                  </p>
+                  <input name="price" required inputMode="numeric" placeholder="Narx, so'm" aria-label="Narx" className="h-10 rounded-full border border-border bg-bg px-3 text-sm" />
+                  <button disabled={!active} className="h-10 rounded-full bg-accent px-4 text-sm font-semibold text-accent-contrast disabled:opacity-50">
+                    {e.mine != null ? "Yangilash" : "Qo'shish"}
+                  </button>
+                  <input name="url" type="url" placeholder="Saytingizdagi sahifa (ixtiyoriy)" aria-label="Havola" className="h-10 rounded-full border border-border bg-bg px-3 text-sm sm:col-span-3" />
+                </form>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Bazada yo'q kitob" id="yangi">
+        <form action={createPartnerBook} className="grid gap-4 sm:grid-cols-2">
+          <Field label="Kitob nomi" name="title" required className="sm:col-span-2" />
+          <Field label="Muallif" name="author" required />
+          <Field label="ISBN" name="isbn" required inputMode="numeric" hint="Orqa muqovadagi shtrix-kod ostida (978...)" />
+          <Field label="Nashriyot" name="publisher" required />
+          <Field label="Yili" name="year" inputMode="numeric" />
+          <Select label="Tili" name="language" defaultValue="">
+            <option value="">O&apos;zbekcha</option>
+            {Object.entries(LANGUAGE_LABEL).map(([c, l]) => (
+              <option key={c} value={c}>{l}</option>
+            ))}
+          </Select>
+          <Field label="Narx (so'm)" name="price" required inputMode="numeric" />
+          <Field label="Saytingizdagi sahifa" name="url" type="url" className="sm:col-span-2" />
+          <Button disabled={!active} className="w-fit">Kitobni qo&apos;shish</Button>
+        </form>
+      </Section>
+
+      <Section title="Fayl bilan yuklash (Excel/CSV)" id="fayl">
+        <p className="mb-3 text-sm text-muted">
+          Ko&apos;p kitob bo&apos;lsa — jadval yuklang. Ustunlar: <b>isbn, nom, muallif, nashriyot, narx, mavjud, havola</b>. Excel&apos;da
+          &quot;Saqlash → CSV UTF-8&quot; tanlang.{" "}
+          <a href="/feed-namuna.csv" download className="font-semibold text-accent underline">Namuna faylni yuklab olish</a>
+        </p>
+        <form action={uploadPartnerFeed} className="grid gap-3">
+          <input type="file" name="file" accept=".csv,.txt,.json,text/csv,application/json" required className="text-sm" />
+          <Check label="Bu to'liq ro'yxat — faylda yo'q kitoblar &quot;sotuvda yo'q&quot; bo'lsin" name="full" />
+          <Button disabled={!active} className="w-fit">Yuklash</Button>
+        </form>
+      </Section>
+
+      <Section title={`Narxlaringiz (${formatNumber(offerTotal)})`} id="narxlar">
+        <form className="mb-3 flex gap-2" action="/hamkor#narxlar">
+          <input name="n" defaultValue={n} placeholder="Nom yoki muallif bo'yicha" className={inputCls} />
+          <button className="h-11 shrink-0 rounded-full border border-border bg-surface-2 px-4 text-sm font-semibold">Izlash</button>
+        </form>
+        <ul className="divide-y divide-border rounded-xl border border-border">
+          {offers.map((o) => (
+            <li key={o.id} className="p-3">
+              <p className="truncate text-sm font-medium">{o.edition.book.title}</p>
+              <p className="truncate text-xs text-muted">{o.edition.book.author.name} · {o.edition.publisher}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <form action={savePartnerOffer} className="flex flex-1 flex-wrap items-center gap-2">
+                  <input type="hidden" name="id" value={o.id} />
+                  <input type="hidden" name="back" value={back} />
+                  <input type="hidden" name="url" value={o.url ?? ""} />
+                  <input name="price" defaultValue={o.price} inputMode="numeric" aria-label="Narx" className="h-10 w-28 rounded-full border border-border bg-surface-2 px-3 text-sm tabular" />
+                  <label className="flex items-center gap-1.5 text-xs">
+                    <input type="checkbox" name="inStock" defaultChecked={o.inStock} className="h-4 w-4" /> sotuvda
+                  </label>
+                  <button disabled={!active} className="h-10 rounded-full bg-accent px-4 text-xs font-semibold text-accent-contrast disabled:opacity-50">Saqlash</button>
+                </form>
+                <form action={deletePartnerOffer}>
+                  <input type="hidden" name="id" value={o.id} />
+                  <input type="hidden" name="back" value={back} />
+                  <button disabled={!active} className="text-xs text-muted underline disabled:opacity-50">O&apos;chirish</button>
+                </form>
+              </div>
+            </li>
+          ))}
+          {!offers.length && <li className="p-4 text-center text-sm text-muted">Hali narx yo&apos;q — yuqoridan kitob qo&apos;shing yoki fayl yuklang.</li>}
+        </ul>
+        {pages > 1 && (
+          <div className="mt-3 flex items-center justify-between text-sm">
+            {page > 1 ? <Link href={`/hamkor?${new URLSearchParams({ ...(n ? { n } : {}), sahifa: String(page - 1) })}#narxlar`} className="underline">← Oldingi</Link> : <span />}
+            <span className="text-muted">{page} / {pages}</span>
+            {page < pages ? <Link href={`/hamkor?${new URLSearchParams({ ...(n ? { n } : {}), sahifa: String(page + 1) })}#narxlar`} className="underline">Keyingi →</Link> : <span />}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Do'kon ma'lumotlari" id="malumot">
+        <form action={savePartnerProfile} className="grid gap-4 sm:grid-cols-2">
+          <Field label="Shahar" name="city" defaultValue={seller.city} required />
+          <Field label="Sayt" name="website" type="url" defaultValue={seller.website ?? ""} placeholder="https://" />
+          <Field label="Manzil" name="address" defaultValue={seller.address ?? ""} className="sm:col-span-2" />
+          <Field label="Telegram/Instagram" name="social" defaultValue={seller.social ?? ""} placeholder="instagram.com/dokonim" className="sm:col-span-2" />
+          <Field
+            label="Xaritadagi joylashuv"
+            name="location"
+            defaultValue={seller.lat != null && seller.lng != null ? `${seller.lat}, ${seller.lng}` : ""}
+            placeholder="41.311081, 69.240562"
+            hint="Google Maps'da do'koningiz ustiga barmoqni bosib turing — chiqqan raqamlarni nusxalang"
+            className="sm:col-span-2"
+          />
+          <Area label="Qisqacha (500 belgigacha)" name="description" defaultValue={seller.description ?? ""} className="sm:col-span-2" />
+          <Button disabled={!active} className="w-fit">Saqlash</Button>
+        </form>
+      </Section>
+    </div>
+  );
+}

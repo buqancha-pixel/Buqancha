@@ -27,6 +27,7 @@ export default async function AdminSellers({ searchParams }: { searchParams: SP 
                 <span className="block truncate text-xs text-muted">
                   {SELLER_TYPE_LABEL[s.type]} · {s.city}
                   {s.collector !== "NONE" ? " · narxlar avtomatik" : ""}
+                  {s.partnerUntil && s.partnerUntil > new Date() ? " · hamkor" : s.partnerTokenHash ? " · hamkorlik muddati tugagan" : ""}
                 </span>
               </span>
               <span className="shrink-0 text-sm tabular text-muted">{formatNumber(s._count.offers)} narx</span>

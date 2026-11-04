@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { PARTNER_TELEGRAM } from "@/lib/site";
 
@@ -19,10 +20,11 @@ export default function PartnerPage() {
         </p>
         <ul className="mt-6 flex flex-col gap-3 text-[15px]">
           {[
-            "Bepul ro'yxatdan o'tish va narxlarni joylash",
-            "Narxlarni fayl, API yoki saytingiz orqali yangilash",
-            "Hamkor takliflari \"hamkor\" belgisi bilan ko'rsatiladi",
-            "Xaridor to'g'ridan-to'g'ri saytingizga o'tadi",
+            "Shaxsiy kabinet: narxlaringizni o'zingiz yangilaysiz, yangi kitob qo'shasiz",
+            "Ko'p kitob bo'lsa — Excel/CSV fayl yuklaysiz",
+            "Narxlaringiz \"Hamkor\" belgisi bilan ko'rsatiladi",
+            "Birinchi oy bepul",
+            "Xaridor to'g'ridan-to'g'ri saytingizga yoki do'koningizga keladi",
           ].map((t) => (
             <li key={t} className="flex gap-3">
               <span className="mt-1 size-2 shrink-0 rounded-full bg-accent" aria-hidden="true" />
@@ -30,6 +32,12 @@ export default function PartnerPage() {
             </li>
           ))}
         </ul>
+        <p className="mt-6 text-sm text-muted">
+          Hamkormisiz?{" "}
+          <Link href="/hamkor/kirish" className="font-semibold text-accent underline">
+            Kabinetga kirish
+          </Link>
+        </p>
       </div>
       <div className="card flex flex-col gap-5 p-6 sm:p-8">
         <h2 className="text-xl">Telegram orqali yozing</h2>

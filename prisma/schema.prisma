@@ -134,6 +134,11 @@ model Seller {
   crawlDelayMs Int           @default(3000)
   // sotuvchi rasmlarini ko'rsatishga rozilik (so'rov bo'lsa — false)
   allowImages  Boolean       @default(true)
+  // hamkorlar kabineti: kirish havolasi kalitining SHA-256 xeshi (kalitning o'zi saqlanmaydi)
+  partnerTokenHash String?   @unique
+  partnerSince     DateTime?
+  // kabinet va "Hamkor" belgisi shu sanagacha faol (bepul sinov yoki to'lov)
+  partnerUntil     DateTime?
   offers   Offer[]
   runs     CollectorRun[]
   unmatched UnmatchedItem[]

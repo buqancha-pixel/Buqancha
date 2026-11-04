@@ -130,7 +130,7 @@ function editionFields(input: EditionInput) {
   };
 }
 
-export async function createBook(book: BookInput, edition: EditionInput): Promise<string> {
+export async function createBook(book: BookInput, edition: EditionInput, origin: "manual" | "partner" = "manual"): Promise<string> {
   const b = bookFields(book);
   const e = editionFields(edition);
   await assertIsbnFree(e.isbn);
@@ -141,7 +141,7 @@ export async function createBook(book: BookInput, edition: EditionInput): Promis
       ...b,
       slug: await uniqueSlug(slugify(b.title), "book", surname),
       authorId: author.id,
-      origin: "manual",
+      origin,
       coverColor: colorFor(b.title),
       searchKey: buildSearchKey(b.title, b.titleCyrl, author.name, author.nameCyrl),
       editions: { create: e },
@@ -189,7 +189,7 @@ export async function deleteEdition(editionId: string) {
 export type OfferInput = { sellerId: string; price: string; url: string; inStock: boolean };
 
 /** Narx qo'shish yoki yangilash (bir nashr + bir sotuvchi = bitta narx). */
-export async function saveOffer(editionId: string, input: OfferInput) {
+export async function saveOffer(editionId: string, input: OfferInput, source: "MANUAL" | "PARTNER" = "MANUAL") {
   const seller = await prisma.seller.findUnique({ where: { id: input.sellerId } });
   if (!seller) throw new AdminError("Sotuvchini tanlang.");
   const price = parseSum(input.price);
@@ -197,8 +197,8 @@ export async function saveOffer(editionId: string, input: OfferInput) {
   const now = new Date();
   const offer = await prisma.offer.upsert({
     where: { editionId_sellerId: { editionId, sellerId: seller.id } },
-    create: { editionId, sellerId: seller.id, price, url, inStock: input.inStock, source: "MANUAL", lastSeenAt: now, checkedAt: now },
-    update: { price, url, inStock: input.inStock, source: "MANUAL", isSample: false, pendingPrice: null, checkedAt: now },
+    create: { editionId, sellerId: seller.id, price, url, inStock: input.inStock, source, lastSeenAt: now, checkedAt: now },
+    update: { price, url, inStock: input.inStock, source, isSample: false, pendingPrice: null, checkedAt: now },
   });
   await prisma.priceSnapshot.create({ data: { offerId: offer.id, price, inStock: input.inStock } });
 }

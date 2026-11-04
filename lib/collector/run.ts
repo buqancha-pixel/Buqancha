@@ -13,12 +13,18 @@ import { searchKey } from "../normalize";
 export type RunResult = { seller: string; kind: CollectorKind; status: string; stats: RunStats; error?: string };
 
 /** Hamkor feed'ini (fayl yoki matn) import qilish. */
-export async function importFeed(sellerSlug: string, body: string, format?: "csv" | "json"): Promise<RunResult> {
+export async function importFeed(
+  sellerSlug: string,
+  body: string,
+  format?: "csv" | "json",
+  opts: { fullCatalog?: boolean } = {},
+): Promise<RunResult> {
   const seller = await prisma.seller.findUniqueOrThrow({ where: { slug: sellerSlug } });
   return withRun(seller, "FEED", async (stats) => {
     const { items, errors } = parseFeed(body, format);
     stats.errors.push(...errors);
-    await applyItems(seller.id, items, stats, { source: "PARTNER", fullCatalog: true, sellerSlug: seller.slug });
+    // to'liq ro'yxat bo'lsa — faylda yo'q narxlar "sotuvda yo'q" deb belgilanadi
+    await applyItems(seller.id, items, stats, { source: "PARTNER", fullCatalog: opts.fullCatalog ?? true, sellerSlug: seller.slug });
   });
 }
 
