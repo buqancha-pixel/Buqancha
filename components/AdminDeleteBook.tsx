@@ -5,8 +5,8 @@ import { useState, useTransition } from "react";
 import { quickDeleteBookAction } from "@/app/admin/actions";
 
 /**
- * Admin kirgan bo'lsa: kitobni saytning o'zidan o'chirish (tasdiqlash so'raladi).
- * "card" — katalogdagi muqova burchagida; "button" — kitob sahifasidagi admin qatorida.
+ * Admin panel (Kitoblar ro'yxati): kitobni o'chirish tugmasi (tasdiqlash so'raladi).
+ * Saytning ochiq sahifalarida ishlatilmaydi.
  * O'chirilgan kitob kechki yig'ishda qayta qo'shilmaydi.
  */
 export function AdminDeleteBook({ id, title, variant, afterDelete = "refresh" }: { id: string; title: string; variant: "card" | "button"; afterDelete?: "refresh" | "catalog" }) {

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { isAdmin } from "@/lib/admin/auth";
-import { AdminDeleteBook } from "@/components/AdminDeleteBook";
 import type { SellerType } from "@prisma/client";
 import { Cover } from "@/components/Cover";
 import { BookCard } from "@/components/BookCard";
@@ -71,7 +69,7 @@ const TYPE_PARAMS: Array<[string, SellerType]> = Object.entries(SELLER_TYPE_PARA
 export default async function BookPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { slug } = await params;
   const sp = await searchParams;
-  const [book, admin] = await Promise.all([getBookBySlug(slug), isAdmin()]);
+  const book = await getBookBySlug(slug);
   if (!book) notFound();
 
   const tur = typeof sp.tur === "string" && sp.tur in SELLER_TYPE_PARAM ? sp.tur : undefined;
@@ -154,15 +152,6 @@ export default async function BookPage({ params, searchParams }: { params: Param
           )}
         </figure>
         <div className="min-w-0">
-          {admin && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2 text-xs">
-              <span className="font-semibold text-muted">Admin:</span>
-              <Link href={`/admin/kitoblar/${book.id}`} className="rounded-full border border-border px-3 py-1 font-semibold hover:border-accent">
-                Tahrirlash
-              </Link>
-              <AdminDeleteBook id={book.id} title={book.title} variant="button" afterDelete="catalog" />
-            </div>
-          )}
           <h1 className="text-2xl sm:text-4xl [text-wrap:balance]">{book.title}</h1>
           {book.titleCyrl && (
             <p className="mt-1 text-sm text-muted">
