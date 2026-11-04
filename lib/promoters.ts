@@ -3,7 +3,14 @@ import { cached } from "./cache";
 import { bookCardInclude } from "./books";
 import { AdminError } from "./admin/books";
 
-/** Saytda faqat rozilik olingan va faol targ'ibotchilar ko'rinadi. */
+/** Post kartochkasi uchun maydonlar (matn qisqasi bilan). */
+export const postCardSelect = {
+  id: true, kind: true, title: true, body: true, videoPlatform: true, videoId: true, videoUrl: true, publishedAt: true,
+  images: { take: 1, orderBy: { position: "asc" as const }, select: { id: true } },
+  book: { select: { title: true, slug: true } },
+} as const;
+
+/** Saytda faqat rozilik olingan va faol targ'ibotchilar ko'rinadi.*/
 const visible = { consent: true, active: true } as const;
 
 export const getPromoters = cached(
@@ -28,6 +35,12 @@ export const getPromoter = cached(
         // mahkamlanganlar (ko'pi bilan 3 ta) birinchi
         books: { orderBy: [{ pinned: "desc" }, { createdAt: "desc" }], include: { book: { include: bookCardInclude } } },
         readingBook: { include: bookCardInclude },
+        posts: {
+          where: { status: "APPROVED" },
+          orderBy: { publishedAt: "desc" },
+          take: 24,
+          select: postCardSelect,
+        },
         lists: {
           orderBy: { createdAt: "desc" },
           include: {
@@ -37,7 +50,7 @@ export const getPromoter = cached(
         },
       },
     }),
-  "promoter-v2",
+  "promoter-v3",
   300,
 );
 
@@ -107,3 +120,31 @@ export function cleanNote(raw: string): string | null {
   if (text.length > NOTE_MAX_CHARS) throw new AdminError(`Tavsiya matni juda uzun (${NOTE_MAX_CHARS} belgigacha).`);
   return text;
 }
+
+/** Bitta post sahifasi (faqat tasdiqlangan va bloger saytda ko'rinadigan bo'lsa). */
+export const getPromoterPost = cached(
+  (promoterSlug: string, postId: string) =>
+    prisma.promoterPost.findFirst({
+      where: { id: postId, status: "APPROVED", promoter: { slug: promoterSlug, ...visible } },
+      include: {
+        promoter: true,
+        images: { orderBy: { position: "asc" }, select: { id: true, width: true, height: true } },
+        book: { include: bookCardInclude },
+      },
+    }),
+  "promoter-post",
+  300,
+);
+
+/** Kitob haqidagi bloger postlari (kitob sahifasi uchun). */
+export const getBookPosts = cached(
+  (bookId: string) =>
+    prisma.promoterPost.findMany({
+      where: { bookId, status: "APPROVED", promoter: visible },
+      orderBy: { publishedAt: "desc" },
+      take: 12,
+      select: { ...postCardSelect, promoter: { select: { id: true, slug: true, name: true, instagram: true, photoUrl: true, photoAt: true } } },
+    }),
+  "book-posts",
+  300,
+);

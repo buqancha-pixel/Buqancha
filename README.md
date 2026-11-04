@@ -217,6 +217,14 @@ Bloger sahifasi qo'shimchalari: banner (`PromoterBanner`, 1500×500; yuklanmasa 
 50 tagacha), Instagram story rasmi (`/rasm/story/<blogerId>/<kitobId>`, 1080×1920 PNG, `next/og` + Manrope shrifti
 `assets/fonts`, muqova `sharp` bilan PNG'ga; `?yuklab=1` — fayl) va statistika (`PromoterStat`: kunlik umumiy
 ko'rishlar va kitobga o'tishlar, `/api/stat`, botlar sanalmaydi, shaxsiy ma'lumot saqlanmaydi; kabinet va adminda).
+**Bloger postlari** (`PromoterPost`): maqola (50–3000 so'z, rasmlar bilan), rasmli post (1–6 rasm) va video.
+Maqola va rasm darhol chiqadi; video `PENDING` — admin → Postlar (menyuda kutayotganlar soni) shablon bo'yicha tekshirib
+tasdiqlaydi yoki sababini tanlab rad etadi (bloger sababini kabinetida ko'radi). Video saytga yuklanmaydi: YouTube
+(oddiy/Shorts), Instagram Reels yoki TikTok havolasi (`lib/video.ts`) o'sha platformaning iframe pleyeri bilan
+ko'rsatiladi. Video shabloni — `VIDEO_RULES` (bloger joylashda hammasini belgilaydi) va videoning oxiriga qo'yiladigan
+yakuniy kadr `/rasm/shablon/<blogerId>?f=v|h` (1080×1920 / 1920×1080). Post rasmlari 1600px WebP (`PromoterPostImage`,
+`/rasm/post/<id>`), brauzer oldindan kichraytiradi. Saytda: bloger sahifasida "Videolar va maqolalar",
+`/targibotchilar/<bloger>/p/<id>`, kitob sahifasida "Blogerlar videolari va maqolalari".
 Tarmoqlar: Instagram (admin), Telegram va YouTube kanali (bloger kabinetda o'zi kiritadi, `normalizeTelegram`/
 `normalizeYoutube` — video havolasi emas, kanal) — bloger sahifasi va ro'yxatda logolar bilan (`SocialLinks`). Instagram manzili, rozilik va saytda ko'rinish faqat adminda.
 

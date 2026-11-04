@@ -10,8 +10,11 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { PromoterBanner } from "@/components/PromoterBanner";
 import { SITE_URL } from "@/lib/site";
+import { MultiPhotoInput } from "@/components/MultiPhotoInput";
+import { PLATFORM_LABEL, VIDEO_RULES } from "@/lib/video";
+import { MAX_IMAGES } from "@/lib/promoter/posts";
 import {
-  addPromoterRecommendation, createPromoterList, deletePromoterList, promoterLogout, removePromoterBanner, removePromoterPhoto,
+  addPromoterRecommendation, createArticle, createPhotoPost, createPromoterList, createVideoPost, deletePost, deletePromoterList, promoterLogout, removePromoterBanner, removePromoterPhoto,
   removePromoterRecommendation, savePromoterProfile, setReadingBook, updatePromoterList, updatePromoterNote, uploadPromoterBanner,
   uploadPromoterPhoto,
 } from "./actions";
@@ -44,7 +47,7 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
   const q = (sp.q ?? "").trim().slice(0, 100);
   const since = new Date(Date.now() - 29 * 864e5);
   since.setUTCHours(0, 0, 0, 0);
-  const [recs, lists, days, totals] = await Promise.all([
+  const [recs, lists, days, totals, posts] = await Promise.all([
     prisma.promoterBook.findMany({
       where: { promoterId: me.id },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
@@ -53,6 +56,7 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
     prisma.promoterList.findMany({ where: { promoterId: me.id }, orderBy: { createdAt: "desc" }, include: { books: { orderBy: { position: "asc" }, select: { bookId: true } } } }),
     prisma.promoterStat.findMany({ where: { promoterId: me.id, day: { gte: since } }, orderBy: { day: "asc" } }),
     prisma.promoterStat.aggregate({ where: { promoterId: me.id }, _sum: { views: true, clicks: true } }),
+    prisma.promoterPost.findMany({ where: { promoterId: me.id }, orderBy: { createdAt: "desc" }, take: 50, include: { _count: { select: { images: true } } } }),
   ]);
   const have = new Set(recs.map((r) => r.bookId));
   const found = q ? (await searchBooks(q, 15)).filter((b) => !have.has(b.id)) : [];
@@ -101,6 +105,7 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
           <li><b className="text-text">Eng sevimli</b> — &quot;Tavsiyalarim&quot;da 3 tagacha kitobni &quot;📌 Eng sevimli&quot; qiling: ular sahifangiz boshida turadi.</li>
           <li><b className="text-text">Hozir o&apos;qiyapman</b> — o&apos;qiyotgan kitobingiz yonidagi tugmani bosing, sahifangiz tepasida chiqadi.</li>
           <li><b className="text-text">📲 Story rasmi</b> — har bir tavsiya yonidagi tugma Instagram story uchun tayyor rasm beradi: muqova, narx, fikringiz va sahifangiz manzili. Yuklab oling va story&apos;ga qo&apos;ying.</li>
+          <li><b className="text-text">Postlar</b> — maqola yozing, rasmli post qo&apos;ying yoki video joylang. Video YouTube/Instagram/TikTok&apos;dagi havolasi bilan qo&apos;yiladi, shablon talablariga mos bo&apos;lishi kerak va Buqancha tasdiqlagach chiqadi.</li>
           <li><b className="text-text">To&apos;plamlar</b> — &quot;Yozda o&apos;qish uchun 10 kitob&quot; kabi ro&apos;yxat tuzing; har birining alohida havolasi bo&apos;ladi.</li>
           <li><b className="text-text">Rasm, banner va ma&apos;lumot</b> — profil rasmi, sahifa banneri, o&apos;zingiz haqingizda, Telegram va YouTube.</li>
         </ol>
@@ -196,6 +201,101 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
           ))}
           {!recs.length && <li className="px-3 py-4 text-center text-sm text-muted">Hali tavsiya yo&apos;q — yuqoridan kitob qidirib qo&apos;shing.</li>}
         </ul>
+      </Section>
+
+      <Section title={`Postlarim (${posts.length})`} id="postlar">
+        <p className="mb-3 text-sm text-muted">
+          Maqola va rasmli post darhol saytda chiqadi. <b className="text-text">Video</b> — Buqancha shablon bo&apos;yicha tekshirib tasdiqlagach.
+        </p>
+        <div className="grid gap-3">
+          <details className="rounded-xl border border-border p-3 [&_summary::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none font-semibold">📝 Maqola yozish</summary>
+            <form action={createArticle} className="mt-3 grid gap-3">
+              <Field label="Sarlavha" name="title" required maxLength={120} placeholder="Nega «O'tkan kunlar»ni hamma o'qishi kerak" />
+              <BookSelect recs={recs} label="Qaysi kitob haqida (ixtiyoriy)" />
+              <NoteField name="body" maxWords={3000} maxChars={20000} rows={12} label="Maqola matni" placeholder="Maqola matni (50–3000 so'z). Xatboshilarni bo'sh qator bilan ajrating." />
+              <div className="grid gap-1 text-sm"><span className="font-medium">Rasmlar (ixtiyoriy)</span><MultiPhotoInput max={MAX_IMAGES} /></div>
+              <Button className="w-fit">Chop etish</Button>
+            </form>
+          </details>
+
+          <details className="rounded-xl border border-border p-3 [&_summary::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none font-semibold">🖼 Rasmli post</summary>
+            <form action={createPhotoPost} className="mt-3 grid gap-3">
+              <Field label="Sarlavha" name="title" required maxLength={120} placeholder="Bu oyda o'qiganlarim" />
+              <div className="grid gap-1 text-sm"><span className="font-medium">Rasmlar (1–{MAX_IMAGES})</span><MultiPhotoInput max={MAX_IMAGES} required /></div>
+              <BookSelect recs={recs} label="Qaysi kitob haqida (ixtiyoriy)" />
+              <NoteField name="body" rows={4} label="Izoh" placeholder="Izoh (500 so'zgacha, ixtiyoriy)" />
+              <Button className="w-fit">Chop etish</Button>
+            </form>
+          </details>
+
+          <details className="rounded-xl border border-border p-3 [&_summary::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none font-semibold">🎬 Video joylash</summary>
+            <div className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">
+              <p className="font-semibold">Video shabloni — tasdiqlanish uchun hammasi bajarilishi shart:</p>
+              <ol className="mt-2 grid list-decimal gap-1 pl-5 text-muted">
+                {VIDEO_RULES.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ol>
+              <p className="mt-3 font-semibold">Yakuniy kadr (videoning oxiriga 2–3 soniya qo&apos;ying):</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <a href={`/rasm/shablon/${me.id}?f=v`} className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-contrast">⬇ Vertikal (Reels, Shorts, TikTok)</a>
+                <a href={`/rasm/shablon/${me.id}?f=h`} className="rounded-full border border-border px-4 py-2 text-xs font-semibold">⬇ Gorizontal (YouTube)</a>
+              </div>
+              <p className="mt-2 text-xs text-muted">Videoni o&apos;zingizning YouTube, Instagram yoki TikTok sahifangizga joylang, keyin havolasini shu yerga qo&apos;ying.</p>
+            </div>
+            {recs.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">Video bitta kitob haqida bo&apos;ladi — avval o&apos;sha kitobni tavsiya qiling.</p>
+            ) : (
+              <form action={createVideoPost} className="mt-3 grid gap-3">
+                <Field label="Video havolasi" name="videoUrl" required placeholder="https://www.instagram.com/reel/... yoki youtube.com/shorts/..." />
+                <Field label="Sarlavha" name="title" required maxLength={120} placeholder="«Dunyoning ishlari» — 1 daqiqada" />
+                <BookSelect recs={recs} label="Video qaysi kitob haqida" required />
+                <NoteField name="body" rows={3} label="Izoh" placeholder="Qisqa izoh (ixtiyoriy)" />
+                <fieldset className="grid gap-1.5 rounded-xl border border-border p-3 text-sm">
+                  <legend className="px-1 font-medium">Videom shablonga mos:</legend>
+                  {VIDEO_RULES.map((r, i) => (
+                    <label key={r} className="flex items-start gap-2">
+                      <input type="checkbox" name={`rule${i}`} required className="mt-0.5 h-4 w-4" /> {r}
+                    </label>
+                  ))}
+                </fieldset>
+                <Button className="w-fit">Tekshiruvga yuborish</Button>
+              </form>
+            )}
+          </details>
+        </div>
+
+        {posts.length > 0 && (
+          <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
+            {posts.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 text-sm">
+                <span aria-hidden="true">{p.kind === "ARTICLE" ? "📝" : p.kind === "PHOTO" ? "🖼" : "🎬"}</span>
+                <span className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
+                {p.kind === "VIDEO" && p.videoPlatform && <span className="text-xs text-muted">{PLATFORM_LABEL[p.videoPlatform]}</span>}
+                {p._count.images > 0 && <span className="text-xs text-muted">{p._count.images} rasm</span>}
+                {p.status === "APPROVED" ? (
+                  visible ? (
+                    <Link href={`/targibotchilar/${me.slug}/p/${p.id}`} target="_blank" className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">Saytda ↗</Link>
+                  ) : (
+                    <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">Tasdiqlangan</span>
+                  )
+                ) : p.status === "PENDING" ? (
+                  <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-semibold text-muted">⏳ Tekshirilmoqda</span>
+                ) : (
+                  <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-500">Rad etildi</span>
+                )}
+                <form action={deletePost}>
+                  <input type="hidden" name="postId" value={p.id} />
+                  <button className="text-xs text-muted underline">O&apos;chirish</button>
+                </form>
+                {p.status === "REJECTED" && p.rejectReason && <p className="w-full text-xs text-red-500">Sababi: {p.rejectReason}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
 
       <Section title={`To'plamlarim (${lists.length})`} id="toplamlar">
@@ -312,5 +412,20 @@ function BookPicker({ recs, selected }: { recs: Array<{ bookId: string; book: { 
         </label>
       ))}
     </fieldset>
+  );
+}
+
+/** Post qaysi kitob haqida: blogerning o'z tavsiyalaridan. */
+function BookSelect({ recs, label, required = false }: { recs: Array<{ bookId: string; book: { title: string } }>; label: string; required?: boolean }) {
+  return (
+    <label className="grid gap-1 text-sm">
+      <span className="font-medium">{label}</span>
+      <select name="bookId" required={required} defaultValue="" className={inputCls}>
+        <option value="">{required ? "— kitobni tanlang —" : "— kitobsiz —"}</option>
+        {recs.map((r) => (
+          <option key={r.bookId} value={r.bookId}>{r.book.title}</option>
+        ))}
+      </select>
+    </label>
   );
 }

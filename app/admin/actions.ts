@@ -539,3 +539,29 @@ export async function adminRemovePromoterBannerAction(data: FormData) {
   const id = s(data, "id");
   await run(`/admin/targibotchilar/${id}#banner`, () => deletePromoterBanner(id), "Banner olib tashlandi.");
 }
+
+// ---------- bloger postlari (videolarni tasdiqlash) ----------
+
+export async function approvePostAction(data: FormData) {
+  await run("/admin/postlar", async () => {
+    const r = await prisma.promoterPost.updateMany({
+      where: { id: s(data, "id"), status: { not: "APPROVED" } },
+      data: { status: "APPROVED", rejectReason: null, publishedAt: new Date() },
+    });
+    if (!r.count) throw new AdminError("Post topilmadi yoki allaqachon tasdiqlangan.");
+  }, "Tasdiqlandi — saytda chiqdi.");
+}
+
+export async function rejectPostAction(data: FormData) {
+  await run("/admin/postlar", async () => {
+    const reason = [s(data, "reason"), s(data, "comment")].filter(Boolean).join(". ").slice(0, 400);
+    if (!reason) throw new AdminError("Rad etish sababini tanlang yoki yozing — bloger uni kabinetida ko'radi.");
+    await prisma.promoterPost.update({ where: { id: s(data, "id") }, data: { status: "REJECTED", rejectReason: reason, publishedAt: null } });
+  }, "Rad etildi — bloger sababini kabinetida ko'radi.");
+}
+
+export async function deletePostAdminAction(data: FormData) {
+  await run("/admin/postlar?holat=hammasi", async () => {
+    await prisma.promoterPost.delete({ where: { id: s(data, "id") } });
+  }, "Post o'chirildi.");
+}

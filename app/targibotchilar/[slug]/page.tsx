@@ -9,6 +9,7 @@ import { PromoterBanner } from "@/components/PromoterBanner";
 import { PromoterStats } from "@/components/PromoterStats";
 import { SocialLinks } from "@/components/SocialLinks";
 import { Stars } from "@/components/Stars";
+import { PostCard } from "@/components/PostCard";
 import { bookImage } from "@/lib/books";
 import { avatarColor, getPromoter, instagramUrl, promoterBannerSrc, promoterPhotoSrc } from "@/lib/promoters";
 import { absoluteUrl } from "@/lib/site";
@@ -78,6 +79,17 @@ export default async function PromoterPage({ params }: Props) {
             <span className="block truncate text-sm text-muted">{p.readingBook.author.name}</span>
           </span>
         </Link>
+      )}
+
+      {p.posts.length > 0 && (
+        <section className="mt-10" aria-labelledby="posts-h">
+          <h2 id="posts-h" className="text-xl sm:text-2xl">Videolar va maqolalar</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {p.posts.map((post) => (
+              <PostCard key={post.id} post={post} href={`/targibotchilar/${p.slug}/p/${post.id}`} />
+            ))}
+          </div>
+        </section>
       )}
 
       {p.lists.length > 0 && (

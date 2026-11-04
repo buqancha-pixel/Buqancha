@@ -10,6 +10,7 @@ import { deletePromoterBanner, deletePromoterPhoto, savePromoterBanner, saveProm
 import { cleanNote } from "@/lib/promoters";
 import { ContactError, normalizeTelegram, normalizeYoutube } from "@/lib/contacts";
 import { slugify } from "@/lib/normalize";
+import { createPost } from "@/lib/promoter/posts";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 const MAX_BOOKS = 300;
@@ -201,4 +202,34 @@ export async function deletePromoterList(data: FormData) {
     const l = await ownList(s(data, "listId"), id);
     await prisma.promoterList.delete({ where: { id: l.id } });
   }, "To'plam o'chirildi.");
+}
+
+// ---------- postlar: maqola, rasm, video ----------
+
+export async function createArticle(data: FormData) {
+  await run("/bloger#postlar", async (id) => {
+    await createPost(id, "ARTICLE", data);
+    return "Maqola saytga chiqdi.";
+  });
+}
+
+export async function createPhotoPost(data: FormData) {
+  await run("/bloger#postlar", async (id) => {
+    await createPost(id, "PHOTO", data);
+    return "Rasmli post saytga chiqdi.";
+  });
+}
+
+export async function createVideoPost(data: FormData) {
+  await run("/bloger#postlar", async (id) => {
+    await createPost(id, "VIDEO", data);
+    return "Video yuborildi — Buqancha shablon bo'yicha tekshirib, tasdiqlagach saytda chiqadi.";
+  });
+}
+
+export async function deletePost(data: FormData) {
+  await run("/bloger#postlar", async (id) => {
+    const r = await prisma.promoterPost.deleteMany({ where: { id: s(data, "postId"), promoterId: id } });
+    if (!r.count) throw new AdminError("Bu post sizga tegishli emas.");
+  }, "Post o'chirildi.");
 }

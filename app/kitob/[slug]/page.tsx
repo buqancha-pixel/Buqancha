@@ -29,7 +29,8 @@ import {
   LANGUAGE_LABEL,
 } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
-import { avatarColor, getBookPromoters, promoterPhotoSrc } from "@/lib/promoters";
+import { avatarColor, getBookPosts, getBookPromoters, promoterPhotoSrc } from "@/lib/promoters";
+import { PostCard } from "@/components/PostCard";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { OrderMenu } from "@/components/OrderMenu";
 import { Stars } from "@/components/Stars";
@@ -103,7 +104,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
   const cover = bookImage(book);
   const coverSeller = cover?.source && cover.source !== "own" ? everyOffer.find((o) => o.seller.slug === cover.source)?.seller : null;
 
-  const [author, recommendedBy] = await Promise.all([getAuthorBySlug(book.author.slug), getBookPromoters(book.id)]);
+  const [author, recommendedBy, bookPosts] = await Promise.all([getAuthorBySlug(book.author.slug), getBookPromoters(book.id), getBookPosts(book.id)]);
   const moreByAuthor = author?.books.filter((b) => b.id !== book.id).slice(0, 4) ?? [];
   const pageUrl = absoluteUrl(`/kitob/${book.slug}`);
 
@@ -268,6 +269,17 @@ export default async function BookPage({ params, searchParams }: { params: Param
           </div>
         )}
       </section>
+
+      {bookPosts.length > 0 && (
+        <section id="bloger-postlari" className="mt-12 scroll-mt-28" aria-labelledby="bposts-h">
+          <h2 id="bposts-h" className="text-xl sm:text-2xl">Blogerlar videolari va maqolalari</h2>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {bookPosts.map((post) => (
+              <PostCard key={post.id} post={post} href={`/targibotchilar/${post.promoter.slug}/p/${post.id}`} by={post.promoter.name} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {recommendedBy.some((r) => r.note) && (
         <section id="tavsiyalar" className="mt-12 scroll-mt-28" aria-labelledby="reviews-h">

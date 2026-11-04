@@ -211,7 +211,8 @@ function guideMessage(name: string, pageUrl: string, link: string) {
     "5. \"Tavsiyalarim\" ro'yxatida matnni o'zgartirish yoki kitobni olib tashlash mumkin.",
     "6. \"Profil rasmi\" va \"Sahifa banneri\"ni yuklang; \"Sahifamdagi ma'lumot\"da ismingiz, o'zingiz haqingizda, Telegram va YouTube.",
     "7. Har bir tavsiya yonida: 1–5 yulduz baho, \"📌 Eng sevimli\" (3 tagacha), \"📖 Hozir o'qiyapman\" va \"📲 Story rasmi\" — Instagram story uchun tayyor rasm.",
-    "8. \"To'plamlarim\"da \"Yozda o'qish uchun 10 kitob\" kabi ro'yxat tuzing — har birining alohida havolasi bo'ladi. \"Statistika\"da sahifangizni necha kishi ko'rganini ko'rasiz.",
+    "8. \"Postlarim\"da maqola yozing, rasmli post yoki video joylang. Video YouTube/Instagram/TikTok havolasi bilan qo'yiladi, oxirida Buqancha shabloni (kabinetdan yuklab olinadi) bo'lishi kerak — tekshirib tasdiqlagach saytda chiqadi.",
+    "9. \"To'plamlarim\"da \"Yozda o'qish uchun 10 kitob\" kabi ro'yxat tuzing — har birining alohida havolasi bo'ladi. \"Statistika\"da sahifangizni necha kishi ko'rganini ko'rasiz.",
     "",
     "Kitob saytda topilmasa, nomini menga yozing — qo'shib beraman. Kabinet telefonda ham ishlaydi, bir marta kirsangiz 90 kun eslab qoladi.",
   ].join("\n");

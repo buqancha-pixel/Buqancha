@@ -75,6 +75,7 @@ model Book {
   categories   String[]  @default([])
   promoters    PromoterBook[]
   readingBy    Promoter[]  @relation("PromoterReading")
+  posts        PromoterPost[]
   inLists      PromoterListBook[]
   editions     Edition[]
   createdAt    DateTime  @default(now())
@@ -259,6 +260,7 @@ model Promoter {
   readingBook   Book?        @relation("PromoterReading", fields: [readingBookId], references: [id], onDelete: SetNull)
   lists     PromoterList[]
   stats     PromoterStat[]
+  posts     PromoterPost[]
   consent   Boolean        @default(false)
   active    Boolean        @default(true)
   position  Int            @default(0)
@@ -345,4 +347,53 @@ model PromoterStat {
   clicks     Int      @default(0) // sahifasidan kitobga o'tilgan
 
   @@id([promoterId, day])
+}
+
+enum PostKind {
+  ARTICLE // maqola
+  PHOTO   // rasmli post
+  VIDEO   // video (YouTube / Instagram / TikTok havolasi)
+}
+
+enum PostStatus {
+  PENDING  // admin tasdig'ini kutmoqda (videolar)
+  APPROVED // saytda
+  REJECTED // rad etilgan (sababi bilan)
+}
+
+// Bloger posti: maqola, rasmlar yoki video
+model PromoterPost {
+  id            String              @id @default(cuid())
+  promoterId    String
+  promoter      Promoter            @relation(fields: [promoterId], references: [id], onDelete: Cascade)
+  kind          PostKind
+  status        PostStatus          @default(APPROVED)
+  title         String
+  body          String?             // maqola matni yoki rasm/video izohi
+  bookId        String?
+  book          Book?               @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  videoPlatform String?             // youtube | instagram | tiktok
+  videoId       String?
+  videoUrl      String?
+  rejectReason  String?
+  createdAt     DateTime            @default(now())
+  publishedAt   DateTime?
+  images        PromoterPostImage[]
+
+  @@index([promoterId, status])
+  @@index([bookId, status])
+  @@index([status, createdAt])
+}
+
+// Post rasmlari (eng uzun tomoni 1600px gacha WebP)
+model PromoterPostImage {
+  id       String       @id @default(cuid())
+  postId   String
+  post     PromoterPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  data     Bytes
+  width    Int
+  height   Int
+  position Int          @default(0)
+
+  @@index([postId])
 }
