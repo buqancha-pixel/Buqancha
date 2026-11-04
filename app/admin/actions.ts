@@ -12,7 +12,7 @@ import {
 } from "@/lib/admin/books";
 import { buildSearchKey, slugify } from "@/lib/normalize";
 import { parseLocation } from "@/lib/geo";
-import { CATEGORY_BY_SLUG } from "@/lib/categories";
+import { CATEGORY_BY_SLUG, withParents } from "@/lib/categories";
 import { hashToken, newToken } from "@/lib/partner/auth";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
@@ -93,7 +93,7 @@ export async function updateBookAction(data: FormData) {
   await run(`/admin/kitoblar/${id}`, async () => {
     await updateBook(id, { title: s(data, "title"), titleCyrl: s(data, "titleCyrl"), author: s(data, "author"), description: s(data, "description") });
     const picked = data.getAll("categories").map(String).filter((c) => CATEGORY_BY_SLUG.has(c));
-    await prisma.book.update({ where: { id }, data: { categories: [...new Set(picked)] } });
+    await prisma.book.update({ where: { id }, data: { categories: withParents(picked) } });
   }, "Saqlandi.");
 }
 
@@ -276,7 +276,7 @@ async function setCategories(ids: string[], slug: string, mode: "add" | "remove"
   if (!CATEGORY_BY_SLUG.has(slug)) throw new AdminError("Bo'limni tanlang.");
   const books = await prisma.book.findMany({ where: { id: { in: ids } }, select: { id: true, categories: true } });
   for (const b of books) {
-    const next = mode === "add" ? [...new Set([...b.categories, slug])] : b.categories.filter((c) => c !== slug);
+    const next = mode === "add" ? withParents([...b.categories, slug]) : b.categories.filter((c) => c !== slug);
     if (next.length !== b.categories.length) await prisma.book.update({ where: { id: b.id }, data: { categories: next } });
   }
   return books.length;

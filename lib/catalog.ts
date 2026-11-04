@@ -96,16 +96,25 @@ export const getCategoryCounts = cached(
   3600,
 );
 
-export type MenuLanguage = { slug: string; name: string; count: number; topics: Array<{ slug: string; name: string; count: number }> };
+export type MenuTopic = { slug: string; name: string; count: number; child: boolean };
+export type MenuLanguage = { slug: string; name: string; count: number; topics: MenuTopic[] };
 
-/** Menyu: tillar va ularning ichidagi mavzular (bo'sh bo'limlar ko'rsatilmaydi). */
+/** Mavzular daraxti (bo'shlari ham — tuzilma doim ko'rinsin); lang null — barcha tillar. */
+export function topicTree(counts: Record<string, number>, langCode: string | null): MenuTopic[] {
+  return CATEGORIES.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    count: counts[langCode ? `${langCode}|${c.slug}` : `*|${c.slug}`] ?? 0,
+    child: !!c.parent,
+  }));
+}
+
+/** Menyu: "Barcha kitoblar" va har bir til, ichida mavzular. */
 export function menuTree(counts: Record<string, number>): MenuLanguage[] {
-  return LANGUAGES.map((l) => ({
-    slug: l.slug,
-    name: l.name,
-    count: counts[l.code] ?? 0,
-    topics: CATEGORIES.map((c) => ({ slug: c.slug, name: c.name, count: counts[`${l.code}|${c.slug}`] ?? 0 })).filter((c) => c.count > 0),
-  })).filter((l) => l.count > 0);
+  return [
+    { slug: "", name: "Barcha kitoblar", count: counts.all ?? 0, topics: topicTree(counts, null) },
+    ...LANGUAGES.filter((l) => (counts[l.code] ?? 0) > 0).map((l) => ({ slug: l.slug, name: l.name, count: counts[l.code] ?? 0, topics: topicTree(counts, l.code) })),
+  ];
 }
 
 /** Barcha tillardagi mavzular (bosh sahifa qatori uchun). */

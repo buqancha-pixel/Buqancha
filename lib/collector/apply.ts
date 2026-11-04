@@ -1,4 +1,4 @@
-import { languageFromSellerCategories, mapSellerCategories } from "../categories";
+import { languageFromSellerCategories, mapSellerCategories, withParents } from "../categories";
 import type { OfferSource } from "@prisma/client";
 import { prisma } from "../db";
 import type { CollectedItem, RunStats } from "./types";
@@ -257,7 +257,7 @@ async function addCategories(editionId: string, slugs: string[], language: strin
   if (!slugs.length) return;
   const ed = await prisma.edition.findUnique({ where: { id: editionId }, select: { book: { select: { id: true, categories: true } } } });
   if (!ed) return;
-  const merged = Array.from(new Set([...ed.book.categories, ...slugs]));
+  const merged = withParents([...ed.book.categories, ...slugs]);
   if (merged.length !== ed.book.categories.length) await prisma.book.update({ where: { id: ed.book.id }, data: { categories: merged } });
 }
 

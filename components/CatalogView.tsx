@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { BookCard } from "./BookCard";
 import { JsonLd } from "./JsonLd";
-import { CATALOG_SORTS, type CatalogSort, getCatalogPage, getCategoryCounts } from "@/lib/catalog";
-import { CATEGORIES, LANGUAGES, type Category, type Language } from "@/lib/categories";
+import { CATALOG_SORTS, type CatalogSort, getCatalogPage, getCategoryCounts, topicTree } from "@/lib/catalog";
+import { LANGUAGES, type Category, type Language } from "@/lib/categories";
 import { formatNumber } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
 
@@ -18,8 +18,7 @@ export async function CatalogView({ lang, topic, sort, page }: { lang?: Language
     getCatalogPage({ language: lang?.code ?? null, topic: topic?.slug ?? null }, sort, page),
     getCategoryCounts(),
   ]);
-  const topicCount = (slug: string) => counts[lang ? `${lang.code}|${slug}` : `*|${slug}`] ?? 0;
-  const topics = CATEGORIES.filter((c) => topicCount(c.slug) > 0);
+  const topics = topicTree(counts, lang?.code ?? null);
   const langs = LANGUAGES.filter((l) => (counts[l.code] ?? 0) > 0);
   const topicHref = (t: string | null) => (lang ? `/katalog/${lang.slug}${t ? `/${t}` : ""}` : t ? `/katalog/${t}` : "/katalog");
   const base = topicHref(topic?.slug ?? null);
@@ -33,6 +32,8 @@ export async function CatalogView({ lang, topic, sort, page }: { lang?: Language
     const s = q.toString();
     return s ? `${base}?${s}` : base;
   };
+  const side = (active: boolean) =>
+    `flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-2 ${active ? "bg-accent-soft font-semibold text-text" : ""}`;
   const chip = (active: boolean) => `shrink-0 rounded-full px-3 py-1.5 text-sm ${active ? "bg-text text-bg" : "border border-border"}`;
 
   return (
@@ -51,6 +52,33 @@ export async function CatalogView({ lang, topic, sort, page }: { lang?: Language
           },
         }}
       />
+      <div className="lg:grid lg:grid-cols-[250px_1fr] lg:gap-8">
+      <aside className="hidden lg:block" aria-label="Katalog bo'limlari">
+        <div className="card sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto p-3 text-sm">
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Til</p>
+          <Link href={topic ? `/katalog/${topic.slug}` : "/katalog"} className={side(!lang)}>
+            <span>Barcha tillar</span>
+            <span className="tabular text-muted">{formatNumber(counts.all ?? 0)}</span>
+          </Link>
+          {langs.map((l) => (
+            <Link key={l.slug} href={`/katalog/${l.slug}${topic ? `/${topic.slug}` : ""}`} className={side(lang?.slug === l.slug)}>
+              <span>{l.name}</span>
+              <span className="tabular text-muted">{formatNumber(counts[l.code] ?? 0)}</span>
+            </Link>
+          ))}
+          <p className="mt-3 border-t border-border px-2 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted">Mavzular</p>
+          <Link href={topicHref(null)} className={side(!topic)}>
+            <span>Barcha mavzular</span>
+          </Link>
+          {topics.map((c) => (
+            <Link key={c.slug} href={topicHref(c.slug)} className={`${side(topic?.slug === c.slug)} ${c.child ? "ml-3" : ""} ${c.count ? "" : "text-muted"}`}>
+              <span>{c.name}</span>
+              {c.count > 0 && <span className="tabular text-muted">{c.count}</span>}
+            </Link>
+          ))}
+        </div>
+      </aside>
+      <div className="min-w-0">
       <nav aria-label="Yo'l" className="text-sm text-muted">
         <Link href="/" className="hover:text-text">Bosh sahifa</Link>
         {" / "}
@@ -68,7 +96,7 @@ export async function CatalogView({ lang, topic, sort, page }: { lang?: Language
         {about ? `${about}. ` : ""}Sotuvda bor {formatNumber(total)} ta kitob — narxlari do&apos;kon va nashriyotlar bo&apos;yicha.
       </p>
 
-      <div className="no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div className="no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 lg:hidden">
         <Link href={topic ? `/katalog/${topic.slug}` : "/katalog"} className={chip(!lang)}>
           Barcha tillar
         </Link>
@@ -78,13 +106,13 @@ export async function CatalogView({ lang, topic, sort, page }: { lang?: Language
           </Link>
         ))}
       </div>
-      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 lg:hidden">
         <Link href={topicHref(null)} className={chip(!topic)}>
           Barcha mavzular
         </Link>
         {topics.map((c) => (
-          <Link key={c.slug} href={topicHref(c.slug)} className={chip(topic?.slug === c.slug)}>
-            {c.name} <span className="tabular opacity-60">{topicCount(c.slug)}</span>
+          <Link key={c.slug} href={topicHref(c.slug)} className={`${chip(topic?.slug === c.slug)} ${c.count ? "" : "opacity-60"}`}>
+            {c.name} {c.count > 0 && <span className="tabular opacity-60">{c.count}</span>}
           </Link>
         ))}
       </div>
@@ -125,6 +153,8 @@ export async function CatalogView({ lang, topic, sort, page }: { lang?: Language
           )}
         </nav>
       )}
+      </div>
+      </div>
     </div>
   );
 }

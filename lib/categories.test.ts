@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { languageFromSellerCategories, mapSellerCategories, mapSellerCategory } from "./categories.ts";
+import { languageFromSellerCategories, mapSellerCategories, mapSellerCategory, withParents } from "./categories.ts";
 
 test("sotuvchi bo'limlari → katalog", () => {
   assert.deepEqual(mapSellerCategory("jahon-adabiyoti"), ["jahon-adabiyoti"]);
@@ -22,6 +22,12 @@ test("sotuvchi bo'limlari → katalog", () => {
   assert.deepEqual(mapSellerCategory("diniy-marifiy-adabiyot"), []);
   assert.deepEqual(mapSellerCategory("quron-va-tafsirlar"), []);
   assert.deepEqual(mapSellerCategory("toplam-kitoblar"), []);
-  assert.deepEqual(mapSellerCategory("badiiy-adabiyotlar"), []);
-  assert.deepEqual(mapSellerCategories(["jahon-adabiyoti", "jahon-adabiyoti", "biznes"]), ["jahon-adabiyoti", "biznes"]);
+  assert.deepEqual(mapSellerCategory("badiiy-adabiyotlar"), ["badiiy"]);
+  assert.deepEqual(mapSellerCategory("badiiy-bolmagan"), ["badiiy-bolmagan"]);
+  assert.deepEqual(mapSellerCategory("falsafa-va-madaniyat"), ["falsafa"]);
+  assert.deepEqual(mapSellerCategory("entsiklopediyalar"), ["lugatlar"]);
+  assert.deepEqual(mapSellerCategory("umumiy-lugatlar"), ["lugatlar"]);
+  // ichki bo'lim → asosiy bo'lim ham
+  assert.deepEqual(withParents(["ozbek-adabiyoti"]).sort(), ["badiiy", "ozbek-adabiyoti"]);
+  assert.deepEqual(mapSellerCategories(["jahon-adabiyoti", "jahon-adabiyoti", "biznes"]).sort(), ["badiiy", "biznes", "jahon-adabiyoti"]);
 });

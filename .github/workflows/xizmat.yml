@@ -26,6 +26,7 @@ on:
           - kitob-birlashtirish-qollash
           - ruscha-belgilash-korish
           - ruscha-belgilash-qollash
+          - bolimlarni-toldirish
       parametr:
         description: "kitob-birlashtirish uchun: '<kitob-slug> <asosiy-kitob-slug> [til]', masalan 'otkan-kunlar-bygone-days otkan-kunlar en'"
         required: false
@@ -87,6 +88,7 @@ jobs:
             kitob-birlashtirish-korish)       merge_args; npm run --silent merge-book -- "${MERGE[@]}" ;;
             kitob-birlashtirish-qollash)      merge_args; npm run --silent merge-book -- "${MERGE[@]}" --apply ;;
             ruscha-belgilash-korish)          npm run --silent fix-russian ;;
+            bolimlarni-toldirish)             npm run --silent fill-category-parents && npm run --silent collect -- qamar barakot kitob-olami-uzun ;;
             ruscha-belgilash-qollash)         npm run --silent fix-russian -- --apply && npm run --silent remove-religious -- --apply ;;
             *) echo "::error::Noma'lum vazifa: $VAZIFA"; exit 1 ;;
           esac

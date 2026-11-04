@@ -25,7 +25,8 @@
     "snapshot": "tsx scripts/snapshot.ts",
     "stats": "tsx scripts/stats.ts",
     "merge-book": "tsx scripts/merge-book.ts",
-    "fix-russian": "tsx scripts/fix-russian.ts"
+    "fix-russian": "tsx scripts/fix-russian.ts",
+    "fill-category-parents": "tsx scripts/fill-category-parents.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -7,6 +7,8 @@ export type Category = {
   name: string;
   /** qisqa tavsif (bo'lim sahifasi va meta description uchun) */
   about: string;
+  /** ichki bo'lim bo'lsa — asosiy bo'lim (masalan, O'zbek adabiyoti → Badiiy adabiyot) */
+  parent?: string;
 };
 
 /**
@@ -22,21 +24,34 @@ export const LANGUAGES: Language[] = [
 export const LANGUAGE_BY_SLUG = new Map(LANGUAGES.map((l) => [l.slug, l]));
 
 export const CATEGORIES: Category[] = [
-  { slug: "ozbek-adabiyoti", name: "O'zbek adabiyoti", about: "O'zbek yozuvchilarining roman, qissa va hikoyalari" },
-  { slug: "jahon-adabiyoti", name: "Jahon adabiyoti", about: "Jahon adabiyoti durdonalari o'zbek tilida" },
-  { slug: "detektiv-fantastika", name: "Detektiv va fantastika", about: "Detektiv, triller va fantastik asarlar" },
-  { slug: "sheriyat", name: "She'riyat", about: "She'rlar to'plamlari va dostonlar" },
-  { slug: "bolalar", name: "Bolalar uchun", about: "Ertaklar, bolalar adabiyoti va boshqotirmalar" },
+  { slug: "badiiy", name: "Badiiy adabiyot", about: "Roman, qissa, hikoya, she'riyat — o'zbek va jahon adabiyoti" },
+  { slug: "ozbek-adabiyoti", name: "O'zbek adabiyoti", about: "O'zbek yozuvchilarining roman, qissa va hikoyalari", parent: "badiiy" },
+  { slug: "jahon-adabiyoti", name: "Jahon adabiyoti", about: "Jahon adabiyoti durdonalari", parent: "badiiy" },
+  { slug: "detektiv-fantastika", name: "Detektiv va fantastika", about: "Detektiv, triller va fantastik asarlar", parent: "badiiy" },
+  { slug: "sheriyat", name: "She'riyat", about: "She'rlar to'plamlari va dostonlar", parent: "badiiy" },
+  { slug: "bolalar", name: "Bolalar adabiyoti", about: "Ertaklar, bolalar kitoblari va boshqotirmalar" },
+  { slug: "badiiy-bolmagan", name: "Badiiy bo'lmagan", about: "Ilmiy-ommabop va ma'rifiy kitoblar" },
   { slug: "psixologiya", name: "Psixologiya va shaxsiy rivojlanish", about: "Psixologiya, motivatsiya va o'z ustida ishlash" },
   { slug: "biznes", name: "Biznes va moliya", about: "Biznes, moliya, marketing va iqtisodiyot" },
-  { slug: "tarix", name: "Tarix va jamiyat", about: "Tarix, siyosat, huquq, falsafa va madaniyat" },
-  { slug: "badiiy-bolmagan", name: "Badiiy bo'lmagan", about: "Ilmiy-ommabop va ma'rifiy kitoblar" },
-  { slug: "ilm-fan", name: "Ilm-fan", about: "Fan, texnika va ensiklopediyalar" },
-  { slug: "talim", name: "Darsliklar va abituriyentlar", about: "Darsliklar, test to'plamlari, lug'atlar va o'quv qo'llanmalari" },
+  { slug: "tarix", name: "Tarix va ijtimoiy fanlar", about: "Tarix, siyosat va huquq" },
+  { slug: "falsafa", name: "Falsafa va madaniyat", about: "Falsafa, madaniyat va san'at" },
+  { slug: "ilm-fan", name: "Ilm-fan va texnika", about: "Fan, texnika va axborot texnologiyalari" },
+  { slug: "talim", name: "Darsliklar va abituriyentlar", about: "Darsliklar, test to'plamlari va o'quv qo'llanmalari" },
   { slug: "chet-tillari", name: "Chet tillarini o'rganish", about: "Ingliz va boshqa tillarni o'rganish uchun kitoblar" },
+  { slug: "lugatlar", name: "Lug'at va ensiklopediyalar", about: "Lug'atlar, ma'lumotnomalar va ensiklopediyalar" },
 ];
 
 export const CATEGORY_BY_SLUG = new Map(CATEGORIES.map((c) => [c.slug, c]));
+
+/** Ichki bo'limlar bilan birga asosiy bo'limlar ham qo'shiladi (O'zbek adabiyoti → Badiiy adabiyot ham). */
+export function withParents(slugs: string[]): string[] {
+  const out = new Set(slugs.filter((s) => CATEGORY_BY_SLUG.has(s)));
+  for (const s of [...out]) {
+    const p = CATEGORY_BY_SLUG.get(s)?.parent;
+    if (p) out.add(p);
+  }
+  return [...out];
+}
 
 const SKIP = /diniy|quron|qur-on|duolar|rasululloh|tafsir|toplam|sovga|jurnal|qurollari|kanstovar|plakat|chiqargich|qogoz/;
 
@@ -49,20 +64,23 @@ export function mapSellerCategory(raw: string): string[] {
   if (kids) out.add("bolalar");
   if (!kids && /ozbek-.*adabiyot/.test(s)) out.add("ozbek-adabiyoti");
   if (!kids && /jahon-adabiyot/.test(s)) out.add("jahon-adabiyoti");
-  if (/detektiv|fantast|triller/.test(s)) out.add("detektiv-fantastika");
-  if (/sheriyat|sherlar/.test(s)) out.add("sheriyat");
-  if (/psixolog|shaxsiy-rivoj|motivats/.test(s)) out.add("psixologiya");
-  if (/biznes|moliya|iqtisod|marketing/.test(s)) out.add("biznes");
-  if (/tarix|siyosi|huquq|ijtimoiy|falsafa|madaniyat/.test(s)) out.add("tarix");
-  if (/badiiy-bolmagan|marifiy-asar/.test(s)) out.add("badiiy-bolmagan");
-  if (/ilm-fan|ilmiy|texnik|entsiklopediya/.test(s)) out.add("ilm-fan");
-  if (/abiturient|darslik|oquv-qollanma|oquv-adabiyot|lugat|testlar/.test(s)) out.add("talim");
-  if (/chet-til|ingliz-tili$|til-organ|tilini-organ/.test(s)) out.add("chet-tillari");
+  if (/detektiv|fantast|triller|priklyuchen/.test(s)) out.add("detektiv-fantastika");
+  if (/sheriyat|sherlar|poeziya/.test(s)) out.add("sheriyat");
+  if (!kids && /badiiy-adabiyot|khudozhestvennaya|sovremennaya-proza|klassika|romany/.test(s)) out.add("badiiy");
+  if (/psixolog|psikhologiya|shaxsiy-rivoj|lichnostnyj|motivats/.test(s)) out.add("psixologiya");
+  if (/biznes|moliya|iqtisod|marketing|finansy|ekonomika|menedzhment|prodazhi|startap/.test(s)) out.add("biznes");
+  if (/tarix|siyosi|huquq|ijtimoiy/.test(s)) out.add("tarix");
+  if (/falsafa|madaniyat|kultura|filosof/.test(s)) out.add("falsafa");
+  if (/badiiy-bolmagan|marifiy-asar|nekhudozhestvennaya|nauchno-populyarnaya|poznavatelnaya|publitsistika|biografi/.test(s)) out.add("badiiy-bolmagan");
+  if (/ilm-fan|ilmiy|texnik|informatsionnye/.test(s)) out.add("ilm-fan");
+  if (/abiturient|darslik|oquv-qollanma|oquv-adabiyot|testlar|ilmiy-va-oquv/.test(s)) out.add("talim");
+  if (/chet-til|ingliz-tili$|til-organ|tilini-organ|samouchitel/.test(s)) out.add("chet-tillari");
+  if (/lugat|entsiklopedi|ensiklopedi/.test(s)) out.add("lugatlar");
   return Array.from(out);
 }
 
 export function mapSellerCategories(raw: string[] | undefined): string[] {
-  return Array.from(new Set((raw ?? []).flatMap(mapSellerCategory)));
+  return withParents(Array.from(new Set((raw ?? []).flatMap(mapSellerCategory))));
 }
 
 /** Sotuvchi bo'limidan nashr tili ("rus-tilida" → ru): kitob bo'limiga emas, nashr tiliga yoziladi. */
