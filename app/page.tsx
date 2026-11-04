@@ -3,7 +3,8 @@ import { SearchForm } from "@/components/SearchForm";
 import { BookCard } from "@/components/BookCard";
 import { Cover } from "@/components/Cover";
 import { JsonLd } from "@/components/JsonLd";
-import { bookImage, catalogCounts, getMostComparedBooks, getPopularBooks, getSellers } from "@/lib/books";
+import { bookImage, catalogCounts, getBannerBooks, getMostComparedBooks, getPopularBooks, getSellers } from "@/lib/books";
+import { NewBooksBanner } from "@/components/NewBooksBanner";
 import { formatNumber } from "@/lib/format";
 import { SELLER_TYPE_LABEL } from "@/lib/format";
 import { SITE_NAME, absoluteUrl } from "@/lib/site";
@@ -22,11 +23,12 @@ const FLOAT_SLOTS = [
 ];
 
 export default async function HomePage() {
-  const [popular, allSellers, compared, counts] = await Promise.all([
+  const [popular, allSellers, compared, counts, banner] = await Promise.all([
     getPopularBooks(12),
     getSellers(),
     getMostComparedBooks(12),
     catalogCounts(),
+    getBannerBooks(6),
   ]);
   // faqat narxi bor sotuvchilar (katalogdagilar /sotuvchilar sahifasida)
   const sellers = allSellers.filter((s) => s._count.offers > 0);
@@ -48,6 +50,8 @@ export default async function HomePage() {
         }}
       />
 
+      <NewBooksBanner books={banner} />
+
       <section className="relative overflow-hidden">
         <div className="float-covers pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
           {popular.slice(0, 4).map((b, i) => (
@@ -57,7 +61,7 @@ export default async function HomePage() {
           ))}
         </div>
 
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center px-4 pb-14 pt-14 text-center sm:pt-24">
+        <div className="relative mx-auto flex max-w-3xl flex-col items-center px-4 pb-14 pt-10 text-center sm:pt-16">
           <p className="mb-4 rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-muted">
             {formatNumber(counts.books)} ta kitob · {sellers.length} ta sotuvchi
           </p>

@@ -88,6 +88,20 @@ export async function updateBookAction(data: FormData) {
   );
 }
 
+export async function setFeaturedAction(data: FormData) {
+  const id = s(data, "id");
+  const on = data.get("featured") === "on";
+  await run(`/admin/kitoblar/${id}#banner`, async () => {
+    const note = s(data, "featuredNote").slice(0, 40) || null;
+    const book = await prisma.book.findUniqueOrThrow({ where: { id } });
+    await prisma.book.update({
+      where: { id },
+      // yangi tanlangan kitob banner boshiga chiqadi; yozuvni o'zgartirish tartibni buzmaydi
+      data: { featuredAt: on ? (book.featuredAt ?? new Date()) : null, featuredNote: on ? note : null },
+    });
+  }, on ? "Bannerga chiqarildi." : "Bannerdan olindi.");
+}
+
 export async function deleteBookAction(data: FormData) {
   const id = s(data, "id");
   await run(`/admin/kitoblar/${id}`, async () => {

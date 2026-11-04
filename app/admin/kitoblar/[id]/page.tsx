@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { formatPrice, formatRelative, SOURCE_LABEL } from "@/lib/format";
 import {
-  addEditionAction, deleteBookAction, deleteEditionAction, deleteOfferAction, saveOfferAction,
+  addEditionAction, deleteBookAction, setFeaturedAction, deleteEditionAction, deleteOfferAction, saveOfferAction,
   updateAuthorAction, updateBookAction, updateEditionAction,
 } from "../../actions";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, Select, type SP } from "../../ui";
@@ -48,6 +48,17 @@ export default async function EditBook({ params, searchParams }: { params: Promi
           <Button className="mt-4">Saqlash</Button>
         </Section>
       </form>
+
+      <Section title="Bosh sahifa banneri" id="banner">
+        <form action={setFeaturedAction} className="grid gap-3">
+          <input type="hidden" name="id" value={book.id} />
+          <Check label="Bosh sahifadagi «Yangi» bannerida ko'rsatish" name="featured" defaultChecked={!!book.featuredAt} />
+          <Field label="Qisqa yozuv (ixtiyoriy)" name="featuredNote" defaultValue={book.featuredNote ?? ""} maxLength={40}
+            placeholder="Masalan: 2026-yil nashri, Muallif imzosi bilan" />
+          <p className="text-xs text-muted">Bannerda 6 tagacha kitob chiqadi: avval siz tanlaganlar (oxirgisi birinchi), qolgani — saytga yangi qo&apos;shilganlar.</p>
+          <Button className="w-fit">Saqlash</Button>
+        </form>
+      </Section>
 
       <div id="nashrlar" className="scroll-mt-24">
         {book.editions.map((e, i) => (

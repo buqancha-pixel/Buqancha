@@ -135,6 +135,8 @@ Vercel'da `ADMIN_PASSWORD` o'rnatilgach, `/admin` da parol bilan kiriladi (sessi
 - **Ko'rib chiqish:** 70% dan ko'p o'zgargan narxlarni qabul/rad qilish; moslanmagan va e'tiborsiz mahsulotlarni
   mavjud kitob/nashrga bog'lash yoki ulardan yangi kitob yaratish (diniy adabiyot shu yerdan qo'lda qo'shiladi).
 - **Sotuvchilar:** qo'shish, tahrirlash, muqova rasmlarini ko'rsatishni o'chirish.
+- **Bosh sahifa banneri:** kitob sahifasida «Bannerda ko'rsatish» + qisqa yozuv. Bannerda 6 tagacha kitob:
+  avval tanlanganlar (oxirgisi birinchi), qolgani — saytga eng so'nggi qo'shilgan, rasmi va narxi bor kitoblar.
 
 Qo'lda qo'shilgan yoki tahrirlangan kitoblar `origin = "manual"` — avtomatik tozalash va diniy filtr ularga tegmaydi.
 O'chirilgan narx havolasi `IGNORED` sifatida eslab qolinadi, shuning uchun katalog importi kitobni qayta yaratmaydi.

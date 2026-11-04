@@ -5,7 +5,7 @@ import { searchKey } from "./normalize";
 
 const bookCardInclude = {
   author: true,
-  editions: { include: { offers: { select: { price: true, inStock: true, isSample: true } } } },
+  editions: { include: { offers: { select: { price: true, inStock: true, isSample: true, sellerId: true } } } },
 } satisfies Prisma.BookInclude;
 
 export type BookCardData = Prisma.BookGetPayload<{ include: typeof bookCardInclude }>;
@@ -44,6 +44,48 @@ export async function getMostComparedBooks(limit = 12) {
   const order = new Map(rows.map((r, i) => [r.id, i]));
   return books.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
 }
+
+/**
+ * Bosh sahifa banneri: avval admin tanlagan kitoblar (oxirgi tanlangani birinchi),
+ * kam bo'lsa — saytga eng so'nggi qo'shilgan, rasmi va haqiqiy narxi bor kitoblar.
+ */
+export async function getBannerBooks(limit = 6) {
+  const featured = await prisma.book.findMany({
+    where: { featuredAt: { not: null } },
+    orderBy: { featuredAt: "desc" },
+    take: limit,
+    include: bookCardInclude,
+  });
+  const rest = limit - featured.length;
+  const auto =
+    rest > 0
+      ? await prisma.book.findMany({
+          where: {
+            featuredAt: null,
+            editions: { some: { imageUrl: { not: null }, offers: { some: { isSample: false, inStock: true } } } },
+          },
+          orderBy: { createdAt: "desc" },
+          take: rest,
+          include: bookCardInclude,
+        })
+      : [];
+  return [...featured, ...auto].map((b) => {
+    const real = b.editions.flatMap((e) => e.offers).filter((o) => !o.isSample && o.inStock);
+    return {
+      id: b.id,
+      slug: b.slug,
+      title: b.title,
+      author: b.author.name,
+      color: b.coverColor,
+      image: bookImage(b)?.url ?? null,
+      note: b.featuredNote,
+      minPrice: real.length ? Math.min(...real.map((o) => o.price)) : null,
+      sellers: new Set(real.map((o) => o.sellerId)).size,
+    };
+  });
+}
+
+export type BannerBook = Awaited<ReturnType<typeof getBannerBooks>>[number];
 
 export async function catalogCounts() {
   const [books, real] = await Promise.all([

@@ -217,3 +217,68 @@ a {
     0 0 0 1px rgb(255 255 255 / 0.08),
     0 18px 40px -12px rgb(110 90 255 / 0.45);
 }
+
+/* ---------- Bosh sahifa banneri ---------- */
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.banner-bg {
+  background:
+    radial-gradient(60% 90% at 85% 50%, color-mix(in oklab, var(--c) 70%, white) 0%, transparent 70%),
+    radial-gradient(50% 80% at 10% 110%, color-mix(in oklab, var(--c) 60%, #ffcf5a) 0%, transparent 70%),
+    linear-gradient(115deg, color-mix(in oklab, var(--c) 75%, black) 0%, var(--c) 55%, color-mix(in oklab, var(--c) 80%, white) 100%);
+}
+
+/* matn har qanday rangda o'qilishi uchun chap tomonni qoraytiramiz */
+.banner-shade {
+  background: linear-gradient(90deg, rgb(0 0 0 / 0.55) 0%, rgb(0 0 0 / 0.3) 50%, rgb(0 0 0 / 0) 85%);
+}
+
+.banner-ring {
+  border: 1px solid rgb(255 255 255 / 0.18);
+  box-shadow: 0 0 0 28px rgb(255 255 255 / 0.04), 0 0 0 64px rgb(255 255 255 / 0.03);
+}
+
+.banner-cover {
+  transform: rotate(4deg);
+  transition: transform 0.4s ease;
+  filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.45));
+}
+.banner-slide:hover .banner-cover {
+  transform: rotate(1deg) translateY(-4px);
+}
+
+.banner-slide {
+  box-shadow: var(--shadow);
+}
+[data-theme="koinot"] .banner-slide {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1),
+    0 24px 60px -24px color-mix(in oklab, var(--c) 80%, white);
+}
+
+.banner-arrow {
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.9);
+  color: #1c1b19;
+  font-size: 1.5rem;
+  line-height: 1;
+  box-shadow: 0 6px 16px -6px rgb(0 0 0 / 0.4);
+}
+.banner-arrow:hover {
+  background: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-cover {
+    transition: none;
+  }
+}

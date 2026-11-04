@@ -67,12 +67,17 @@ model Book {
   coverColor   String    @default("#1f6f5c")
   // "manual" — qo'lda kiritilgan, "import" — katalog importida avtomatik yaratilgan
   origin       String    @default("manual")
+  // bosh sahifa banneri: admin tanlagan vaqt (bo'lmasa — avtomatik yangi kitoblar) va qisqa yozuv
+  featuredAt   DateTime?
+  featuredNote String?
   editions     Edition[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([searchKey])
   @@index([searchCount])
+  @@index([featuredAt])
+  @@index([createdAt])
 }
 
 model Edition {
