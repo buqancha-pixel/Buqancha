@@ -43,6 +43,8 @@ const TITLE_STEMS = [
   "masjid", "shariat", "ramazon", "iymon", "tasavvuf", "aqida", "qur'on", "muhammad sollalloh",
   "sollalloh", "roziyalloh", "alayhissalom", "oxirat", "sajda", "zakot",
   "duolar", "imomi", "imomlar", "sunnati", "sunnat ", "tavhid", "fiqh", "zikr",
+  // ruscha (kirill → lotin kalit)
+  "коран", "ислам", "аллах", "пророк", "намаз", "молитв", "библи", "евангел", "православ", "христиан", "хадис",
 ].map((w) => searchKey(w));
 
 // ko'p so'zli aniq iboralar (searchKey ko'rinishida)

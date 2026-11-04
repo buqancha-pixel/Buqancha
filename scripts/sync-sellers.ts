@@ -33,6 +33,7 @@ async function main() {
       ...(s.collector ? { collector: s.collector } : {}),
       ...(s.sitemapUrls ? { sitemapUrls: s.sitemapUrls } : {}),
       ...(s.listingUrls ? { listingUrls: s.listingUrls } : {}),
+      ...(s.importLanguages ? { importLanguages: s.importLanguages } : {}),
       ...(s.productUrlPattern ? { productUrlPattern: s.productUrlPattern } : {}),
     };
     const exists = await prisma.seller.findUnique({ where: { slug: s.slug } });
@@ -52,6 +53,8 @@ async function main() {
         ...(s.collector ? { collector: s.collector } : {}),
         ...(s.sitemapUrls ? { sitemapUrls: s.sitemapUrls } : {}),
         ...(s.listingUrls ? { listingUrls: s.listingUrls } : {}),
+        ...(s.importLanguages ? { importLanguages: s.importLanguages } : {}),
+      ...(s.importLanguages ? { importLanguages: s.importLanguages } : {}),
         ...(s.productUrlPattern ? { productUrlPattern: s.productUrlPattern } : {}),
         ...fillIfEmpty("website", data.website),
         ...fillIfEmpty("social", data.social),

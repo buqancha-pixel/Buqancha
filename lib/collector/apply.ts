@@ -1,10 +1,11 @@
+import { mapSellerCategories } from "../categories";
 import type { OfferSource } from "@prisma/client";
 import { prisma } from "../db";
 import type { CollectedItem, RunStats } from "./types";
 import { buildIndex, matchItem, type MatchIndex } from "./match";
 import { decide } from "./decide";
 import { normalizeIsbn } from "./isbn";
-import { canCreateBook, createBookFromItem } from "./create-book";
+import { canCreateBook, createBookFromItem, detectLanguage } from "./create-book";
 import { isReligious } from "./religion";
 
 /** Ko'rinmay qolganlarni "mavjud emas" qilish chegarasi: bundan ko'p bo'lsa feed buzuq deb hisoblanadi. */
@@ -33,7 +34,7 @@ export type ApplyOptions = {
   /** item.key → editionId (oldindan ma'lum bog'lanishlar, masalan mahsulot havolasi) */
   knownEditions?: Map<string, string>;
   /** bazada yo'q kitoblar uchun yangi kitob yaratilsinmi (katalog importi) */
-  createBooks?: { sellerName: string };
+  createBooks?: { sellerName: string; languages?: string[] };
   /** diniy adabiyot o'tkazib yuborilsin (avtomatik import qilinmaydi) */
   skipReligious?: boolean;
   /** sotuvchi slug'i — muqova rasmi manbasi sifatida yoziladi */
@@ -70,8 +71,9 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
 
   if (opts.fullCatalog) await markMissing(existing, seenEditions, stats, now);
 
-  async function applyOne(item: CollectedItem) {
+  async function applyOne(raw: CollectedItem) {
     stats.seen++;
+    const item: CollectedItem = { ...raw, language: detectLanguage(raw) };
     if (opts.skipReligious && isReligious(item)) {
       // diniy adabiyot avtomatik qo'shilmaydi; faqat sayt egasi qo'lda kiritgan kitobga bog'lanishi mumkin
       const m = matchItem(item, index);
@@ -98,6 +100,7 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
             year: item.year ?? null,
             imageUrl: item.image ?? null,
             imageSource: item.image ? (opts.sellerSlug ?? null) : null,
+            language: item.language && item.language !== "uz" ? item.language : null,
           },
         });
         const book = index.books.find((b) => b.bookId === m.bookId)!;
@@ -106,8 +109,13 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
         index.byIsbn.set(isbn, entry);
         stats.newEditions++;
         editionId = ed.id;
-      } else if (opts.createBooks && !m.bookId && "reason" in m && m.reason === "kitob topilmadi") {
-        const v = canCreateBook(item, isbn, opts.createBooks.sellerName);
+      } else if (
+        opts.createBooks &&
+        !m.bookId &&
+        "reason" in m &&
+        (m.reason === "kitob topilmadi" || (m.reason.startsWith("boshqa tilda") && (opts.createBooks.languages ?? ["uz"]).includes(item.language ?? "uz")))
+      ) {
+        const v = canCreateBook(item, isbn, opts.createBooks.sellerName, opts.createBooks.languages);
         if (!v.ok) {
           stats.unmatched++;
           await recordUnmatched(sellerId, item);
@@ -124,6 +132,7 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
     if (seenEditions.has(editionId)) return;
     seenEditions.add(editionId);
     if (item.image && opts.sellerSlug) await fillImage(editionId, item.image, opts.sellerSlug);
+    if (item.categories?.length) await addCategories(editionId, mapSellerCategories(item.categories));
 
     const current = byEdition.get(editionId) ?? null;
     const d = decide(current, item);
@@ -235,6 +244,15 @@ export async function cleanupOrphans() {
 }
 
 /** Nashrda rasm bo'lmasa — sotuvchi rasmini yozadi (o'z suratimiz hech qachon almashtirilmaydi). */
+/** Sotuvchi bo'limlaridan kelgan katalog bo'limlarini kitobga qo'shadi (bor bo'limlar saqlanadi). */
+async function addCategories(editionId: string, slugs: string[]) {
+  if (!slugs.length) return;
+  const ed = await prisma.edition.findUnique({ where: { id: editionId }, select: { book: { select: { id: true, categories: true } } } });
+  if (!ed) return;
+  const merged = Array.from(new Set([...ed.book.categories, ...slugs]));
+  if (merged.length !== ed.book.categories.length) await prisma.book.update({ where: { id: ed.book.id }, data: { categories: merged } });
+}
+
 async function fillImage(editionId: string, image: string, sellerSlug: string) {
   await prisma.edition.updateMany({ where: { id: editionId, imageUrl: null }, data: { imageUrl: image, imageSource: sellerSlug } });
 }

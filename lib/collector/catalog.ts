@@ -64,7 +64,7 @@ export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {
       await applyItems(seller.id, items, stats, {
         source: "AUTO",
         fullCatalog: false,
-        createBooks: { sellerName: seller.name },
+        createBooks: { sellerName: seller.name, languages: seller.importLanguages },
         skipReligious: true,
         sellerSlug: seller.slug,
       });

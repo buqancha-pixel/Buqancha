@@ -46,11 +46,12 @@ jobs:
       - run: npx prisma migrate deploy
       # mavjud narxlarni qayta tekshirish (20 soatdan beri tekshirilmaganlar)
       - name: Narxlar
-        run: npm run collect -- qamar barakot akademnashr kitob-olami-uzun --stale=20
+        run: npm run collect -- qamar barakot akademnashr kitob-olami-uzun bookhunter --stale=20
       # sotuvchilarda paydo bo'lgan yangi kitoblar (ma'lumi o'tkazib yuboriladi)
       - name: Yangi kitoblar
         run: |
           npm run import-catalog -- qamar &
           npm run import-catalog -- barakot &
           npm run import-catalog -- kitob-olami-uzun &
+          npm run import-catalog -- bookhunter &
           wait

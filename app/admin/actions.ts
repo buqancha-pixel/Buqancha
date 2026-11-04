@@ -10,6 +10,7 @@ import {
 } from "@/lib/admin/books";
 import { buildSearchKey, slugify } from "@/lib/normalize";
 import { parseLocation } from "@/lib/geo";
+import { CATEGORY_BY_SLUG } from "@/lib/categories";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 
@@ -84,10 +85,14 @@ export async function createBookAction(data: FormData) {
 
 export async function updateBookAction(data: FormData) {
   const id = s(data, "id");
-  await run(`/admin/kitoblar/${id}`, () =>
-    updateBook(id, { title: s(data, "title"), titleCyrl: s(data, "titleCyrl"), author: s(data, "author"), description: s(data, "description") }),
-    "Saqlandi.",
-  );
+  await run(`/admin/kitoblar/${id}`, async () => {
+    await updateBook(id, { title: s(data, "title"), titleCyrl: s(data, "titleCyrl"), author: s(data, "author"), description: s(data, "description") });
+    // til bo'limlari (rus/ingliz) nashr tilidan olinadi — admin faqat mavzu bo'limlarini belgilaydi
+    const picked = data.getAll("categories").map(String).filter((c) => CATEGORY_BY_SLUG.has(c) && !CATEGORY_BY_SLUG.get(c)!.language);
+    const book = await prisma.book.findUniqueOrThrow({ where: { id }, select: { categories: true } });
+    const keepLang = book.categories.filter((c) => CATEGORY_BY_SLUG.get(c)?.language);
+    await prisma.book.update({ where: { id }, data: { categories: [...new Set([...picked, ...keepLang])] } });
+  }, "Saqlandi.");
 }
 
 export async function setFeaturedAction(data: FormData) {

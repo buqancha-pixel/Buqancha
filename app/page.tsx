@@ -5,6 +5,7 @@ import { Cover } from "@/components/Cover";
 import { JsonLd } from "@/components/JsonLd";
 import { bookImage, catalogCounts, getBannerBooks, getMostComparedBooks, getPopularBooks, getSellers } from "@/lib/books";
 import { NewBooksBanner } from "@/components/NewBooksBanner";
+import { getCategoryCounts, menuCategories } from "@/lib/catalog";
 import { formatNumber } from "@/lib/format";
 import { SELLER_TYPE_LABEL } from "@/lib/format";
 import { INSTAGRAM_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
@@ -23,13 +24,15 @@ const FLOAT_SLOTS = [
 ];
 
 export default async function HomePage() {
-  const [popular, allSellers, compared, counts, banner] = await Promise.all([
+  const [popular, allSellers, compared, counts, banner, catCounts] = await Promise.all([
     getPopularBooks(12),
     getSellers(),
     getMostComparedBooks(12),
     catalogCounts(),
     getBannerBooks(6),
+    getCategoryCounts(),
   ]);
+  const cats = menuCategories(catCounts);
   // faqat narxi bor sotuvchilar (katalogdagilar /sotuvchilar sahifasida)
   const sellers = allSellers.filter((s) => s._count.offers > 0);
 
@@ -98,6 +101,28 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+
+      {cats.length > 0 && (
+        <section className="mx-auto mb-12 max-w-6xl px-4" aria-labelledby="cats">
+          <div className="mb-3 flex items-end justify-between gap-4">
+            <h2 id="cats" className="text-xl sm:text-2xl">Bo&apos;limlar</h2>
+            <Link href="/katalog" className="text-sm font-semibold text-accent hover:underline">
+              Butun katalog →
+            </Link>
+          </div>
+          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:flex-wrap">
+            {cats.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/katalog/${c.slug}`}
+                className="shrink-0 rounded-full border border-border bg-surface-2 px-4 py-2 text-sm font-medium transition-colors hover:border-accent"
+              >
+                {c.name} <span className="tabular text-muted">{c.count}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mx-auto max-w-6xl px-4" aria-labelledby="popular">
         <div className="mb-4 flex items-end justify-between gap-4">

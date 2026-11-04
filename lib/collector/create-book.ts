@@ -22,7 +22,13 @@ export function displayPair(raw: string): { latin: string; cyrl: string | null }
 export type CreateVerdict = { ok: true } | { ok: false; reason: string };
 
 /** Mahsulotdan yangi kitob yaratish mumkinmi (ma'lumot yetarli va ishonchlimi)? */
-export function canCreateBook(item: CollectedItem, isbn: string | null, sellerName: string): CreateVerdict {
+/** Mahsulot tili: JSON-LD'da bo'lsa o'sha, bo'lmasa nomidan (ruscha harflar). */
+export function detectLanguage(item: CollectedItem): string | undefined {
+  if (item.language) return item.language;
+  return looksRussian(item.title) ? "ru" : undefined;
+}
+
+export function canCreateBook(item: CollectedItem, isbn: string | null, sellerName: string, languages: string[] = ["uz"]): CreateVerdict {
   if (!isbn) return { ok: false, reason: "ISBN yo'q — yangi kitob yaratilmaydi" };
   if (!item.author || item.authorFromBrand) return { ok: false, reason: "muallif ko'rsatilmagan" };
   if (/tarjim|tarjimon|переводчик|перевод|tərcümə|translat/i.test(item.author))
@@ -30,8 +36,8 @@ export function canCreateBook(item: CollectedItem, isbn: string | null, sellerNa
   const ak = searchKey(item.author);
   if (ak === searchKey(sellerName) || (item.publisher && ak === searchKey(item.publisher)))
     return { ok: false, reason: "muallif o'rnida do'kon/nashriyot nomi" };
-  if (item.language && item.language !== "uz") return { ok: false, reason: `boshqa tilda (${item.language})` };
-  if (looksRussian(item.title)) return { ok: false, reason: "ruscha nashr" };
+  const lang = detectLanguage(item) ?? "uz";
+  if (!languages.includes(lang)) return { ok: false, reason: lang === "ru" ? "ruscha nashr" : `boshqa tilda (${lang})` };
   const title = cleanTitle(item.title);
   if (searchKey(title).length < 2) return { ok: false, reason: "nom juda qisqa" };
   return { ok: true };
@@ -84,8 +90,11 @@ export async function createBookFromItem(item: CollectedItem, isbn: string, inde
     return existing.id;
   }
   const author = await findOrCreateAuthor(item.author!);
-  const { latin: title, cyrl } = displayPair(cleanTitle(item.title));
-  const altCyrl = !cyrl && item.titleAlt && hasCyrillic(item.titleAlt) ? displayPair(cleanTitle(item.titleAlt)).cyrl : null;
+  const lang = detectLanguage(item);
+  // ruscha kitob: nom asl holida (o'zbek lotiniga o'girilmaydi), qidiruv kaliti esa baribir lotin-kirill tushunadi
+  const pair = lang === "ru" ? { latin: tidyCase(cleanTitle(item.title).replace(/\s+/g, " ").trim()), cyrl: null } : displayPair(cleanTitle(item.title));
+  const { latin: title, cyrl } = pair;
+  const altCyrl = lang !== "ru" && !cyrl && item.titleAlt && hasCyrillic(item.titleAlt) ? displayPair(cleanTitle(item.titleAlt)).cyrl : null;
   const titleCyrl = cyrl ?? altCyrl;
   const surname = slugify(author.name).split("-").pop();
   const book = await prisma.book.create({
@@ -110,6 +119,7 @@ export async function createBookFromItem(item: CollectedItem, isbn: string, inde
       year: item.year ?? null,
       imageUrl: item.image ?? null,
       imageSource: item.image ? sellerSlug : null,
+      language: lang && lang !== "uz" ? lang : null,
     },
   });
   const entry: IndexEdition = {

@@ -4,7 +4,7 @@ import { prisma } from "./db";
 import { searchKey } from "./normalize";
 import { isUzbekEdition } from "./format";
 
-const bookCardInclude = {
+export const bookCardInclude = {
   author: true,
   editions: { include: { offers: { select: { price: true, inStock: true, isSample: true, sellerId: true } } } },
 } satisfies Prisma.BookInclude;

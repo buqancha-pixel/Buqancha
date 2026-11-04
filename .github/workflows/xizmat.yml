@@ -24,6 +24,8 @@ on:
           - sotuvchilar-sinxron
           - kitob-birlashtirish-korish
           - kitob-birlashtirish-qollash
+          - ruscha-belgilash-korish
+          - ruscha-belgilash-qollash
       parametr:
         description: "kitob-birlashtirish uchun: '<kitob-slug> <asosiy-kitob-slug> [til]', masalan 'otkan-kunlar-bygone-days otkan-kunlar en'"
         required: false
@@ -84,6 +86,8 @@ jobs:
             sotuvchilar-sinxron)              npm run --silent db:sellers ;;
             kitob-birlashtirish-korish)       merge_args; npm run --silent merge-book -- "${MERGE[@]}" ;;
             kitob-birlashtirish-qollash)      merge_args; npm run --silent merge-book -- "${MERGE[@]}" --apply ;;
+            ruscha-belgilash-korish)          npm run --silent fix-russian ;;
+            ruscha-belgilash-qollash)         npm run --silent fix-russian -- --apply && npm run --silent remove-religious -- --apply ;;
             *) echo "::error::Noma'lum vazifa: $VAZIFA"; exit 1 ;;
           esac
           echo "--- yakuniy holat ---"

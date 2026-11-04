@@ -3,11 +3,15 @@ import { ThemeToggle, type Theme } from "./ThemeToggle";
 import { SearchForm } from "./SearchForm";
 import { InstagramIcon } from "./InstagramIcon";
 import { INSTAGRAM, INSTAGRAM_URL } from "@/lib/site";
+import { CatalogMenu } from "./CatalogMenu";
+import { getCategoryCounts, menuCategories } from "@/lib/catalog";
 
-export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?: boolean }) {
+export async function Header({ theme, showSearch = true }: { theme: Theme; showSearch?: boolean }) {
+  const counts = await getCategoryCounts().catch(() => ({ all: 0 }) as Record<string, number>);
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-3">
+        <CatalogMenu categories={menuCategories(counts)} total={counts.all ?? 0} instagramUrl={INSTAGRAM_URL} />
         <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Buqancha — bosh sahifa">
           <Logo />
           <span className="font-heading text-lg font-semibold">Buqancha</span>
@@ -18,6 +22,9 @@ export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?
           </div>
         )}
         <nav className="ml-auto hidden items-center gap-5 text-sm font-medium text-muted sm:flex">
+          <Link href="/katalog" className="hover:text-text">
+            Katalog
+          </Link>
           <Link href="/sotuvchilar" className="hover:text-text">
             Sotuvchilar
           </Link>
@@ -36,6 +43,9 @@ export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?
         </div>
       </div>
       <nav className="no-scrollbar mx-auto flex max-w-6xl items-center gap-5 overflow-x-auto whitespace-nowrap px-4 pb-2 text-sm font-medium text-muted sm:hidden">
+        <Link href="/katalog" className="hover:text-text">
+          Katalog
+        </Link>
         <Link href="/sotuvchilar" className="hover:text-text">
           Sotuvchilar
         </Link>

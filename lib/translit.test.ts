@@ -16,8 +16,24 @@ test("ruscha matnni aniqlash", () => {
   assert.equal(looksRussian("Ўткан кунлар"), false);
   assert.equal(looksRussian("Сила привычки"), true);
   assert.equal(looksRussian("Мастер и Маргарита"), true);
-  assert.equal(looksRussian("Мы"), true);
+  assert.equal(looksRussian("Мышление"), true);
   assert.equal(looksRussian("O'tkan kunlar"), false);
+  assert.equal(looksRussian("Тонкое искусство пофигизма"), true);
+  assert.equal(looksRussian("Сила Instagram. Простой путь к миллиону подписчиков"), true);
+  assert.equal(looksRussian("13 причин почему"), true);
+  assert.equal(looksRussian("Видеомаркетинг: стратегия, контент, производство"), true);
+  // o'zbekcha kirill — ruscha emas
+  assert.equal(looksRussian("Шум бола"), false);
+  assert.equal(looksRussian("Алишер Навоий"), false);
+  assert.equal(looksRussian("Меҳробдан чаён"), false);
+  assert.equal(looksRussian("Кеча ва кундуз"), false);
+  assert.equal(looksRussian("Дунёнинг ишлари"), false);
+  assert.equal(looksRussian("Лев Толстой: Энг сара асарлари"), false);
+  assert.equal(looksRussian("Хотиралар / Анна Достоевская"), false);
+  assert.equal(looksRussian("Бурунги болалар: Сайланма И"), false);
+  assert.equal(looksRussian("Кентервильское привидение"), true);
+  assert.equal(looksRussian("Из"), false);
+  assert.equal(looksRussian("Американская трагедия - 1"), true);
 });
 
 test("katta/kichik harflarni tartiblash", () => {

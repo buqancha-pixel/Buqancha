@@ -47,8 +47,19 @@ export function toLatinDisplay(input: string): string {
 export function looksRussian(text: string): boolean {
   if (!hasCyrillic(text)) return false;
   if (/[ўқғҳЎҚҒҲ]/.test(text)) return false;
+  // o'zbekcha so'zlar/qo'shimchalar bo'lsa — o'zbekcha (ruscha ism bo'lsa ham: "Лев Толстой: Энг сара асарлари")
+  if (/(^|[^а-яё])(ва|энг|билан|учун|ҳақида|хакида|сайланма)([^а-яё]|$)|[а-яё]{2,}(лар|лари|ларнинг|нинг|ларга|лардан)([^а-яё]|$)/i.test(text))
+    return false;
   if (/[ыщЫЩ]/.test(text)) return true;
-  return /(^|[^а-яё])(и|в|на|для|как|что|это|от|по|не|из|книга|история|жизнь|мир|детей|человек|правила|секреты)([^а-яё]|$)/i.test(text);
+  // bitta so'zli nom ("Из" — o'zbekcha "Iz" ham bo'lishi mumkin) bog'lovchi bo'yicha aniqlanmaydi
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  if (words < 2) return /[а-яё]{2,}(ство|ение|ание|ость|ться)$/i.test(text.trim());
+  // bir harfli bog'lovchilar faqat kichik harfda ("Мастер и Маргарита"); "Сайланма И" — rim raqami
+  if (/(^|[^а-яёА-ЯЁ])(и|в|к|с|у)([^а-яёА-ЯЁ]|$)/.test(text)) return true;
+  if (/(^|[^а-яё])(на|для|как|что|это|от|по|не|из|за|при|без|почему|зачем|книга|история|жизнь|мир|детей|человек|правила|секреты)([^а-яё]|$)/i.test(text))
+    return true;
+  // o'zbek tilida bo'lmaydigan ruscha qo'shimchalar: искусство, мышление, сознание, учиться, простой
+  return /[а-яё]{2,}(ство|ение|ание|ость|ться|ский|ская|ское|ские|ный|ная|ное|ные|ой|ое|ый|ая)([^а-яё]|$)/i.test(text);
 }
 
 /** "abdulla qodiriy" / "ABDULLA QODIRIY" → "Abdulla Qodiriy" (faqat butunlay kichik yoki katta bo'lsa). */

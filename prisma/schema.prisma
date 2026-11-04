@@ -70,6 +70,8 @@ model Book {
   // bosh sahifa banneri: admin tanlagan vaqt (bo'lmasa — avtomatik yangi kitoblar) va qisqa yozuv
   featuredAt   DateTime?
   featuredNote String?
+  // katalog bo'limlari (lib/categories.ts dagi slug'lar; sotuvchi bo'limlaridan avtomatik yoki admin panelda)
+  categories   String[]  @default([])
   editions     Edition[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -125,6 +127,8 @@ model Seller {
   sitemapUrls  String[]      @default([])
   // sitemap'da mahsulotlar bo'lmasa: bo'lim sahifalari (?page=1, 2, ... yangi havola chiqmaguncha)
   listingUrls  String[]      @default([])
+  // shu sotuvchidan qaysi tildagi kitoblar yangi kitob sifatida yaratilishi mumkin ("uz", "ru")
+  importLanguages String[]   @default(["uz"])
   // katalog importi uchun: sitemap'dagi qaysi manzillar kitob sahifasi (regex)
   productUrlPattern String?
   crawlDelayMs Int           @default(3000)

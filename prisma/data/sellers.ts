@@ -34,6 +34,8 @@ export type SellerSeed = {
   sitemapUrls?: string[];
   /** sitemap'da mahsulot bo'lmasa — bo'lim sahifalari (?page=N bilan aylanadi) */
   listingUrls?: string[];
+  /** yangi kitob yaratiladigan tillar (sukut: faqat o'zbekcha) */
+  importLanguages?: string[];
   /** katalog importi: sitemap'dagi kitob sahifalari (regex) */
   productUrlPattern?: string;
 };
@@ -102,6 +104,11 @@ export const SELLERS: SellerSeed[] = [
     address: "Amir Temur ko'chasi, 129A",
     description: "Biznes va ilmiy-ommabop adabiyotga ixtisoslashgan onlayn do'kon; O'zbekiston bo'ylab yetkazib berish.",
     sources: ["https://bookhunter.uz/ru/contacts", "https://www.goldenpages.uz/company/?Id=102091"],
+    collector: "PRODUCT_PAGE",
+    // har bir kitobning /uz/ va /ru/ sahifasi bor — faqat /uz/ olinadi; kitoblar asosan rus tilida
+    sitemapUrls: ["https://bookhunter.uz/sitemap-books-1.xml"],
+    productUrlPattern: "^https://bookhunter\\.uz/uz/book/",
+    importLanguages: ["uz", "ru"],
   },
   {
     slug: "kitobxona",
