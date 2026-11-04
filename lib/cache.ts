@@ -21,7 +21,10 @@ function decode<T>(text: string): T {
   ) as T;
 }
 
+// kesh deploy'lar orasida saqlanadi — kod (so'rov) o'zgarsa eski natija qolmasligi uchun kalitda versiya
+const VERSION = (process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.CACHE_VERSION ?? "local").slice(0, 12);
+
 export function cached<A extends unknown[], R>(fn: (...args: A) => Promise<R>, key: string, revalidate = 3600) {
-  const inner = unstable_cache(async (...args: A) => encode(await fn(...args)), [key], { revalidate, tags: [CATALOG_TAG] });
+  const inner = unstable_cache(async (...args: A) => encode(await fn(...args)), [key, VERSION], { revalidate, tags: [CATALOG_TAG] });
   return async (...args: A): Promise<R> => decode<R>(await inner(...args));
 }

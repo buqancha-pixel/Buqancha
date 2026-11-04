@@ -66,7 +66,14 @@ async function getBannerBooksRaw(limit = 6) {
       ? await prisma.book.findMany({
           where: {
             featuredAt: null,
-            editions: { some: { imageUrl: { not: null }, offers: { some: { isSample: false, inStock: true } } } },
+            // avtomatik banner — o'zbekcha nashri bor kitoblardan (ruscha importlar bosib ketmasin)
+            editions: {
+              some: {
+                imageUrl: { not: null },
+                OR: [{ language: null }, { language: { in: ["uz", "uz-Cyrl"] } }],
+                offers: { some: { isSample: false, inStock: true } },
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
           take: rest,
