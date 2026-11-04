@@ -16,7 +16,7 @@ const TITLE_WORDS = new Set(
     "payg'ambarlar", "rasululloh", "rasulullohning", "alloh", "allohning", "allohga", "islom", "islomiy", "islomda",
     "tafsir", "tafsiri", "sahoba", "sahobalar", "roziyallohu", "sollallohu", "alayhissalom", "zikr", "fiqh", "aqida",
     "aqidasi", "sunnat", "sunnati", "zakot", "tavhid", "tasavvuf", "musulmon", "musulmonlar", "ramazon", "duolar",
-    "duo", "iymon", "iymonning", "imon", "haj", "umra", "mo'min", "mo'minlar", "shariat", "sunniy", "salaf",
+    "duo", "iymon", "iymonning", "imon", "haj", "umra", "mo'min", "mo'minlar", "mo'minning", "mo'minga", "mo'minlarning", "mo'minlarga", "shariat", "sunniy", "salaf",
     "din", "diniy", "avliyo", "avliyolar", "avliyolari", "imom", "imomi", "masjid", "oxirat", "sahih",
   ].map((w) => searchKey(w)),
 );
@@ -33,6 +33,18 @@ export function isReligiousCategory(slugs: string[] | undefined): boolean {
   return !!slugs?.some((s) => CATEGORY_RE.test(s));
 }
 
+/**
+ * So'z o'zaklari: qo'shimchali shakllarni ham ushlaydi ("sahobalarning", "payg'ambarimizning",
+ * "ilohiy", "masjidlar"). Faqat diniy ma'noli o'zaklar; "jannat", "do'zax", "qiyomat", "musulmon" kabi
+ * adabiyotda ham ko'p uchraydiganlari ataylab yo'q ("Yo'qotilgan jannat", "Dorur-rohat musulmonlari").
+ */
+const TITLE_STEMS = [
+  "hadis", "payg'ambar", "rasululloh", "alloh", "ilohiy", "islom", "tafsir", "sahoba", "saxoba", "namoz", "avliyo",
+  "masjid", "shariat", "ramazon", "iymon", "tasavvuf", "aqida", "qur'on", "muhammad sollalloh",
+  "sollalloh", "roziyalloh", "alayhissalom", "oxirat", "sajda", "zakot",
+  "duolar", "imomi", "imomlar", "sunnati", "sunnat ", "tavhid", "fiqh", "zikr",
+].map((w) => searchKey(w));
+
 // ko'p so'zli aniq iboralar (searchKey ko'rinishida)
 const TITLE_PHRASES = ["saodat asri", "tazkirat ul"].map((p) => searchKey(p));
 
@@ -40,6 +52,7 @@ export function isReligiousText(title: string, publisher?: string | null): boole
   if (publisher && PUBLISHER_RE.test(publisher)) return true;
   const key = searchKey(title);
   if (TITLE_PHRASES.some((p) => ` ${key} `.includes(` ${p} `))) return true;
+  if (TITLE_STEMS.some((stem) => ` ${key}`.includes(` ${stem}`))) return true;
   return key.split(" ").some((t) => TITLE_WORDS.has(t));
 }
 
