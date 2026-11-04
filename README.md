@@ -175,8 +175,15 @@ bilan); kitob sahifasida "Tavsiya qiladi: @…". Admin panel → Targ'ibotchilar
 
 **Hamkorlar kabineti** (`/hamkor`): do'kon/nashriyot o'z narxlarini o'zi boshqaradi — kitob qo'shish (ISBN yoki nom
 bo'yicha qidirib), narx/mavjudlikni tahrirlash, bazada yo'q kitobni qo'shish (ISBN bilan; diniy adabiyot — faqat
-sayt egasi orqali), CSV/JSON fayl yuklash ("to'liq ro'yxat" belgilansa faylda yo'qlari "sotuvda yo'q"), do'kon
-ma'lumotlari va xaritadagi joylashuv. Kirish — admin panelda (Sotuvchilar → sotuvchi → Hamkor kabineti) yaratiladigan
+sayt egasi orqali), butun ro'yxatni bitta fayl bilan yuklash, do'kon ma'lumotlari va xaritadagi joylashuv.
+Hamkor faqat o'z sotuvchisining narxlarini ko'radi va o'zgartiradi (sessiya bitta `sellerId` ga bog'langan).
+
+Fayl yuklash: Excel (`.xlsx`), Word (`.docx` — hujjatdagi eng katta jadval), CSV yoki JSON, 4 MB gacha. Ustun
+nomlari o'zbekcha/ruscha/inglizcha bo'lishi mumkin ("Kitob nomi", "Narx (so'm)", "ISBN", "Muallif", "Nashriyot",
+"Mavjud"; `lib/collector/parsers/feed.ts` → `ALIASES`). ISBN bo'yicha moslanadi; bazada yo'q kitob ISBN va muallif
+bo'lsa yaratiladi, diniy adabiyot o'tkazib yuboriladi. "To'liq ro'yxat" belgilansa faylda yo'qlari "sotuvda yo'q".
+Namuna: `public/buqancha-namuna.xlsx` (`npx tsx scripts/make-template.ts` bilan qayta yaratiladi). Yuklash tarixi
+admin panelda (Sotuvchilar → sotuvchi → Hamkor kabineti → Fayl yuklashlari). Kirish — admin panelda (Sotuvchilar → sotuvchi → Hamkor kabineti) yaratiladigan
 maxfiy havola; bazada faqat kalit xeshi, login/parol/telefon saqlanmaydi; yangi havola eskisini va sessiyalarni
 bekor qiladi. `Seller.partnerUntil` — birinchi marta 30 kun bepul, keyin admin "+30 kun"/"+1 yil" bilan uzaytiradi;
 muddat tugasa narxlar qoladi, tahrirlash va "Hamkor" belgisi yopiladi. Hamkor narxini kechki avtomatik yig'ish

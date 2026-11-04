@@ -8,6 +8,7 @@ import { AdminError, createBook, deleteOffer, optionalUrl, saveOffer } from "@/l
 import { endPartnerSession, partnerActive, requirePartner, sellerByToken, startPartnerSession } from "@/lib/partner/auth";
 import { isReligiousText } from "@/lib/collector/religion";
 import { importFeed } from "@/lib/collector/run";
+import { docxRows, rowsToCsv, xlsxRows } from "@/lib/collector/parsers/office";
 import { parseLocation } from "@/lib/geo";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
@@ -105,14 +106,30 @@ export async function uploadPartnerFeed(data: FormData) {
   await run("/hamkor#fayl", async (_sellerId, slug) => {
     const file = data.get("file");
     if (!(file instanceof File) || !file.size) throw new AdminError("Faylni tanlang.");
-    if (file.size > 3_000_000) throw new AdminError("Fayl juda katta (3 MB gacha).");
+    if (file.size > 4_000_000) throw new AdminError("Fayl juda katta (4 MB gacha). Ro'yxatni ikkiga bo'lib yuklang.");
     const name = file.name.toLowerCase();
-    const format = name.endsWith(".json") ? "json" : name.endsWith(".csv") || name.endsWith(".txt") ? "csv" : null;
-    if (!format) throw new AdminError("CSV (Excel'dan \"CSV UTF-8\" sifatida saqlang) yoki JSON fayl yuklang.");
-    const res = await importFeed(slug, await file.text(), format, { fullCatalog: data.get("full") === "on" });
+    let body: string;
+    let format: "csv" | "json" = "csv";
+    try {
+      if (name.endsWith(".xlsx")) body = rowsToCsv(xlsxRows(new Uint8Array(await file.arrayBuffer())));
+      else if (name.endsWith(".docx")) body = rowsToCsv(docxRows(new Uint8Array(await file.arrayBuffer())));
+      else if (name.endsWith(".csv") || name.endsWith(".txt")) body = await file.text();
+      else if (name.endsWith(".json")) {
+        body = await file.text();
+        format = "json";
+      } else if (name.endsWith(".xls") || name.endsWith(".doc"))
+        throw new AdminError("Eski format. Excel/Word'da \"Saqlash\" → .xlsx yoki .docx tanlang.");
+      else throw new AdminError("Excel (.xlsx), Word (.docx) yoki CSV fayl yuklang.");
+    } catch (e) {
+      if (e instanceof AdminError) throw e;
+      throw new AdminError(`Fayl o'qilmadi: ${(e as Error).message}`);
+    }
+    const res = await importFeed(slug, body, format, { fullCatalog: data.get("full") === "on", createBooks: true });
     const st = res.stats;
     if (res.status === "FAILED") throw new AdminError(`Fayl o'qilmadi: ${res.error ?? st.errors[0] ?? "noma'lum xato"}`);
-    return `Fayl qabul qilindi: ${st.created} ta yangi narx, ${st.updated} ta yangilandi, ${st.unchanged} ta o'zgarmadi, ${st.unmatched} ta kitob topilmadi${
+    return `Fayl qabul qilindi: ${st.seen} ta qator — ${st.created} ta yangi narx, ${st.updated} ta yangilandi, ${st.unchanged} ta o'zgarmadi${
+      st.newBooks ? `, ${st.newBooks} ta yangi kitob qo'shildi` : ""
+    }${st.unmatched ? `, ${st.unmatched} tasi qo'shilmadi (ISBN yoki muallif yo'q)` : ""}${st.religious ? `, ${st.religious} ta diniy kitob o'tkazildi` : ""}${
       st.markedOut ? `, ${st.markedOut} tasi "sotuvda yo'q"` : ""
     }${st.errors.length ? `. Xatolar: ${st.errors.slice(0, 3).join("; ")}` : ""}.`;
   });

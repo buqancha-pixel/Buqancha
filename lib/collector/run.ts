@@ -17,14 +17,22 @@ export async function importFeed(
   sellerSlug: string,
   body: string,
   format?: "csv" | "json",
-  opts: { fullCatalog?: boolean } = {},
+  opts: { fullCatalog?: boolean; createBooks?: boolean } = {},
 ): Promise<RunResult> {
   const seller = await prisma.seller.findUniqueOrThrow({ where: { slug: sellerSlug } });
   return withRun(seller, "FEED", async (stats) => {
     const { items, errors } = parseFeed(body, format);
     stats.errors.push(...errors);
-    // to'liq ro'yxat bo'lsa — faylda yo'q narxlar "sotuvda yo'q" deb belgilanadi
-    await applyItems(seller.id, items, stats, { source: "PARTNER", fullCatalog: opts.fullCatalog ?? true, sellerSlug: seller.slug });
+    // to'liq ro'yxat bo'lsa — faylda yo'q narxlar "sotuvda yo'q" deb belgilanadi;
+    // createBooks — bazada yo'q kitoblar (ISBN va muallif bo'lsa) yaratiladi, diniy adabiyot o'tkaziladi
+    await applyItems(seller.id, items, stats, {
+      source: "PARTNER",
+      fullCatalog: opts.fullCatalog ?? true,
+      sellerSlug: seller.slug,
+      ...(opts.createBooks
+        ? { createBooks: { sellerName: seller.name, languages: [...new Set(["uz", ...seller.importLanguages])] }, skipReligious: true }
+        : {}),
+    });
   });
 }
 

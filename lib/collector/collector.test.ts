@@ -91,6 +91,14 @@ test("CSV feed: ; ajratkich, qo'shtirnoq, o'zbekcha sarlavhalar, xatolar", () =>
   assert.match(errors[1], /ISBN noto'g'ri/);
 });
 
+test("feed: Excel sarlavhalari (qavs, ruscha)", () => {
+  const { items } = parseFeed("Kitob nomi,Muallif,ISBN,Narx (so'm),Наличие\nNavoiy,Oybek,,30 000,ha\n", "csv");
+  assert.equal(items.length, 1);
+  assert.equal(items[0].title, "Navoiy");
+  assert.equal(items[0].author, "Oybek");
+  assert.equal(items[0].price, 30000);
+});
+
 test("JSON feed", () => {
   const { items } = parseFeed(JSON.stringify({ items: [{ title: "Sarob", price: 33000, in_stock: false, sku: "A1" }] }));
   assert.deepEqual(items[0], { key: "A1", title: "Sarob", author: undefined, publisher: undefined, isbn: undefined, price: 33000, inStock: false, url: undefined });

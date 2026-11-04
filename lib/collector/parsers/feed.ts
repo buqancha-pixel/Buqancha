@@ -10,14 +10,15 @@ import { normalizeIsbn } from "../isbn.ts";
  */
 
 const ALIASES: Record<string, keyof RawRow> = {
-  isbn: "isbn",
-  title: "title", nom: "title", name: "title", kitob: "title",
-  author: "author", muallif: "author",
-  publisher: "publisher", nashriyot: "publisher",
-  price: "price", narx: "price", narxi: "price",
-  in_stock: "in_stock", instock: "in_stock", stock: "in_stock", mavjud: "in_stock", available: "in_stock",
-  url: "url", havola: "url", link: "url",
-  sku: "sku", id: "sku",
+  // o'zbekcha, inglizcha va ruscha ustun nomlari (Excel/Word jadvallari uchun)
+  isbn: "isbn", "isbn_raqami": "isbn", "shtrix_kod": "isbn", barcode: "isbn", "штрихкод": "isbn",
+  title: "title", nom: "title", nomi: "title", name: "title", kitob: "title", "kitob_nomi": "title", "название": "title", "наименование": "title",
+  author: "author", muallif: "author", muallifi: "author", "автор": "author",
+  publisher: "publisher", nashriyot: "publisher", nashriyoti: "publisher", "издательство": "publisher",
+  price: "price", narx: "price", narxi: "price", "narx_so'm": "price", "narxi_so'm": "price", "цена": "price", "стоимость": "price",
+  in_stock: "in_stock", instock: "in_stock", stock: "in_stock", mavjud: "in_stock", mavjudligi: "in_stock", available: "in_stock", "наличие": "in_stock",
+  url: "url", havola: "url", link: "url", "ссылка": "url",
+  sku: "sku", id: "sku", artikul: "sku", "артикул": "sku",
 };
 
 type RawRow = {
@@ -65,7 +66,9 @@ function parseBool(v: unknown): boolean {
 function mapKeys(obj: Record<string, unknown>): RawRow {
   const row: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
-    const key = ALIASES[k.trim().toLowerCase().replace(/[\s-]+/g, "_")];
+    // "Narx (so'm)", "Kitob nomi:", "ISBN raqami" — qavslar va tinish belgilari e'tiborga olinmaydi
+    const norm = k.toLowerCase().replace(/\(.*?\)/g, "").replace(/[:*.]/g, "").trim().replace(/[\s-]+/g, "_");
+    const key = ALIASES[norm];
     if (key && row[key] === undefined) row[key] = v;
   }
   return row as RawRow;

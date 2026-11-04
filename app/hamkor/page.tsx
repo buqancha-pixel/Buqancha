@@ -135,17 +135,26 @@ export default async function PartnerHome({ searchParams }: { searchParams: SP }
         </form>
       </Section>
 
-      <Section title="Fayl bilan yuklash (Excel/CSV)" id="fayl">
-        <p className="mb-3 text-sm text-muted">
-          Ko&apos;p kitob bo&apos;lsa — jadval yuklang. Ustunlar: <b>isbn, nom, muallif, nashriyot, narx, mavjud, havola</b>. Excel&apos;da
-          &quot;Saqlash → CSV UTF-8&quot; tanlang.{" "}
-          <a href="/feed-namuna.csv" download className="font-semibold text-accent underline">Namuna faylni yuklab olish</a>
+      <Section title="Butun ro'yxatni bitta fayl bilan yuklash" id="fayl">
+        <p className="mb-2 text-sm">
+          Kitoblarni bittalab kiritish shart emas: <b>Excel (.xlsx)</b> yoki <b>Word (.docx) jadvali</b> yuklang — barchasi bir
+          yo&apos;la qo&apos;shiladi. Bazada yo&apos;q kitoblar ham (ISBN va muallif yozilgan bo&apos;lsa) avtomatik yaratiladi.
         </p>
+        <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-muted">
+          <li>
+            <a href="/buqancha-namuna.xlsx" download className="font-semibold text-accent underline">Excel shablonni yuklab oling</a> (yoki o&apos;z jadvalingizdan foydalaning).
+          </li>
+          <li>
+            Ustunlar: <b>Kitob nomi, Muallif, ISBN, Nashriyot, Narx (so&apos;m), Mavjud (ha/yo&apos;q), Havola</b>. Majburiy — nom va narx; ISBN bo&apos;lsa, kitob aniq topiladi.
+          </li>
+          <li>Faylni shu yerga yuklang. Keyinchalik narxlar o&apos;zgarsa — o&apos;sha faylni yangilab qayta yuklang.</li>
+        </ol>
         <form action={uploadPartnerFeed} className="grid gap-3">
-          <input type="file" name="file" accept=".csv,.txt,.json,text/csv,application/json" required className="text-sm" />
-          <Check label="Bu to'liq ro'yxat — faylda yo'q kitoblar &quot;sotuvda yo'q&quot; bo'lsin" name="full" />
+          <input type="file" name="file" accept=".xlsx,.docx,.csv,.txt,.json" required className="text-sm" />
+          <Check label="Bu to'liq ro'yxat — faylda yo'q kitoblarim &quot;sotuvda yo'q&quot; bo'lsin" name="full" />
           <Button disabled={!active} className="w-fit">Yuklash</Button>
         </form>
+        <p className="mt-2 text-xs text-muted">4 MB gacha (bir necha ming kitob). Diniy adabiyot fayldan qo&apos;shilmaydi — Buqanchaga yozing.</p>
       </Section>
 
       <Section title={`Narxlaringiz (${formatNumber(offerTotal)})`} id="narxlar">

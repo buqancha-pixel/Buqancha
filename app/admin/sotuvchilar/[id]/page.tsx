@@ -10,7 +10,12 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
   await requireAdmin();
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const isNew = id === "yangi";
-  const seller = isNew ? null : await prisma.seller.findUnique({ where: { id }, include: { _count: { select: { offers: true } } } });
+  const seller = isNew
+    ? null
+    : await prisma.seller.findUnique({
+        where: { id },
+        include: { _count: { select: { offers: true } }, runs: { where: { kind: "FEED" }, orderBy: { startedAt: "desc" }, take: 8 } },
+      });
   if (!isNew && !seller) notFound();
   return (
     <div>
@@ -81,6 +86,23 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
                 </form>
               ))}
           </div>
+          {seller.runs.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-1 text-sm font-semibold">Fayl yuklashlari</p>
+              <ul className="divide-y divide-border rounded-xl border border-border text-xs">
+                {seller.runs.map((r) => {
+                  const st = (r.stats ?? {}) as Record<string, number>;
+                  return (
+                    <li key={r.id} className="px-3 py-2">
+                      {formatDate(r.startedAt)} · {r.status} · {st.seen ?? 0} qator: {st.created ?? 0} yangi, {st.updated ?? 0} yangilandi
+                      {st.newBooks ? `, ${st.newBooks} yangi kitob` : ""}
+                      {st.unmatched ? `, ${st.unmatched} qo'shilmadi` : ""}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
           <p className="mt-3 text-xs text-muted">
             Hamkor havola orqali kiradi (login va parol yo&apos;q). Muddat tugasa narxlari qoladi, faqat tahrirlash va &quot;Hamkor&quot; belgisi yopiladi.
           </p>
