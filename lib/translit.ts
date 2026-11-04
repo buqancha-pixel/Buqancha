@@ -55,7 +55,7 @@ export function looksRussian(text: string): boolean {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   if (words < 2) return /[а-яё]{2,}(ство|ение|ание|ость|ться)$/i.test(text.trim());
   // bir harfli bog'lovchilar faqat kichik harfda ("Мастер и Маргарита"); "Сайланма И" — rim raqami
-  if (/(^|[^а-яёА-ЯЁ])(и|в|к|с|у)([^а-яёА-ЯЁ]|$)/.test(text)) return true;
+  if (/(^|\s)(и|в|к|с|у)(\s|$)/.test(text)) return true;
   if (/(^|[^а-яё])(на|для|как|что|это|от|по|не|из|за|при|без|почему|зачем|книга|история|жизнь|мир|детей|человек|правила|секреты)([^а-яё]|$)/i.test(text))
     return true;
   // o'zbek tilida bo'lmaydigan ruscha qo'shimchalar: искусство, мышление, сознание, учиться, простой

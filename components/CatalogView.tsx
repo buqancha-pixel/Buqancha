@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { BookCard } from "./BookCard";
 import { JsonLd } from "./JsonLd";
-import { CATALOG_SORTS, type CatalogSort, getCatalogPage, getCategoryCounts, menuCategories } from "@/lib/catalog";
-import { CATEGORY_BY_SLUG } from "@/lib/categories";
+import { CATALOG_SORTS, type CatalogSort, getCatalogPage, getCategoryCounts } from "@/lib/catalog";
+import { CATEGORIES, LANGUAGES, type Category, type Language } from "@/lib/categories";
 import { formatNumber } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
 
@@ -12,12 +12,19 @@ export function parseCatalogParams(sp: { tartib?: string; sahifa?: string }) {
   return { sort, page };
 }
 
-/** Katalog sahifasi: bo'limlar qatori, saralash, kitoblar to'ri va sahifalash. */
-export async function CatalogView({ slug, sort, page }: { slug: string | null; sort: CatalogSort; page: number }) {
-  const cat = slug ? CATEGORY_BY_SLUG.get(slug)! : null;
-  const [{ books, total, pages }, counts] = await Promise.all([getCatalogPage(slug, sort, page), getCategoryCounts()]);
-  const cats = menuCategories(counts);
-  const base = slug ? `/katalog/${slug}` : "/katalog";
+/** Katalog sahifasi: til va mavzu qatorlari, saralash, kitoblar to'ri va sahifalash. */
+export async function CatalogView({ lang, topic, sort, page }: { lang?: Language; topic?: Category; sort: CatalogSort; page: number }) {
+  const [{ books, total, pages }, counts] = await Promise.all([
+    getCatalogPage({ language: lang?.code ?? null, topic: topic?.slug ?? null }, sort, page),
+    getCategoryCounts(),
+  ]);
+  const topicCount = (slug: string) => counts[lang ? `${lang.code}|${slug}` : `*|${slug}`] ?? 0;
+  const topics = CATEGORIES.filter((c) => topicCount(c.slug) > 0);
+  const langs = LANGUAGES.filter((l) => (counts[l.code] ?? 0) > 0);
+  const topicHref = (t: string | null) => (lang ? `/katalog/${lang.slug}${t ? `/${t}` : ""}` : t ? `/katalog/${t}` : "/katalog");
+  const base = topicHref(topic?.slug ?? null);
+  const title = topic && lang ? `${topic.name} — ${lang.name.toLowerCase()}` : (topic?.name ?? (lang ? `${lang.name} kitoblar` : "Kitoblar katalogi"));
+  const about = topic?.about ?? lang?.about;
   const href = (p: { tartib?: string; sahifa?: number }) => {
     const q = new URLSearchParams();
     const t = p.tartib ?? sort;
@@ -26,6 +33,7 @@ export async function CatalogView({ slug, sort, page }: { slug: string | null; s
     const s = q.toString();
     return s ? `${base}?${s}` : base;
   };
+  const chip = (active: boolean) => `shrink-0 rounded-full px-3 py-1.5 text-sm ${active ? "bg-text text-bg" : "border border-border"}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
@@ -33,7 +41,7 @@ export async function CatalogView({ slug, sort, page }: { slug: string | null; s
         data={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: cat?.name ?? "Kitoblar katalogi",
+          name: title,
           url: absoluteUrl(base),
           inLanguage: "uz",
           mainEntity: {
@@ -46,26 +54,37 @@ export async function CatalogView({ slug, sort, page }: { slug: string | null; s
       <nav aria-label="Yo'l" className="text-sm text-muted">
         <Link href="/" className="hover:text-text">Bosh sahifa</Link>
         {" / "}
-        {cat ? (
+        <Link href="/katalog" className="hover:text-text">Katalog</Link>
+        {lang && (
           <>
-            <Link href="/katalog" className="hover:text-text">Katalog</Link> / <span className="text-text">{cat.name}</span>
+            {" / "}
+            <Link href={`/katalog/${lang.slug}`} className="hover:text-text">{lang.name}</Link>
           </>
-        ) : (
-          <span className="text-text">Katalog</span>
         )}
+        {topic && <> / <span className="text-text">{topic.name}</span></>}
       </nav>
-      <h1 className="mt-3 text-3xl sm:text-4xl">{cat?.name ?? "Kitoblar katalogi"}</h1>
+      <h1 className="mt-3 text-3xl sm:text-4xl">{title}</h1>
       <p className="mt-2 text-muted">
-        {cat ? `${cat.about}. ` : ""}Sotuvda bor {formatNumber(total)} ta kitob — narxlari do&apos;kon va nashriyotlar bo&apos;yicha.
+        {about ? `${about}. ` : ""}Sotuvda bor {formatNumber(total)} ta kitob — narxlari do&apos;kon va nashriyotlar bo&apos;yicha.
       </p>
 
       <div className="no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1">
-        <Link href="/katalog" className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${!slug ? "bg-text text-bg" : "border border-border"}`}>
-          Hammasi
+        <Link href={topic ? `/katalog/${topic.slug}` : "/katalog"} className={chip(!lang)}>
+          Barcha tillar
         </Link>
-        {cats.map((c) => (
-          <Link key={c.slug} href={`/katalog/${c.slug}`} className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${slug === c.slug ? "bg-text text-bg" : "border border-border"}`}>
-            {c.name}
+        {langs.map((l) => (
+          <Link key={l.slug} href={`/katalog/${l.slug}${topic && (counts[`${l.code}|${topic.slug}`] ?? 0) > 0 ? `/${topic.slug}` : ""}`} className={chip(lang?.slug === l.slug)}>
+            {l.name}
+          </Link>
+        ))}
+      </div>
+      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1">
+        <Link href={topicHref(null)} className={chip(!topic)}>
+          Barcha mavzular
+        </Link>
+        {topics.map((c) => (
+          <Link key={c.slug} href={topicHref(c.slug)} className={chip(topic?.slug === c.slug)}>
+            {c.name} <span className="tabular opacity-60">{topicCount(c.slug)}</span>
           </Link>
         ))}
       </div>

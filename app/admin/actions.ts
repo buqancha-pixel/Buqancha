@@ -87,11 +87,8 @@ export async function updateBookAction(data: FormData) {
   const id = s(data, "id");
   await run(`/admin/kitoblar/${id}`, async () => {
     await updateBook(id, { title: s(data, "title"), titleCyrl: s(data, "titleCyrl"), author: s(data, "author"), description: s(data, "description") });
-    // til bo'limlari (rus/ingliz) nashr tilidan olinadi — admin faqat mavzu bo'limlarini belgilaydi
-    const picked = data.getAll("categories").map(String).filter((c) => CATEGORY_BY_SLUG.has(c) && !CATEGORY_BY_SLUG.get(c)!.language);
-    const book = await prisma.book.findUniqueOrThrow({ where: { id }, select: { categories: true } });
-    const keepLang = book.categories.filter((c) => CATEGORY_BY_SLUG.get(c)?.language);
-    await prisma.book.update({ where: { id }, data: { categories: [...new Set([...picked, ...keepLang])] } });
+    const picked = data.getAll("categories").map(String).filter((c) => CATEGORY_BY_SLUG.has(c));
+    await prisma.book.update({ where: { id }, data: { categories: [...new Set(picked)] } });
   }, "Saqlandi.");
 }
 
@@ -267,3 +264,40 @@ export async function updateAuthorAction(data: FormData) {
   }, "Muallif saqlandi.");
 }
 
+
+// ---------- katalog bo'limlari (tezkor) ----------
+
+async function setCategories(ids: string[], slug: string, mode: "add" | "remove") {
+  if (!CATEGORY_BY_SLUG.has(slug)) throw new AdminError("Bo'limni tanlang.");
+  const books = await prisma.book.findMany({ where: { id: { in: ids } }, select: { id: true, categories: true } });
+  for (const b of books) {
+    const next = mode === "add" ? [...new Set([...b.categories, slug])] : b.categories.filter((c) => c !== slug);
+    if (next.length !== b.categories.length) await prisma.book.update({ where: { id: b.id }, data: { categories: next } });
+  }
+  return books.length;
+}
+
+function safeBack(d: FormData) {
+  const b = s(d, "back");
+  return b.startsWith("/admin/kitoblar") ? b : "/admin/kitoblar";
+}
+
+export async function bulkCategoryAction(data: FormData) {
+  const ids = data.getAll("ids").map(String);
+  const mode = s(data, "mode") === "remove" ? "remove" : "add";
+  const slug = data.getAll("bolim").map(String).find((v) => CATEGORY_BY_SLUG.has(v)) ?? "";
+  await run(safeBack(data), async () => {
+    if (!ids.length) throw new AdminError("Avval kitoblarni belgilang.");
+    await setCategories(ids, slug, mode);
+  }, mode === "add" ? `${ids.length} ta kitob bo'limga qo'shildi.` : `${ids.length} ta kitob bo'limdan olib tashlandi.`);
+}
+
+export async function quickCategoryAction(data: FormData) {
+  const [id, slug] = s(data, "quick").split("|");
+  await run(safeBack(data), () => setCategories([id], slug, "add").then(() => undefined), `«${CATEGORY_BY_SLUG.get(slug)?.name ?? slug}» bo'limiga qo'shildi.`);
+}
+
+export async function removeCategoryAction(data: FormData) {
+  const [id, slug] = s(data, "remove").split("|");
+  await run(safeBack(data), () => setCategories([id], slug, "remove").then(() => undefined), "Bo'limdan olib tashlandi.");
+}

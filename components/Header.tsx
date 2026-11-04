@@ -4,14 +4,14 @@ import { SearchForm } from "./SearchForm";
 import { InstagramIcon } from "./InstagramIcon";
 import { INSTAGRAM, INSTAGRAM_URL } from "@/lib/site";
 import { CatalogMenu } from "./CatalogMenu";
-import { getCategoryCounts, menuCategories } from "@/lib/catalog";
+import { getCategoryCounts, menuTree } from "@/lib/catalog";
 
 export async function Header({ theme, showSearch = true }: { theme: Theme; showSearch?: boolean }) {
   const counts = await getCategoryCounts().catch(() => ({ all: 0 }) as Record<string, number>);
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-3">
-        <CatalogMenu categories={menuCategories(counts)} total={counts.all ?? 0} instagramUrl={INSTAGRAM_URL} />
+        <CatalogMenu languages={menuTree(counts)} total={counts.all ?? 0} instagramUrl={INSTAGRAM_URL} />
         <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Buqancha — bosh sahifa">
           <Logo />
           <span className="font-heading text-lg font-semibold">Buqancha</span>

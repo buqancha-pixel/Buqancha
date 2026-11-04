@@ -32,5 +32,7 @@ test("nom va nashriyot bo'yicha", () => {
   assert.equal(isReligiousText("Mo‘minjon Toshqin"), false);
   assert.equal(isReligiousText("Коран. Смысловой перевод"), true);
   assert.equal(isReligiousText("Мышление"), false);
+  assert.equal(isReligiousText("Буюк мураббий с.а.в"), true);
+  assert.equal(isReligiousText("Muhammad s.a.v. hayoti"), true);
   assert.equal(isReligiousText("Mo‘minlarning onalari"), true);
 });

@@ -51,7 +51,7 @@ export default async function EditBook({ params, searchParams }: { params: Promi
             <fieldset className="sm:col-span-2">
               <legend className="mb-2 text-sm font-medium">Katalog bo&apos;limlari</legend>
               <div className="grid gap-2 sm:grid-cols-2">
-                {CATEGORIES.filter((c) => !c.language).map((c) => (
+                {CATEGORIES.map((c) => (
                   <Check key={c.slug} label={c.name} name="categories" value={c.slug} defaultChecked={book.categories.includes(c.slug)} />
                 ))}
               </div>

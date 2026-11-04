@@ -7,9 +7,19 @@ export type Category = {
   name: string;
   /** qisqa tavsif (bo'lim sahifasi va meta description uchun) */
   about: string;
-  /** til bo'limi: shu tildagi nashrlari bor kitoblar ham kiradi */
-  language?: string;
 };
+
+/**
+ * Til bo'limlari (katalogning birinchi darajasi). Kitob tili nashrlaridan: bitta o'zbekcha nashri bo'lsa —
+ * o'zbekcha; aks holda barcha nashrlari shu tilda bo'lsa — o'sha til.
+ */
+export type Language = { slug: string; code: "uz" | "ru" | "en"; name: string; about: string };
+export const LANGUAGES: Language[] = [
+  { slug: "ozbek-tilida", code: "uz", name: "O'zbek tilida", about: "O'zbek tilidagi kitoblar (lotin va kirill)" },
+  { slug: "rus-tilida", code: "ru", name: "Rus tilida", about: "Rus tilidagi kitoblar" },
+  { slug: "ingliz-tilida", code: "en", name: "Ingliz tilida", about: "Ingliz tilidagi kitoblar" },
+];
+export const LANGUAGE_BY_SLUG = new Map(LANGUAGES.map((l) => [l.slug, l]));
 
 export const CATEGORIES: Category[] = [
   { slug: "ozbek-adabiyoti", name: "O'zbek adabiyoti", about: "O'zbek yozuvchilarining roman, qissa va hikoyalari" },
@@ -24,8 +34,6 @@ export const CATEGORIES: Category[] = [
   { slug: "ilm-fan", name: "Ilm-fan", about: "Fan, texnika va ensiklopediyalar" },
   { slug: "talim", name: "Darsliklar va abituriyentlar", about: "Darsliklar, test to'plamlari, lug'atlar va o'quv qo'llanmalari" },
   { slug: "chet-tillari", name: "Chet tillarini o'rganish", about: "Ingliz va boshqa tillarni o'rganish uchun kitoblar" },
-  { slug: "rus-tilida", name: "Rus tilidagi kitoblar", about: "Rus tilidagi kitoblar narxlari", language: "ru" },
-  { slug: "ingliz-tilida", name: "Ingliz tilidagi kitoblar", about: "Ingliz tilidagi kitoblar narxlari", language: "en" },
 ];
 
 export const CATEGORY_BY_SLUG = new Map(CATEGORIES.map((c) => [c.slug, c]));
@@ -50,11 +58,19 @@ export function mapSellerCategory(raw: string): string[] {
   if (/ilm-fan|ilmiy|texnik|entsiklopediya/.test(s)) out.add("ilm-fan");
   if (/abiturient|darslik|oquv-qollanma|oquv-adabiyot|lugat|testlar/.test(s)) out.add("talim");
   if (/chet-til|ingliz-tili$|til-organ|tilini-organ/.test(s)) out.add("chet-tillari");
-  if (/rus-tilida/.test(s)) out.add("rus-tilida");
-  if (/ingliz-tilida/.test(s)) out.add("ingliz-tilida");
   return Array.from(out);
 }
 
 export function mapSellerCategories(raw: string[] | undefined): string[] {
   return Array.from(new Set((raw ?? []).flatMap(mapSellerCategory)));
+}
+
+/** Sotuvchi bo'limidan nashr tili ("rus-tilida" → ru): kitob bo'limiga emas, nashr tiliga yoziladi. */
+export function languageFromSellerCategories(raw: string[] | undefined): string | null {
+  for (const r of raw ?? []) {
+    if (/rus-tilida|na-russkom/.test(r)) return "ru";
+    if (/ingliz-tilida|in-english/.test(r)) return "en";
+    if (/arab-tilida/.test(r)) return "ar";
+  }
+  return null;
 }

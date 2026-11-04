@@ -33,6 +33,8 @@ test("ruscha matnni aniqlash", () => {
   assert.equal(looksRussian("Бурунги болалар: Сайланма И"), false);
   assert.equal(looksRussian("Кентервильское привидение"), true);
   assert.equal(looksRussian("Из"), false);
+  assert.equal(looksRussian("Буюк мураббий с.а.в"), false);
+  assert.equal(looksRussian("Мастер и Маргарита"), true);
   assert.equal(looksRussian("Американская трагедия - 1"), true);
 });
 

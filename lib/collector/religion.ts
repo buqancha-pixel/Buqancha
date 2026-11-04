@@ -48,7 +48,7 @@ const TITLE_STEMS = [
 ].map((w) => searchKey(w));
 
 // ko'p so'zli aniq iboralar (searchKey ko'rinishida)
-const TITLE_PHRASES = ["saodat asri", "tazkirat ul"].map((p) => searchKey(p));
+const TITLE_PHRASES = ["saodat asri", "tazkirat ul", "s.a.v", "с.а.в"].map((p) => searchKey(p));
 
 export function isReligiousText(title: string, publisher?: string | null): boolean {
   if (publisher && PUBLISHER_RE.test(publisher)) return true;

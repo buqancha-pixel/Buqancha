@@ -1,4 +1,4 @@
-import { mapSellerCategories } from "../categories";
+import { languageFromSellerCategories, mapSellerCategories } from "../categories";
 import type { OfferSource } from "@prisma/client";
 import { prisma } from "../db";
 import type { CollectedItem, RunStats } from "./types";
@@ -132,7 +132,7 @@ export async function applyItems(sellerId: string, items: CollectedItem[], stats
     if (seenEditions.has(editionId)) return;
     seenEditions.add(editionId);
     if (item.image && opts.sellerSlug) await fillImage(editionId, item.image, opts.sellerSlug);
-    if (item.categories?.length) await addCategories(editionId, mapSellerCategories(item.categories));
+    if (item.categories?.length) await addCategories(editionId, mapSellerCategories(item.categories), languageFromSellerCategories(item.categories));
 
     const current = byEdition.get(editionId) ?? null;
     const d = decide(current, item);
@@ -245,7 +245,9 @@ export async function cleanupOrphans() {
 
 /** Nashrda rasm bo'lmasa — sotuvchi rasmini yozadi (o'z suratimiz hech qachon almashtirilmaydi). */
 /** Sotuvchi bo'limlaridan kelgan katalog bo'limlarini kitobga qo'shadi (bor bo'limlar saqlanadi). */
-async function addCategories(editionId: string, slugs: string[]) {
+async function addCategories(editionId: string, slugs: string[], language: string | null) {
+  // "rus-tilida" kabi bo'lim — nashr tili (faqat hali belgilanmagan bo'lsa)
+  if (language) await prisma.edition.updateMany({ where: { id: editionId, language: null }, data: { language } });
   if (!slugs.length) return;
   const ed = await prisma.edition.findUnique({ where: { id: editionId }, select: { book: { select: { id: true, categories: true } } } });
   if (!ed) return;
