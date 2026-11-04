@@ -15,6 +15,10 @@ async function main() {
     console.error("Foydalanish: npm run import-catalog -- <sotuvchi-slug> [--limit N]");
     process.exit(2);
   }
+  if (!(await prisma.seller.findUnique({ where: { slug } }))) {
+    console.log(`[${slug}] bazada yo'q (o'chirilgan) — o'tkazildi`);
+    return;
+  }
   const started = Date.now();
   const r = await importCatalog(slug, {
     limit,

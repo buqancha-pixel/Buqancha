@@ -192,7 +192,7 @@ export async function setUnmatchedStatusAction(data: FormData) {
 
 // ---------- sotuvchilar ----------
 
-const TYPES: SellerType[] = ["STORE", "PUBLISHER", "MARKETPLACE"];
+const TYPES: SellerType[] = ["STORE", "ONLINE", "PUBLISHER", "MARKETPLACE"];
 
 function sellerFields(d: FormData) {
   const name = s(d, "name");
@@ -231,9 +231,43 @@ export async function saveSellerAction(data: FormData) {
       }
       return `/admin/sotuvchilar/${id}`;
     }
-    const created = await prisma.seller.create({ data: { ...f, slug: await uniqueSellerSlug(f.name) } });
+    const slug = await uniqueSellerSlug(f.name);
+    const created = await prisma.seller.create({ data: { ...f, slug } });
+    // ilgari o'chirilgan sotuvchi qayta qo'shilsa — sinxronlash uni endi o'tkazib yubormaydi
+    await prisma.removedSeller.deleteMany({ where: { slug } });
     return `/admin/sotuvchilar/${created.id}`;
   }, "Sotuvchi saqlandi.");
+}
+
+/** Sotuvchini barcha narxlari bilan o'chirish; kitoblar qoladi (boshqa sotuvchilarda bo'lishi mumkin). */
+async function removeSellers(ids: string[]): Promise<number> {
+  const sellers = await prisma.seller.findMany({ where: { id: { in: ids } }, select: { id: true, slug: true, name: true } });
+  for (const x of sellers) {
+    // shu sotuvchi saytidan olingan muqova rasmlari (manba ko'rsatilgan) — olib tashlanadi
+    await prisma.edition.updateMany({ where: { imageSource: x.slug }, data: { imageUrl: null, imageSource: null } });
+    await prisma.removedSeller.upsert({ where: { slug: x.slug }, create: { slug: x.slug, name: x.name }, update: { name: x.name, removedAt: new Date() } });
+    await prisma.seller.delete({ where: { id: x.id } }); // narxlar, tarix, yig'ish jurnali — cascade
+  }
+  return sellers.length;
+}
+
+export async function deleteSellerAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/sotuvchilar/${id}#ochirish`, async () => {
+    if (s(data, "confirm") !== "ha") throw new AdminError("O'chirish uchun tasdiqlash belgisini qo'ying.");
+    await removeSellers([id]);
+    return "/admin/sotuvchilar";
+  }, "Sotuvchi va uning narxlari o'chirildi.");
+}
+
+export async function bulkDeleteSellersAction(data: FormData) {
+  const ids = data.getAll("ids").map(String).filter(Boolean);
+  const back = s(data, "back").startsWith("/admin/sotuvchilar") ? s(data, "back") : "/admin/sotuvchilar";
+  await run(back, async () => {
+    if (!ids.length) throw new AdminError("Avval o'chiriladigan sotuvchilarni belgilang.");
+    if (s(data, "confirm") !== "ha") throw new AdminError("Pastdagi \"Ha, o'chirilsin\" belgisini qo'ying.");
+    await removeSellers(ids);
+  }, `${ids.length} ta sotuvchi o'chirildi.`);
 }
 
 async function uniqueSellerSlug(name: string) {

@@ -187,6 +187,13 @@ bekor qiladi. `Seller.partnerUntil` — birinchi marta 30 kun bepul, keyin admin
 muddat tugasa narxlar qoladi, tahrirlash va "Hamkor" belgisi yopiladi. Hamkor narxini kechki avtomatik yig'ish
 almashtirmaydi. Sessiya imzosi: `PARTNER_SECRET` (bo'lmasa `ADMIN_PASSWORD`).
 
+**Sotuvchilar boshqaruvi** (admin → Sotuvchilar): "+ Yangi sotuvchi qo'shish"; turlar — do'kon, onlayn do'kon
+(`ONLINE`, faqat internetda sotadiganlar; saytda "Onlayn do'konlar" bo'limi va kitob sahifasida filtr), nashriyot,
+marketpleys. Ro'yxatda tur va "Faqat narxi yo'qlar" filtri, belgilab birdaniga o'chirish; sotuvchi sahifasida ham
+"Sotuvchini o'chirish". O'chirish narxlar, narx tarixi va yig'ish jurnalini (cascade) hamda shu sotuvchidan olingan
+muqova rasmlarini olib tashlaydi, kitoblar qoladi. Slug `RemovedSeller` ga yoziladi: `npm run db:sellers` uni fayldan
+qayta yaratmaydi, kechki `collect`/`import-catalog` esa o'tkazib yuboradi. Admin shu nom bilan qayta yaratsa — yozuv o'chadi.
+
 **Bloger kabineti** (`/bloger`): admin → Targ'ibotchilar → bloger → "Kabinet ochish" maxfiy havola beradi
 (`Promoter.tokenHash`, hamkor kabinetidagi kabi faqat xesh; yangi havola eskisini bekor qiladi, "Kabinetni yopish" o'chiradi).
 Bloger faqat o'zining tavsiyalarini (kitob qidirib qo'shish, izoh, olib tashlash) va ism/rasm/tavsif/obunachilarni

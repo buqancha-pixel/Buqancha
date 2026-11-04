@@ -12,8 +12,11 @@ async function main() {
   const slugs = args.filter((a) => !a.startsWith("-"));
   const stale = Number(args.find((a) => a.startsWith("--stale="))?.split("=")[1]);
   const opts = Number.isFinite(stale) && stale > 0 ? { staleHours: stale } : {};
+  // admin panelda o'chirilgan sotuvchilar o'tkazib yuboriladi (workflow ro'yxatida qolgan bo'lsa ham)
+  const existing = new Set((await prisma.seller.findMany({ where: { slug: { in: slugs } }, select: { slug: true } })).map((s) => s.slug));
+  for (const s of slugs.filter((x) => !existing.has(x))) console.log(`${s}: bazada yo'q (o'chirilgan) — o'tkazildi`);
   const results: RunResult[] = slugs.length
-    ? await Promise.all(slugs.map((s) => collectSeller(s, opts)))
+    ? await Promise.all(slugs.filter((s) => existing.has(s)).map((s) => collectSeller(s, opts)))
     : await collectAll(opts);
   for (const r of results) printResult(r);
   if (!results.length) console.log("Yig'ish yoqilgan sotuvchi yo'q (Seller.collector = NONE).");

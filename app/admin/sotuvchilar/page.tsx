@@ -1,40 +1,97 @@
 import Link from "next/link";
+import type { Prisma, SellerType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
-import { SELLER_TYPE_LABEL, formatNumber } from "@/lib/format";
+import { SELLER_TYPE_LABEL, SELLER_TYPE_PARAM, SELLER_TYPE_PLURAL, formatNumber } from "@/lib/format";
+import { bulkDeleteSellersAction } from "../actions";
 import { Flash, PageTitle, type SP } from "../ui";
+import { SelectAllSellers } from "./SelectAll";
 
 export default async function AdminSellers({ searchParams }: { searchParams: SP }) {
   await requireAdmin();
   const sp = await searchParams;
-  const sellers = await prisma.seller.findMany({
-    orderBy: [{ offers: { _count: "desc" } }, { name: "asc" }],
-    include: { _count: { select: { offers: true } } },
-  });
+  const tur: SellerType | undefined = sp.tur ? SELLER_TYPE_PARAM[sp.tur] : undefined;
+  const narxsiz = sp.narxsiz === "1";
+  const where: Prisma.SellerWhereInput = { ...(tur ? { type: tur } : {}), ...(narxsiz ? { offers: { none: { isSample: false } } } : {}) };
+  const [sellers, typeCounts] = await Promise.all([
+    prisma.seller.findMany({
+      where,
+      orderBy: [{ offers: { _count: "desc" } }, { name: "asc" }],
+      include: { _count: { select: { offers: { where: { isSample: false } } } } },
+    }),
+    prisma.seller.groupBy({ by: ["type"], _count: true }),
+  ]);
+  const count = (t: SellerType) => typeCounts.find((x) => x.type === t)?._count ?? 0;
+  const total = typeCounts.reduce((a, x) => a + x._count, 0);
+  const qs = (p: { tur?: string | null; narxsiz?: boolean }) => {
+    const q = new URLSearchParams();
+    const t = p.tur === undefined ? sp.tur : p.tur;
+    const n = p.narxsiz ?? narxsiz;
+    if (t) q.set("tur", t);
+    if (n) q.set("narxsiz", "1");
+    const s = q.toString();
+    return s ? `/admin/sotuvchilar?${s}` : "/admin/sotuvchilar";
+  };
+  const chip = (active: boolean) => `shrink-0 rounded-full px-3 py-1.5 text-sm ${active ? "bg-text text-bg" : "border border-border"}`;
+
   return (
     <div>
       <PageTitle>Sotuvchilar</PageTitle>
       <Flash sp={sp} />
-      <Link href="/admin/sotuvchilar/yangi" className="mb-4 inline-block text-sm font-semibold text-accent underline">
-        + Yangi sotuvchi
+      <Link href="/admin/sotuvchilar/yangi" className="mb-4 inline-flex h-10 items-center rounded-full bg-accent px-4 text-sm font-semibold text-accent-contrast">
+        + Yangi sotuvchi qo&apos;shish
       </Link>
-      <ul className="card divide-y divide-border">
-        {sellers.map((s) => (
-          <li key={s.id}>
-            <Link href={`/admin/sotuvchilar/${s.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-surface-2">
-              <span className="min-w-0">
-                <span className="block truncate font-medium">{s.name}</span>
-                <span className="block truncate text-xs text-muted">
-                  {SELLER_TYPE_LABEL[s.type]} · {s.city}
-                  {s.collector !== "NONE" ? " · narxlar avtomatik" : ""}
-                  {s.partnerUntil && s.partnerUntil > new Date() ? " · hamkor" : s.partnerTokenHash ? " · hamkorlik muddati tugagan" : ""}
-                </span>
-              </span>
-              <span className="shrink-0 text-sm tabular text-muted">{formatNumber(s._count.offers)} narx</span>
-            </Link>
-          </li>
+
+      <div className="no-scrollbar -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-1">
+        <Link href={qs({ tur: null })} className={chip(!tur)}>Hammasi {total}</Link>
+        {Object.entries(SELLER_TYPE_PARAM).map(([p, t]) => (
+          <Link key={p} href={qs({ tur: p })} className={chip(tur === t)}>
+            {SELLER_TYPE_PLURAL[t]} {count(t)}
+          </Link>
         ))}
-      </ul>
+      </div>
+      <Link href={qs({ narxsiz: !narxsiz })} className={`mb-4 inline-block ${chip(narxsiz)}`}>
+        {narxsiz ? "✓ " : ""}Faqat narxi yo&apos;qlar
+      </Link>
+
+      <form action={bulkDeleteSellersAction}>
+        <input type="hidden" name="back" value={qs({})} />
+        <ul className="card divide-y divide-border">
+          {sellers.map((s) => (
+            <li key={s.id} className="flex items-center gap-3 pl-3">
+              <input type="checkbox" name="ids" value={s.id} aria-label={`${s.name} — belgilash`} className="h-5 w-5 shrink-0" />
+              <Link href={`/admin/sotuvchilar/${s.id}`} className="flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pr-4 hover:bg-surface-2">
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{s.name}</span>
+                  <span className="block truncate text-xs text-muted">
+                    {SELLER_TYPE_LABEL[s.type]} · {s.city}
+                    {s.collector !== "NONE" ? " · narxlar avtomatik" : ""}
+                    {s.partnerUntil && s.partnerUntil > new Date() ? " · hamkor" : s.partnerTokenHash ? " · hamkorlik muddati tugagan" : ""}
+                  </span>
+                </span>
+                <span className={`shrink-0 text-sm tabular ${s._count.offers ? "text-muted" : "text-warn-text"}`}>
+                  {s._count.offers ? `${formatNumber(s._count.offers)} narx` : "narx yo'q"}
+                </span>
+              </Link>
+            </li>
+          ))}
+          {!sellers.length && <li className="px-4 py-6 text-center text-sm text-muted">Hech kim yo&apos;q.</li>}
+        </ul>
+
+        {sellers.length > 0 && (
+          <div className="sticky bottom-3 z-10 mt-3 grid gap-2 rounded-2xl border border-border bg-bg p-3 shadow-lg">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <SelectAllSellers />
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="confirm" value="ha" className="h-5 w-5" />
+                Ha, belgilanganlar barcha narxlari bilan o&apos;chirilsin
+              </label>
+            </div>
+            <button className="h-10 w-fit rounded-full bg-red-600 px-4 text-sm font-semibold text-white">Belgilanganlarni o&apos;chirish</button>
+            <p className="text-xs text-muted">Kitoblar o&apos;chmaydi — faqat shu sotuvchilarning narxlari. O&apos;chirilgan sotuvchi sinxronlashda qayta qo&apos;shilmaydi.</p>
+          </div>
+        )}
+      </form>
     </div>
   );
 }

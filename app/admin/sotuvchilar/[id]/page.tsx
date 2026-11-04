@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
-import { partnerLinkAction, partnerTermAction, saveSellerAction } from "../../actions";
+import { deleteSellerAction, partnerLinkAction, partnerTermAction, saveSellerAction } from "../../actions";
 import { formatDate } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, Select, type SP } from "../../ui";
@@ -28,6 +28,7 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
             <Field label="Nomi" name="name" defaultValue={seller?.name ?? ""} required className="sm:col-span-2" />
             <Select label="Turi" name="type" defaultValue={seller?.type ?? "STORE"} required>
               <option value="STORE">Kitob do&apos;koni</option>
+              <option value="ONLINE">Onlayn do&apos;kon</option>
               <option value="PUBLISHER">Nashriyot</option>
               <option value="MARKETPLACE">Marketpleys</option>
             </Select>
@@ -113,6 +114,19 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
           {seller._count.offers} ta narx.{" "}
           {seller.collector !== "NONE" ? "Narxlar har kecha avtomatik yangilanadi." : "Narxlar qo'lda kiritiladi (kitob sahifasidan)."}
         </p>
+      )}
+      {seller && (
+        <Section title="Sotuvchini o'chirish" id="ochirish">
+          <form action={deleteSellerAction} className="grid gap-3">
+            <input type="hidden" name="id" value={seller.id} />
+            <p className="text-sm text-muted">
+              Sotuvchi saytdan butunlay o&apos;chadi, uning {seller._count.offers} ta narxi ham. Kitoblar qoladi. Keyin kerak bo&apos;lsa,
+              &quot;Yangi sotuvchi&quot; orqali qayta qo&apos;shasiz.
+            </p>
+            <Check label="Ha, sotuvchi barcha narxlari bilan o'chirilsin" name="confirm" value="ha" />
+            <Button variant="danger" className="w-fit">O&apos;chirish</Button>
+          </form>
+        </Section>
       )}
     </div>
   );

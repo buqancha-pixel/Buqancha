@@ -9,7 +9,7 @@ import { writeFileSync } from "node:fs";
 import { prisma } from "../lib/db";
 import { SELLERS } from "../prisma/data/sellers";
 
-const TYPE = { STORE: "do'kon", PUBLISHER: "nashriyot", MARKETPLACE: "marketpleys" } as const;
+const TYPE = { STORE: "do'kon", ONLINE: "onlayn do'kon", PUBLISHER: "nashriyot", MARKETPLACE: "marketpleys" } as const;
 
 function csv() {
   const esc = (v: string | null | undefined) => `"${(v ?? "").replace(/"/g, '""')}"`;
@@ -25,7 +25,14 @@ async function main() {
   if (process.argv.includes("--csv")) return csv();
   let created = 0;
   let updated = 0;
+  let skipped = 0;
+  // admin panelda o'chirilganlar fayldan qayta yaratilmaydi
+  const removed = new Set((await prisma.removedSeller.findMany({ select: { slug: true } })).map((r) => r.slug));
   for (const s of SELLERS) {
+    if (removed.has(s.slug)) {
+      skipped++;
+      continue;
+    }
     const data = {
       name: s.name, type: s.type, city: s.city, website: s.website, social: s.social ?? null,
       address: s.address ?? null, description: s.description, sources: s.sources,
@@ -64,7 +71,7 @@ async function main() {
     });
     updated++;
   }
-  console.log(`Sotuvchilar: ${created} ta yangi, ${updated} ta yangilandi (jami katalogda ${SELLERS.length}).`);
+  console.log(`Sotuvchilar: ${created} ta yangi, ${updated} ta yangilandi, ${skipped} ta o'chirilgani o'tkazildi (jami katalogda ${SELLERS.length}).`);
 }
 
 main().finally(() => prisma.$disconnect());

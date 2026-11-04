@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/sotuvchilar" },
 };
 
-const ORDER: SellerType[] = ["STORE", "PUBLISHER", "MARKETPLACE"];
+const ORDER: SellerType[] = ["STORE", "ONLINE", "PUBLISHER", "MARKETPLACE"];
 
 const COLLECTOR_LABEL = {
   FEED: "Narxlar hamkor feed'idan",

@@ -28,12 +28,14 @@ export function formatRelative(d: Date, now = new Date()): string {
 
 export const SELLER_TYPE_LABEL: Record<SellerType, string> = {
   STORE: "Do'kon",
+  ONLINE: "Onlayn do'kon",
   PUBLISHER: "Nashriyot",
   MARKETPLACE: "Marketpleys",
 };
 
 export const SELLER_TYPE_PLURAL: Record<SellerType, string> = {
   STORE: "Do'konlar",
+  ONLINE: "Onlayn do'konlar",
   PUBLISHER: "Nashriyotlar",
   MARKETPLACE: "Marketpleyslar",
 };
@@ -41,6 +43,7 @@ export const SELLER_TYPE_PLURAL: Record<SellerType, string> = {
 /** URL parametri ↔ tur */
 export const SELLER_TYPE_PARAM: Record<string, SellerType> = {
   dokon: "STORE",
+  onlayn: "ONLINE",
   nashriyot: "PUBLISHER",
   marketpleys: "MARKETPLACE",
 };

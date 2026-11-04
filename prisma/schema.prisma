@@ -9,6 +9,7 @@ datasource db {
 
 enum SellerType {
   STORE       // do'kon
+  ONLINE      // onlayn do'kon (faqat internetda sotadi)
   PUBLISHER   // nashriyot
   MARKETPLACE // marketpleys
 }
@@ -255,4 +256,11 @@ model PromoterBook {
 
   @@id([promoterId, bookId])
   @@index([bookId])
+}
+
+// Admin panelda o'chirilgan sotuvchilar: "sotuvchilar-sinxron" ularni fayldan qayta yaratmaydi
+model RemovedSeller {
+  slug      String   @id
+  name      String
+  removedAt DateTime @default(now())
 }
