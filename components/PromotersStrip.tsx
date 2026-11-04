@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getPromoters, avatarColor } from "@/lib/promoters";
+import { getPromoters, avatarColor, promoterPhotoSrc } from "@/lib/promoters";
 import { PromoterAvatar } from "./PromoterAvatar";
 
 /** Bosh sahifa: banner ostidagi "Kitob targ'ibotchilari" qatori (Instagram stories uslubida). */
@@ -21,7 +21,7 @@ export async function PromotersStrip() {
             <Link key={p.id} href={`/targibotchilar/${p.slug}`} className="group flex w-[72px] shrink-0 flex-col items-center gap-1.5 text-center">
               <span className="rounded-full bg-[conic-gradient(from_200deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34)] p-[2.5px] transition-transform group-hover:scale-105">
                 <span className="block rounded-full bg-bg p-[2px]">
-                  <PromoterAvatar name={p.name} photoUrl={p.photoUrl} color={avatarColor(p.name)} size={56} />
+                  <PromoterAvatar name={p.name} photoUrl={promoterPhotoSrc(p)} color={avatarColor(p.name)} size={56} />
                 </span>
               </span>
               <span className="w-full truncate text-xs font-medium">{p.name}</span>

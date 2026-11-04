@@ -13,6 +13,8 @@ import {
 import { buildSearchKey, slugify } from "@/lib/normalize";
 import { parseLocation } from "@/lib/geo";
 import { hashToken, newToken } from "@/lib/partner/auth";
+import { cleanNote } from "@/lib/promoters";
+import { deletePromoterPhoto, savePromoterPhoto } from "@/lib/promoter/photo";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 
@@ -389,7 +391,7 @@ export async function addPromoterBookAction(data: FormData) {
   const id = s(data, "id");
   await run(`/admin/targibotchilar/${id}#kitoblar`, async () => {
     const bookId = s(data, "bookId");
-    const note = s(data, "note").slice(0, 200) || null;
+    const note = cleanNote(String(data.get("note") ?? ""));
     await prisma.promoterBook.upsert({
       where: { promoterId_bookId: { promoterId: id, bookId } },
       create: { promoterId: id, bookId, note },
@@ -439,4 +441,14 @@ export async function quickDeleteBookAction(id: string): Promise<{ ok: boolean; 
     console.error(e);
     return { ok: false, message: "O'chirib bo'lmadi. Qayta urinib ko'ring." };
   }
+}
+
+export async function adminPromoterPhotoAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}#rasm`, () => savePromoterPhoto(id, data.get("photo")), "Rasm yuklandi.");
+}
+
+export async function adminRemovePromoterPhotoAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}#rasm`, () => deletePromoterPhoto(id), "Rasm olib tashlandi.");
 }

@@ -239,6 +239,8 @@ model Promoter {
   followers String?        // "120 ming" kabi matn
   photoUrl  String?
   tokenHash String?        @unique // bloger kabineti kaliti xeshi (kalitning o'zi saqlanmaydi)
+  photoAt   DateTime?      // yuklangan rasm vaqti (rasm manzilidagi ?v= — kesh yangilanishi uchun)
+  photo     PromoterPhoto?
   consent   Boolean        @default(false)
   active    Boolean        @default(true)
   position  Int            @default(0)
@@ -263,4 +265,12 @@ model RemovedSeller {
   slug      String   @id
   name      String
   removedAt DateTime @default(now())
+}
+
+// Bloger yuklagan profil rasmi (400×400 WebP, ~20–40 KB) — alohida jadvalda, ro'yxat so'rovlariga qo'shilmaydi
+model PromoterPhoto {
+  promoterId String   @id
+  promoter   Promoter @relation(fields: [promoterId], references: [id], onDelete: Cascade)
+  data       Bytes
+  updatedAt  DateTime @updatedAt
 }

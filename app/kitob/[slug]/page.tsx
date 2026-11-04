@@ -31,7 +31,8 @@ import {
   LANGUAGE_LABEL,
 } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
-import { getBookPromoters } from "@/lib/promoters";
+import { avatarColor, getBookPromoters, promoterPhotoSrc } from "@/lib/promoters";
+import { PromoterAvatar } from "@/components/PromoterAvatar";
 
 type Params = Promise<{ slug: string }>;
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -177,7 +178,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
             <p className="mt-3 flex flex-wrap items-center gap-1.5 text-sm">
               <span className="text-muted">Tavsiya qiladi:</span>
               {recommendedBy.map((r) => (
-                <Link key={r.promoterId} href={`/targibotchilar/${r.promoter.slug}`} className="rounded-full bg-accent-soft px-2.5 py-1 font-semibold hover:underline">
+                <Link key={r.promoterId} href={r.note ? "#tavsiyalar" : `/targibotchilar/${r.promoter.slug}`} className="rounded-full bg-accent-soft px-2.5 py-1 font-semibold hover:underline">
                   @{r.promoter.instagram}
                 </Link>
               ))}
@@ -274,6 +275,28 @@ export default async function BookPage({ params, searchParams }: { params: Param
           </div>
         )}
       </section>
+
+      {recommendedBy.some((r) => r.note) && (
+        <section id="tavsiyalar" className="mt-12 scroll-mt-28" aria-labelledby="reviews-h">
+          <h2 id="reviews-h" className="text-xl sm:text-2xl">Kitob targ&apos;ibotchilari tavsiyasi</h2>
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            {recommendedBy
+              .filter((r) => r.note)
+              .map((r) => (
+                <article key={r.promoterId} className="card p-5">
+                  <Link href={`/targibotchilar/${r.promoter.slug}`} className="flex items-center gap-3 hover:underline">
+                    <PromoterAvatar name={r.promoter.name} photoUrl={promoterPhotoSrc(r.promoter)} color={avatarColor(r.promoter.name)} size={44} />
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold">{r.promoter.name}</span>
+                      <span className="block truncate text-sm text-muted">@{r.promoter.instagram}</span>
+                    </span>
+                  </Link>
+                  <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed">{r.note}</p>
+                </article>
+              ))}
+          </div>
+        </section>
+      )}
 
       {!onlySample && sampleOffers.length > 0 && (
         <details className="mt-6 rounded-card border border-dashed border-border p-4">

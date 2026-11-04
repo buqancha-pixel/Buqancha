@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Cover } from "@/components/Cover";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { bookImage } from "@/lib/books";
-import { avatarColor, getPromoters, instagramUrl } from "@/lib/promoters";
+import { avatarColor, getPromoters, instagramUrl, promoterPhotoSrc } from "@/lib/promoters";
 import { PARTNER_TELEGRAM } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -26,7 +26,7 @@ export default async function PromotersPage() {
           {promoters.map((p) => (
             <li key={p.id} className="card flex flex-col p-5">
               <div className="flex items-center gap-4">
-                <PromoterAvatar name={p.name} photoUrl={p.photoUrl} color={avatarColor(p.name)} />
+                <PromoterAvatar name={p.name} photoUrl={promoterPhotoSrc(p)} color={avatarColor(p.name)} />
                 <div className="min-w-0">
                   <Link href={`/targibotchilar/${p.slug}`} className="block truncate text-lg font-semibold hover:underline">
                     {p.name}

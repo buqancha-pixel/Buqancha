@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { searchBooks } from "@/lib/books";
-import { addPromoterBookAction, deletePromoterAction, promoterLinkAction, promoterRevokeAction, removePromoterBookAction, savePromoterAction } from "../../actions";
+import { addPromoterBookAction, adminPromoterPhotoAction, adminRemovePromoterPhotoAction, deletePromoterAction, promoterLinkAction, promoterRevokeAction, removePromoterBookAction, savePromoterAction } from "../../actions";
+import { PhotoUpload } from "@/components/PhotoUpload";
+import { NoteField } from "@/components/NoteField";
+import { PromoterAvatar } from "@/components/PromoterAvatar";
+import { avatarColor, promoterPhotoSrc } from "@/lib/promoters";
 import { SITE_URL } from "@/lib/site";
 import { CopyBox } from "@/components/CopyBox";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, inputCls, type SP } from "../../ui";
@@ -67,6 +71,24 @@ export default async function EditPromoter({ params, searchParams }: { params: P
         </Section>
       )}
 
+      {p && (
+        <Section title="Profil rasmi" id="rasm">
+          <div className="flex flex-wrap items-center gap-4">
+            <PromoterAvatar name={p.name} photoUrl={promoterPhotoSrc(p)} color={avatarColor(p.name)} size={80} />
+            <form action={adminPromoterPhotoAction}>
+              <input type="hidden" name="id" value={p.id} />
+              <PhotoUpload label={p.photoAt ? "Boshqa rasm yuklash" : "Rasm yuklash"} />
+            </form>
+            {p.photoAt && (
+              <form action={adminRemovePromoterPhotoAction}>
+                <input type="hidden" name="id" value={p.id} />
+                <button className="text-xs text-muted underline">Rasmni olib tashlash</button>
+              </form>
+            )}
+          </div>
+        </Section>
+      )}
+
       <form action={savePromoterAction}>
         {p && <input type="hidden" name="id" value={p.id} />}
         <Section title="Ma'lumotlar">
@@ -75,7 +97,7 @@ export default async function EditPromoter({ params, searchParams }: { params: P
             <Field label="Instagram username" name="instagram" defaultValue={p?.instagram ?? ""} required placeholder="kitobxon_qiz" hint="@ belgisisiz yoki profil havolasi" />
             <Field label="Obunachilar" name="followers" defaultValue={p?.followers ?? ""} placeholder="25 ming" />
             <Field label="Tartib raqami" name="position" type="number" defaultValue={p?.position ?? 0} hint="Kichigi oldinda" />
-            <Field label="Rasm havolasi (ixtiyoriy)" name="photoUrl" type="url" defaultValue={p?.photoUrl ?? ""} className="sm:col-span-2" hint="Bo'lmasa ism bosh harflari ko'rsatiladi" />
+            <Field label="Rasm havolasi (ixtiyoriy)" name="photoUrl" type="url" defaultValue={p?.photoUrl ?? ""} className="sm:col-span-2" hint="Yuklangan rasm bo'lsa, u ko'rsatiladi; bo'lmasa shu havola, u ham bo'lmasa ism bosh harflari" />
             <Area label="Qisqacha (600 belgigacha)" name="about" defaultValue={p?.about ?? ""} className="sm:col-span-2" placeholder="Qanday kitoblar haqida yozadi, nimasi bilan qiziq" />
             <div className="grid gap-2 sm:col-span-2">
               <Check label="Bloger roziligi olindi (belgilanmasa saytda ko'rinmaydi)" name="consent" defaultChecked={p?.consent ?? false} />
@@ -102,7 +124,7 @@ export default async function EditPromoter({ params, searchParams }: { params: P
                   <span className="min-w-0 flex-1 truncate text-sm">
                     <b>{b.title}</b> <span className="text-muted">· {b.author.name}</span>
                   </span>
-                  <input name="note" placeholder="Izoh (ixtiyoriy)" aria-label="Izoh" className="h-9 w-40 rounded-full border border-border bg-bg px-3 text-xs" />
+                  <NoteField rows={2} />
                   <Button className="h-9 text-xs">+ Qo&apos;shish</Button>
                 </form>
               </li>
@@ -113,7 +135,7 @@ export default async function EditPromoter({ params, searchParams }: { params: P
               <li key={pb.bookId} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
                 <span className="min-w-0 truncate">
                   {pb.book.title} <span className="text-muted">· {pb.book.author.name}</span>
-                  {pb.note && <span className="text-muted italic"> — “{pb.note}”</span>}
+                  {pb.note && <span className="block truncate text-xs text-muted italic">“{pb.note}”</span>}
                 </span>
                 <form action={removePromoterBookAction}>
                   <input type="hidden" name="id" value={p.id} />
@@ -152,10 +174,10 @@ function guideMessage(name: string, pageUrl: string, link: string) {
     "Qanday ishlatiladi:",
     "1. Havolani oching va \"Kabinetga kirish\" tugmasini bosing. Login va parol kerak emas — havola parol o'rnida, uni hech kimga bermang.",
     "2. \"Kitob tavsiya qilish\" bo'limida kitob nomi yoki muallifini yozib, \"Qidirish\"ni bosing.",
-    "3. Kitob yonidagi \"Izoh\" qatoriga 1–2 gap yozing (nega o'qish kerak) va \"+ Tavsiya qilish\"ni bosing.",
+    "3. Kitob ostidagi maydonga tavsiyangizni yozing (500 so'zgacha: nega o'qish kerak, nimasi yoqdi) va \"+ Tavsiya qilish\"ni bosing.",
     "4. Kitob sizning sahifangizda chiqadi, kitobning o'z sahifasida esa \"Tavsiya qiladi: @username\" bo'lib ko'rinadi.",
-    "5. \"Tavsiyalarim\" ro'yxatida izohni o'zgartirish yoki kitobni olib tashlash mumkin.",
-    "6. \"Sahifamdagi ma'lumot\" bo'limida ismingiz, o'zingiz haqingizda qisqacha va obunachilar sonini yozing.",
+    "5. \"Tavsiyalarim\" ro'yxatida matnni o'zgartirish yoki kitobni olib tashlash mumkin.",
+    "6. \"Profil rasmi\" bo'limida \"Rasm yuklash\"ni bosib, rasmingizni qo'ying; \"Sahifamdagi ma'lumot\"da ismingiz, o'zingiz haqingizda va obunachilar sonini yozing.",
     "",
     "Kitob saytda topilmasa, nomini menga yozing — qo'shib beraman. Kabinet telefonda ham ishlaydi, bir marta kirsangiz 90 kun eslab qoladi.",
   ].join("\n");

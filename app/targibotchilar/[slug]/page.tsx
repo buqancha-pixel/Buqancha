@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { BookCard } from "@/components/BookCard";
 import { JsonLd } from "@/components/JsonLd";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
-import { avatarColor, getPromoter, instagramUrl } from "@/lib/promoters";
+import { avatarColor, getPromoter, instagramUrl, promoterPhotoSrc } from "@/lib/promoters";
 import { absoluteUrl } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -37,7 +37,7 @@ export default async function PromoterPage({ params }: Props) {
         <Link href="/" className="hover:text-text">Bosh sahifa</Link> / <Link href="/targibotchilar" className="hover:text-text">Kitob targ&apos;ibotchilari</Link>
       </nav>
       <div className="mt-4 flex flex-wrap items-center gap-5">
-        <PromoterAvatar name={p.name} photoUrl={p.photoUrl} color={avatarColor(p.name)} size={88} />
+        <PromoterAvatar name={p.name} photoUrl={promoterPhotoSrc(p)} color={avatarColor(p.name)} size={88} />
         <div className="min-w-0">
           <h1 className="text-3xl sm:text-4xl">{p.name}</h1>
           <p className="mt-1">
@@ -56,7 +56,12 @@ export default async function PromoterPage({ params }: Props) {
           {p.books.map((pb) => (
             <div key={pb.bookId}>
               <BookCard book={pb.book} />
-              {pb.note && <p className="mt-1 px-2.5 text-xs italic text-muted">“{pb.note}”</p>}
+              {pb.note && (
+                <Link href={`/kitob/${pb.book.slug}#tavsiyalar`} className="mt-1 block px-2.5 text-xs text-muted hover:text-text">
+                  <span className="line-clamp-4 italic">“{pb.note}”</span>
+                  {pb.note.length > 160 && <span className="mt-0.5 block font-semibold text-accent">To&apos;liq o&apos;qish →</span>}
+                </Link>
+              )}
             </div>
           ))}
         </div>
