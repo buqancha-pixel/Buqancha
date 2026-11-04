@@ -144,9 +144,10 @@ Vercel'da `ADMIN_PASSWORD` o'rnatilgach, `/admin` da parol bilan kiriladi (sessi
 Qo'lda qo'shilgan yoki tahrirlangan kitoblar `origin = "manual"` — avtomatik tozalash va diniy filtr ularga tegmaydi.
 O'chirilgan narx havolasi `IGNORED` sifatida eslab qolinadi, shuning uchun katalog importi kitobni qayta yaratmaydi.
 
-**Manzillar** (`/manzillar`): do'kon va nashriyotlar shahar bo'yicha, Google/Yandex xarita tugmalari bilan.
-Xaritadagi nuqta faqat admin panelda joylashuv kiritilgan sotuvchilarga chiqadi (Google Maps koordinatasi yoki
-havolasi); avtomatik geokodlash ishlatilmaydi — O'zbekiston manzillarida boshqa shahardagi ko'chani topib qo'yadi.
+**Manzillar** (`/manzillar`): tepada Google xaritasi (kalitsiz joylash, "kitob do'konlari <shahar>" qidiruvi —
+Google biladigan barcha do'konlar), pastda Buqancha ro'yxati shahar bo'yicha, Google/Yandex xarita tugmalari bilan.
+Admin panelda kiritilgan joylashuv (Google Maps koordinatasi/havolasi) tugmalarni aniq nuqtaga olib boradi va
+JSON-LD `geo` ga yoziladi; avtomatik geokodlash ishlatilmaydi — O'zbekiston manzillarida boshqa shahardagi ko'chani topadi.
 
 **Bo'lim sahifalaridan yig'ish:** sitemap'da mahsulot bo'lmagan saytlar uchun `Seller.listingUrls` — bo'lim
 sahifalari `?page=N` bilan yangi havola chiqmaguncha aylanadi (masalan, kitobolami.uz). Nom "MUALLIF: NOM"

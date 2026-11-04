@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Prisma, SellerType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { JsonLd } from "@/components/JsonLd";
-import { StoreMap, type MapPoint } from "@/components/StoreMap";
+import { GoogleMapEmbed } from "@/components/GoogleMapEmbed";
 import { SELLER_TYPE_LABEL, SELLER_TYPE_PARAM, plural } from "@/lib/format";
 import { googleMapsUrl, yandexMapsUrl } from "@/lib/geo";
 import { absoluteUrl } from "@/lib/site";
@@ -51,9 +51,7 @@ export default async function PlacesPage({ searchParams }: { searchParams: SP })
   const city = sp.shahar && cities.some(([c]) => c === sp.shahar) ? sp.shahar : undefined;
   const sellers = city ? all.filter((s) => s.city === city) : all;
 
-  const points: MapPoint[] = sellers
-    .filter((s) => s.lat != null && s.lng != null)
-    .map((s) => ({ id: s.id, name: s.name, address: s.address, lat: s.lat!, lng: s.lng!, mapUrl: googleMapsUrl(s) }));
+  const mapQuery = `${type === "PUBLISHER" ? "nashriyotlar" : "kitob do'konlari"} ${city ?? "Toshkent"}`;
 
   const href = (p: { tur?: string; shahar?: string }) => {
     const q = new URLSearchParams();
@@ -92,17 +90,8 @@ export default async function PlacesPage({ searchParams }: { searchParams: SP })
         }}
       />
       <h1 className="text-3xl sm:text-4xl">Kitob do&apos;konlari manzillari</h1>
-      <p className="mt-3 max-w-2xl text-muted">
-        {plural(sellers.length, "joy")}
-        {city ? ` — ${city}` : ""}. Manzil yonidagi tugma orqali Google yoki Yandex xaritada yo&apos;nalish oling. Manzil
-        noto&apos;g&apos;ri yoki do&apos;koningiz ro&apos;yxatda yo&apos;qmi?{" "}
-        <Link href="/hamkorlik" className="font-semibold text-accent hover:underline">
-          Bizga yozing
-        </Link>
-        .
-      </p>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {TYPES.map(([key, label]) => (
           <Link
             key={key}
@@ -124,16 +113,21 @@ export default async function PlacesPage({ searchParams }: { searchParams: SP })
         ))}
       </div>
 
-      {points.length > 0 && (
-        <div className="mt-6">
-          <StoreMap points={points} />
-          {points.length < sellers.length && (
-            <p className="mt-2 text-xs text-muted">
-              Xaritada aniq joylashuvi tasdiqlangan {points.length} ta joy ko&apos;rsatilgan; qolganlari uchun xarita tugmalaridan foydalaning.
-            </p>
-          )}
-        </div>
-      )}
+      <div className="mt-6">
+        <GoogleMapEmbed query={mapQuery} zoom={city && city !== "Toshkent" ? 13 : 12} title={`Xarita: ${mapQuery}`} />
+        <p className="mt-2 text-xs text-muted">
+          Xaritada Google biladigan barcha {type === "PUBLISHER" ? "nashriyotlar" : "kitob do'konlari"} ko&apos;rsatiladi.
+        </p>
+      </div>
+      <p className="mt-8 max-w-2xl text-muted">
+        {plural(sellers.length, "joy")}
+        {city ? ` — ${city}` : ""}. Manzil yonidagi tugma orqali Google yoki Yandex xaritada yo&apos;nalish oling. Manzil
+        noto&apos;g&apos;ri yoki do&apos;koningiz ro&apos;yxatda yo&apos;qmi?{" "}
+        <Link href="/hamkorlik" className="font-semibold text-accent hover:underline">
+          Bizga yozing
+        </Link>
+        .
+      </p>
 
       {groups.map(([c, list]) => (
         <section key={c} className="mt-10" aria-labelledby={`c-${c}`}>
