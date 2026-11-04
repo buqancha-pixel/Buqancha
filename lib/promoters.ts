@@ -24,9 +24,34 @@ export const getPromoter = cached(
   (slug: string) =>
     prisma.promoter.findFirst({
       where: { slug, ...visible },
-      include: { books: { orderBy: { createdAt: "desc" }, include: { book: { include: bookCardInclude } } } },
+      include: {
+        // mahkamlanganlar (ko'pi bilan 3 ta) birinchi
+        books: { orderBy: [{ pinned: "desc" }, { createdAt: "desc" }], include: { book: { include: bookCardInclude } } },
+        readingBook: { include: bookCardInclude },
+        lists: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            _count: { select: { books: true } },
+            books: { take: 4, orderBy: { position: "asc" }, include: { book: { include: { editions: { select: { imageUrl: true, imageSource: true } } } } } },
+          },
+        },
+      },
     }),
-  "promoter",
+  "promoter-v2",
+  300,
+);
+
+/** Bloger to'plami sahifasi. */
+export const getPromoterList = cached(
+  (promoterSlug: string, listSlug: string) =>
+    prisma.promoterList.findFirst({
+      where: { slug: listSlug, promoter: { slug: promoterSlug, ...visible } },
+      include: {
+        promoter: true,
+        books: { orderBy: { position: "asc" }, include: { book: { include: bookCardInclude } } },
+      },
+    }),
+  "promoter-list",
   300,
 );
 
@@ -36,6 +61,7 @@ export const getBookPromoters = cached(
     prisma.promoterBook.findMany({
       where: { bookId, promoter: visible },
       include: { promoter: { select: { id: true, slug: true, name: true, instagram: true, photoUrl: true, photoAt: true } } },
+      // rating ham keladi (PromoterBook maydoni)
       orderBy: { createdAt: "asc" },
     }),
   "book-promoters",
@@ -58,6 +84,11 @@ export function avatarColor(name: string) {
 export function promoterPhotoSrc(p: { id: string; photoAt?: Date | null; photoUrl?: string | null }): string | null {
   if (p.photoAt) return `/rasm/bloger/${p.id}?v=${new Date(p.photoAt).getTime()}`;
   return p.photoUrl ?? null;
+}
+
+/** Banner manzili (yuklanmagan bo'lsa null — sahifada muqovalar kollaji). */
+export function promoterBannerSrc(p: { id: string; bannerAt?: Date | null }): string | null {
+  return p.bannerAt ? `/rasm/bloger/${p.id}/banner?v=${new Date(p.bannerAt).getTime()}` : null;
 }
 
 /** Tavsiya matni: 500 so'zgacha (va 4000 belgigacha). */

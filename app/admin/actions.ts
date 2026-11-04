@@ -15,7 +15,7 @@ import { parseLocation } from "@/lib/geo";
 import { hashToken, newToken, termUntil } from "@/lib/partner/auth";
 import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram, normalizeYoutube } from "@/lib/contacts";
 import { cleanNote } from "@/lib/promoters";
-import { deletePromoterPhoto, savePromoterPhoto } from "@/lib/promoter/photo";
+import { deletePromoterBanner, deletePromoterPhoto, savePromoterBanner, savePromoterPhoto } from "@/lib/promoter/photo";
 import { deleteSellerPhoto, saveSellerPhoto } from "@/lib/seller/photo";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
@@ -528,4 +528,14 @@ export async function bulkDeleteBooksAction(data: FormData) {
       if (await prisma.book.findUnique({ where: { id }, select: { id: true } })) await deleteBook(id);
     }
   }, `${ids.length} ta kitob o'chirildi.`);
+}
+
+export async function adminPromoterBannerAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}#banner`, () => savePromoterBanner(id, data.get("photo")), "Banner yuklandi.");
+}
+
+export async function adminRemovePromoterBannerAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}#banner`, () => deletePromoterBanner(id), "Banner olib tashlandi.");
 }

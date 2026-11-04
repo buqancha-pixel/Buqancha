@@ -211,6 +211,12 @@ Profil rasmi: kabinetda (yoki admin sahifasida) "Rasm yuklash" — brauzer telef
 server `sharp` bilan 400×400 WebP qilib `PromoterPhoto` jadvaliga yozadi; `/rasm/bloger/<id>?v=<vaqt>` dan uzoq
 keshlanib beriladi. Tavsiya matni 500 so'zgacha (`cleanNote`); to'liq matn kitob sahifasidagi "Kitob targ'ibotchilari
 tavsiyasi" bo'limida, bloger sahifasida qisqasi va "To'liq o'qish" havolasi.
+Bloger sahifasi qo'shimchalari: banner (`PromoterBanner`, 1500×500; yuklanmasa — tavsiyalar muqovalaridan kollaj),
+1–5 yulduz baho va "📌 Eng sevimli" (`PromoterBook.rating/pinned`, 3 tagacha, sahifa boshida), "Hozir o'qiyapman"
+(`Promoter.readingBookId`), to'plamlar (`PromoterList`, `/targibotchilar/<bloger>/<to'plam>`, faqat o'z tavsiyalaridan,
+50 tagacha), Instagram story rasmi (`/rasm/story/<blogerId>/<kitobId>`, 1080×1920 PNG, `next/og` + Manrope shrifti
+`assets/fonts`, muqova `sharp` bilan PNG'ga; `?yuklab=1` — fayl) va statistika (`PromoterStat`: kunlik umumiy
+ko'rishlar va kitobga o'tishlar, `/api/stat`, botlar sanalmaydi, shaxsiy ma'lumot saqlanmaydi; kabinet va adminda).
 Tarmoqlar: Instagram (admin), Telegram va YouTube kanali (bloger kabinetda o'zi kiritadi, `normalizeTelegram`/
 `normalizeYoutube` — video havolasi emas, kanal) — bloger sahifasi va ro'yxatda logolar bilan (`SocialLinks`). Instagram manzili, rozilik va saytda ko'rinish faqat adminda.
 

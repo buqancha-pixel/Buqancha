@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { searchBooks } from "@/lib/books";
-import { addPromoterBookAction, adminPromoterPhotoAction, adminRemovePromoterPhotoAction, deletePromoterAction, promoterLinkAction, promoterRevokeAction, removePromoterBookAction, savePromoterAction } from "../../actions";
+import { addPromoterBookAction, adminPromoterBannerAction, adminPromoterPhotoAction, adminRemovePromoterBannerAction, adminRemovePromoterPhotoAction, deletePromoterAction, promoterLinkAction, promoterRevokeAction, removePromoterBookAction, savePromoterAction } from "../../actions";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { NoteField } from "@/components/NoteField";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
-import { avatarColor, promoterPhotoSrc } from "@/lib/promoters";
+import { avatarColor, promoterBannerSrc, promoterPhotoSrc } from "@/lib/promoters";
+import { PromoterBanner } from "@/components/PromoterBanner";
+import { formatNumber } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
 import { CopyBox } from "@/components/CopyBox";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, inputCls, type SP } from "../../ui";
@@ -21,6 +23,12 @@ export default async function EditPromoter({ params, searchParams }: { params: P
     : await prisma.promoter.findUnique({ where: { id }, include: { books: { orderBy: { createdAt: "desc" }, include: { book: { include: { author: true } } } } } });
   if (!isNew && !p) notFound();
   const q = (sp.q ?? "").trim();
+  const [stats30, statsAll] = p
+    ? await Promise.all([
+        prisma.promoterStat.aggregate({ where: { promoterId: p.id, day: { gte: new Date(Date.now() - 30 * 864e5) } }, _sum: { views: true, clicks: true } }),
+        prisma.promoterStat.aggregate({ where: { promoterId: p.id }, _sum: { views: true, clicks: true } }),
+      ])
+    : [{ _sum: { views: 0, clicks: 0 } }, { _sum: { views: 0, clicks: 0 } }];
   const found = p && q ? (await searchBooks(q, 12)).filter((b) => !p.books.some((pb) => pb.bookId === b.id)) : [];
 
   return (
@@ -86,6 +94,28 @@ export default async function EditPromoter({ params, searchParams }: { params: P
               </form>
             )}
           </div>
+        </Section>
+      )}
+
+      {p && (
+        <Section title="Banner va statistika" id="banner">
+          <PromoterBanner src={promoterBannerSrc(p)} covers={[]} color={avatarColor(p.name)} />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <form action={adminPromoterBannerAction}>
+              <input type="hidden" name="id" value={p.id} />
+              <PhotoUpload label={p.bannerAt ? "Boshqa banner yuklash" : "Banner yuklash"} />
+            </form>
+            {p.bannerAt && (
+              <form action={adminRemovePromoterBannerAction}>
+                <input type="hidden" name="id" value={p.id} />
+                <button className="text-xs text-muted underline">Bannerni olib tashlash</button>
+              </form>
+            )}
+          </div>
+          <p className="mt-3 text-sm">
+            Oxirgi 30 kun: <b>{formatNumber(stats30._sum.views ?? 0)}</b> ko&apos;rish, <b>{formatNumber(stats30._sum.clicks ?? 0)}</b> kitobga o&apos;tish ·
+            jami: {formatNumber(statsAll._sum.views ?? 0)} / {formatNumber(statsAll._sum.clicks ?? 0)}
+          </p>
         </Section>
       )}
 
@@ -179,7 +209,9 @@ function guideMessage(name: string, pageUrl: string, link: string) {
     "3. Kitob ostidagi maydonga tavsiyangizni yozing (500 so'zgacha: nega o'qish kerak, nimasi yoqdi) va \"+ Tavsiya qilish\"ni bosing.",
     "4. Kitob sizning sahifangizda chiqadi, kitobning o'z sahifasida esa \"Tavsiya qiladi: @username\" bo'lib ko'rinadi.",
     "5. \"Tavsiyalarim\" ro'yxatida matnni o'zgartirish yoki kitobni olib tashlash mumkin.",
-    "6. \"Profil rasmi\" bo'limida \"Rasm yuklash\"ni bosib, rasmingizni qo'ying; \"Sahifamdagi ma'lumot\"da ismingiz, o'zingiz haqingizda va obunachilar sonini yozing.",
+    "6. \"Profil rasmi\" va \"Sahifa banneri\"ni yuklang; \"Sahifamdagi ma'lumot\"da ismingiz, o'zingiz haqingizda, Telegram va YouTube.",
+    "7. Har bir tavsiya yonida: 1–5 yulduz baho, \"📌 Eng sevimli\" (3 tagacha), \"📖 Hozir o'qiyapman\" va \"📲 Story rasmi\" — Instagram story uchun tayyor rasm.",
+    "8. \"To'plamlarim\"da \"Yozda o'qish uchun 10 kitob\" kabi ro'yxat tuzing — har birining alohida havolasi bo'ladi. \"Statistika\"da sahifangizni necha kishi ko'rganini ko'rasiz.",
     "",
     "Kitob saytda topilmasa, nomini menga yozing — qo'shib beraman. Kabinet telefonda ham ishlaydi, bir marta kirsangiz 90 kun eslab qoladi.",
   ].join("\n");

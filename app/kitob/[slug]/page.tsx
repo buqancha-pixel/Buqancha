@@ -32,6 +32,7 @@ import { absoluteUrl } from "@/lib/site";
 import { avatarColor, getBookPromoters, promoterPhotoSrc } from "@/lib/promoters";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { OrderMenu } from "@/components/OrderMenu";
+import { Stars } from "@/components/Stars";
 import { SellerLogo } from "@/components/SellerLogo";
 import { sellerPhotoSrc } from "@/lib/seller/photo";
 
@@ -283,6 +284,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
                       <span className="block truncate text-sm text-muted">@{r.promoter.instagram}</span>
                     </span>
                   </Link>
+                  <Stars value={r.rating} className="mt-2 block text-lg" />
                   <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed">{r.note}</p>
                 </article>
               ))}

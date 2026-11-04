@@ -74,6 +74,8 @@ model Book {
   // katalog bo'limlari (lib/categories.ts dagi slug'lar; sotuvchi bo'limlaridan avtomatik yoki admin panelda)
   categories   String[]  @default([])
   promoters    PromoterBook[]
+  readingBy    Promoter[]  @relation("PromoterReading")
+  inLists      PromoterListBook[]
   editions     Edition[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -250,6 +252,13 @@ model Promoter {
   tokenHash String?        @unique // bloger kabineti kaliti xeshi (kalitning o'zi saqlanmaydi)
   photoAt   DateTime?      // yuklangan rasm vaqti (rasm manzilidagi ?v= — kesh yangilanishi uchun)
   photo     PromoterPhoto?
+  bannerAt  DateTime?      // yuklangan banner vaqti (yo'q bo'lsa — tavsiyalar muqovalaridan kollaj)
+  banner    PromoterBanner?
+  // "Hozir o'qiyapman"
+  readingBookId String?
+  readingBook   Book?        @relation("PromoterReading", fields: [readingBookId], references: [id], onDelete: SetNull)
+  lists     PromoterList[]
+  stats     PromoterStat[]
   consent   Boolean        @default(false)
   active    Boolean        @default(true)
   position  Int            @default(0)
@@ -263,6 +272,8 @@ model PromoterBook {
   bookId     String
   book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   note       String?
+  rating     Int?     // 1–5 yulduz (ixtiyoriy)
+  pinned     Boolean  @default(false) // ro'yxat boshiga mahkamlangan (ko'pi bilan 3 ta)
   createdAt  DateTime @default(now())
 
   @@id([promoterId, bookId])
@@ -290,4 +301,48 @@ model SellerPhoto {
   seller    Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   data      Bytes
   updatedAt DateTime @updatedAt
+}
+
+// Bloger sahifasi banneri (1500×500 WebP)
+model PromoterBanner {
+  promoterId String   @id
+  promoter   Promoter @relation(fields: [promoterId], references: [id], onDelete: Cascade)
+  data       Bytes
+  updatedAt  DateTime @updatedAt
+}
+
+// Bloger to'plami: "Yozda o'qish uchun 10 kitob" kabi
+model PromoterList {
+  id         String             @id @default(cuid())
+  promoterId String
+  promoter   Promoter           @relation(fields: [promoterId], references: [id], onDelete: Cascade)
+  slug       String
+  title      String
+  about      String?
+  createdAt  DateTime           @default(now())
+  books      PromoterListBook[]
+
+  @@unique([promoterId, slug])
+}
+
+model PromoterListBook {
+  listId   String
+  list     PromoterList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  bookId   String
+  book     Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  position Int          @default(0)
+
+  @@id([listId, bookId])
+  @@index([bookId])
+}
+
+// Bloger statistikasi: kunlik umumiy sonlar (kim ko'rgani saqlanmaydi)
+model PromoterStat {
+  promoterId String
+  promoter   Promoter @relation(fields: [promoterId], references: [id], onDelete: Cascade)
+  day        DateTime @db.Date
+  views      Int      @default(0) // sahifasi ochilgan
+  clicks     Int      @default(0) // sahifasidan kitobga o'tilgan
+
+  @@id([promoterId, day])
 }
