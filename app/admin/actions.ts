@@ -516,3 +516,16 @@ export async function adminRemoveSellerPhotoAction(data: FormData) {
   const id = s(data, "id");
   await run(`/admin/sotuvchilar/${id}#rasm`, () => deleteSellerPhoto(id), "Rasm olib tashlandi.");
 }
+
+/** Admin → Kitoblar (muqovali ko'rinish): belgilangan kitoblarni birdaniga o'chirish. */
+export async function bulkDeleteBooksAction(data: FormData) {
+  const ids = Array.from(new Set(data.getAll("ids").map(String).filter(Boolean))).slice(0, 120);
+  const back = s(data, "back").startsWith("/admin/kitoblar") ? s(data, "back") : "/admin/kitoblar";
+  await run(back, async () => {
+    if (!ids.length) throw new AdminError("Avval o'chiriladigan kitoblarni belgilang.");
+    if (s(data, "confirm") !== "ha") throw new AdminError("Pastdagi \"Ha, o'chirilsin\" belgisini qo'ying.");
+    for (const id of ids) {
+      if (await prisma.book.findUnique({ where: { id }, select: { id: true } })) await deleteBook(id);
+    }
+  }, `${ids.length} ta kitob o'chirildi.`);
+}

@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { quickDeleteBookAction } from "@/app/admin/actions";
 
 /**
- * Admin panel (Kitoblar ro'yxati): kitobni o'chirish tugmasi (tasdiqlash so'raladi).
+ * Admin panel (Kitoblar): "card" — muqova burchagidagi 🗑, "button" — ro'yxatdagi tugma (tasdiqlash so'raladi).
  * Saytning ochiq sahifalarida ishlatilmaydi.
  * O'chirilgan kitob kechki yig'ishda qayta qo'shilmaydi.
  */

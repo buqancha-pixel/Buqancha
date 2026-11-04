@@ -214,8 +214,10 @@ tavsiyasi" bo'limida, bloger sahifasida qisqasi va "To'liq o'qish" havolasi.
 Tarmoqlar: Instagram (admin), Telegram va YouTube kanali (bloger kabinetda o'zi kiritadi, `normalizeTelegram`/
 `normalizeYoutube` — video havolasi emas, kanal) — bloger sahifasi va ro'yxatda logolar bilan (`SocialLinks`). Instagram manzili, rozilik va saytda ko'rinish faqat adminda.
 
-**Kitobni o'chirish** faqat admin panelda: Admin → Kitoblar ro'yxatidagi "Kitobni o'chirish" yoki kitob sahifasining
-pastidagi "Kitobni o'chirish". Saytning ochiq sahifalarida (katalog, kitob sahifasi) admin tugmalari yo'q. O'chirilgan
+**Kitobni o'chirish** faqat admin panelda: Admin → Kitoblar sukut bo'yicha muqovali ko'rinishda (katalogdagidek,
+"Mashhur / Yangi qo'shilgan / Eski" tartibi) — muqovadagi 🗑 bilan bittasini yoki katakchalarni belgilab, pastdagi
+"Belgilanganlarni o'chirish" bilan birdaniga (120 tagacha); "☰ Ro'yxat" ko'rinishi ham bor. Kitob sahifasining
+pastida ham "Kitobni o'chirish". Saytning ochiq sahifalarida (katalog, kitob sahifasi) admin tugmalari yo'q. O'chirilgan
 kitobning sotuvchi havolalari eslab qolinadi — kechki yig'ish uni qayta qo'shmaydi.
 
 Hamkorlik sahifasida forma yo'q (shaxsiy ma'lumot saqlanmaydi) — Telegram havolasi (`PARTNER_TELEGRAM`, `lib/site.ts`).
