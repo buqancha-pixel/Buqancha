@@ -1,7 +1,7 @@
 import { cached } from "./cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./db";
-import { CATEGORIES, LANGUAGES } from "./categories";
+import { LANGUAGES } from "./categories";
 import { bookCardInclude } from "./books";
 
 export const CATALOG_SORTS = {
@@ -23,9 +23,9 @@ function languageWhere(code: string | null): Prisma.Sql {
     AND EXISTS (SELECT 1 FROM "Edition" e2 WHERE e2."bookId" = bk.id AND e2."language" = ${code}))`;
 }
 
-export type CatalogFilter = { language: string | null; topic: string | null };
+export type CatalogFilter = { language: string | null };
 
-/** Sotuvda bor kitoblar (til va mavzu bo'yicha), saralangan va sahifalangan. */
+/** Sotuvda bor kitoblar (til bo'yicha), saralangan va sahifalangan. */
 async function getCatalogPageRaw(filter: CatalogFilter, sort: CatalogSort, page: number) {
   const order =
     sort === "arzon"
@@ -35,7 +35,7 @@ async function getCatalogPageRaw(filter: CatalogFilter, sort: CatalogSort, page:
         : sort === "yangi"
           ? Prisma.sql`ca DESC`
           : Prisma.sql`sc DESC, ns DESC, mp ASC`;
-  const where = Prisma.sql`${languageWhere(filter.language)} AND ${filter.topic ? Prisma.sql`${filter.topic} = ANY(bk."categories")` : Prisma.sql`TRUE`}`;
+  const where = languageWhere(filter.language);
   const offset = (Math.max(1, page) - 1) * PAGE_SIZE;
   const [rows, total] = await Promise.all([
     prisma.$queryRaw<Array<{ id: string }>>`
@@ -61,14 +61,12 @@ async function getCatalogPageRaw(filter: CatalogFilter, sort: CatalogSort, page:
   return { books, total: n, pages: Math.max(1, Math.ceil(n / PAGE_SIZE)) };
 }
 
-/**
- * Sotuvda bor kitoblar soni: kalitlar "all", "<til>", "<til>|<mavzu>", "*|<mavzu>" (10 daqiqa keshlanadi).
- */
+/** Sotuvda bor kitoblar soni: kalitlar "all" va til kodi (1 soat keshlanadi). */
 export const getCategoryCounts = cached(
   async (): Promise<Record<string, number>> => {
-    const rows = await prisma.$queryRaw<Array<{ lang: string; topic: string | null; n: bigint }>>`
+    const rows = await prisma.$queryRaw<Array<{ lang: string | null; n: bigint }>>`
       WITH b AS (
-        SELECT DISTINCT bk.id, bk."categories",
+        SELECT DISTINCT bk.id,
           CASE
             WHEN EXISTS (SELECT 1 FROM "Edition" e2 WHERE e2."bookId" = bk.id AND ${UZ_EDITION}) THEN 'uz'
             ELSE (SELECT MIN(e2."language") FROM "Edition" e2 WHERE e2."bookId" = bk.id)
@@ -76,50 +74,27 @@ export const getCategoryCounts = cached(
         FROM "Book" bk JOIN "Edition" e ON e."bookId" = bk.id JOIN "Offer" o ON o."editionId" = e.id
         WHERE o."isSample" = false AND o."inStock" = true
       )
-      SELECT lang, NULL AS topic, COUNT(*) AS n FROM b GROUP BY lang
-      UNION ALL
-      SELECT lang, t AS topic, COUNT(*) AS n FROM b, unnest(b."categories") AS t GROUP BY lang, t`;
+      SELECT lang, COUNT(*) AS n FROM b GROUP BY lang`;
     const out: Record<string, number> = { all: 0 };
     for (const r of rows) {
       const n = Number(r.n);
-      if (r.topic === null) {
-        out[r.lang] = (out[r.lang] ?? 0) + n;
-        out.all += n;
-      } else {
-        out[`${r.lang}|${r.topic}`] = n;
-        out[`*|${r.topic}`] = (out[`*|${r.topic}`] ?? 0) + n;
-      }
+      if (r.lang) out[r.lang] = (out[r.lang] ?? 0) + n;
+      out.all += n;
     }
     return out;
   },
-  "category-counts-v2",
+  "language-counts-v1",
   3600,
 );
 
-export type MenuTopic = { slug: string; name: string; count: number; child: boolean };
-export type MenuLanguage = { slug: string; name: string; count: number; topics: MenuTopic[] };
+export type MenuLanguage = { slug: string; name: string; count: number };
 
-/** Mavzular daraxti (bo'shlari ham — tuzilma doim ko'rinsin); lang null — barcha tillar. */
-export function topicTree(counts: Record<string, number>, langCode: string | null): MenuTopic[] {
-  return CATEGORIES.map((c) => ({
-    slug: c.slug,
-    name: c.name,
-    count: counts[langCode ? `${langCode}|${c.slug}` : `*|${c.slug}`] ?? 0,
-    child: !!c.parent,
-  }));
-}
-
-/** Menyu: "Barcha kitoblar" va har bir til, ichida mavzular. */
+/** Menyu: "Barcha kitoblar" va har bir til. */
 export function menuTree(counts: Record<string, number>): MenuLanguage[] {
   return [
-    { slug: "", name: "Barcha kitoblar", count: counts.all ?? 0, topics: topicTree(counts, null) },
-    ...LANGUAGES.filter((l) => (counts[l.code] ?? 0) > 0).map((l) => ({ slug: l.slug, name: l.name, count: counts[l.code] ?? 0, topics: topicTree(counts, l.code) })),
+    { slug: "", name: "Barcha kitoblar", count: counts.all ?? 0 },
+    ...LANGUAGES.filter((l) => (counts[l.code] ?? 0) > 0).map((l) => ({ slug: l.slug, name: l.name, count: counts[l.code] ?? 0 })),
   ];
-}
-
-/** Barcha tillardagi mavzular (bosh sahifa qatori uchun). */
-export function menuCategories(counts: Record<string, number>) {
-  return CATEGORIES.map((c) => ({ slug: c.slug, name: c.name, count: counts[`*|${c.slug}`] ?? 0 })).filter((c) => c.count > 0);
 }
 
 export const getCatalogPage = cached(getCatalogPageRaw, "getCatalogPage", 3600);

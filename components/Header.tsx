@@ -11,7 +11,7 @@ export async function Header({ theme, showSearch = true }: { theme: Theme; showS
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-3">
-        <CatalogMenu languages={menuTree(counts)} total={counts.all ?? 0} instagramUrl={INSTAGRAM_URL} />
+        <CatalogMenu languages={menuTree(counts)} instagramUrl={INSTAGRAM_URL} />
         <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Buqancha — bosh sahifa">
           <Logo />
           <span className="font-heading text-lg font-semibold">Buqancha</span>
@@ -24,6 +24,9 @@ export async function Header({ theme, showSearch = true }: { theme: Theme; showS
         <nav className="ml-auto hidden items-center gap-5 text-sm font-medium text-muted sm:flex">
           <Link href="/katalog" className="hover:text-text">
             Katalog
+          </Link>
+          <Link href="/targibotchilar" className="hidden hover:text-text lg:inline">
+            Targ&apos;ibotchilar
           </Link>
           <Link href="/sotuvchilar" className="hover:text-text">
             Sotuvchilar
@@ -45,6 +48,9 @@ export async function Header({ theme, showSearch = true }: { theme: Theme; showS
       <nav className="no-scrollbar mx-auto flex max-w-6xl items-center gap-5 overflow-x-auto whitespace-nowrap px-4 pb-2 text-sm font-medium text-muted sm:hidden">
         <Link href="/katalog" className="hover:text-text">
           Katalog
+        </Link>
+        <Link href="/targibotchilar" className="hover:text-text">
+          Targ&apos;ibotchilar
         </Link>
         <Link href="/sotuvchilar" className="hover:text-text">
           Sotuvchilar

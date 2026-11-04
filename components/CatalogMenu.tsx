@@ -5,11 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-type Topic = { slug: string; name: string; count: number; child: boolean };
-type Lang = { slug: string; name: string; count: number; topics: Topic[] };
+type Lang = { slug: string; name: string; count: number };
 
-/** Chap burchakdagi menyu: katalog bo'limlari va sayt sahifalari. */
-export function CatalogMenu({ languages, total, instagramUrl }: { languages: Lang[]; total: number; instagramUrl: string }) {
+/** Chap burchakdagi menyu: tillar bo'yicha katalog va sayt sahifalari. */
+export function CatalogMenu({ languages, instagramUrl }: { languages: Lang[]; instagramUrl: string }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -82,34 +81,13 @@ export function CatalogMenu({ languages, total, instagramUrl }: { languages: Lan
             </button>
           </div>
           <nav className="flex flex-col px-2 pb-4" aria-label="Katalog bo'limlari">
-            {languages.map((l, i) => {
-              const base = l.slug ? `/katalog/${l.slug}` : "/katalog";
+            {languages.map((l) => {
+              const href = l.slug ? `/katalog/${l.slug}` : "/katalog";
               return (
-                <details key={l.slug || "all"} open={i === 0 ? !pathname.startsWith("/katalog/") || !languages.some((x) => x.slug && pathname.startsWith(`/katalog/${x.slug}`)) : pathname.startsWith(base)} className="group mt-1">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-[15px] font-semibold hover:bg-surface-2 [&::-webkit-details-marker]:hidden">
-                    <span>{l.name}</span>
-                    <span className="flex items-center gap-2 text-sm font-normal text-muted">
-                      <span className="tabular">{l.count.toLocaleString("ru-RU").replace(/,/g, " ")}</span>
-                      <svg viewBox="0 0 24 24" className="size-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
-                    </span>
-                  </summary>
-                  <div className="ml-3 flex flex-col border-l border-border pl-2">
-                    <Link href={base} className={link(base)} tabIndex={open ? 0 : -1}>
-                      <span>Barchasi</span>
-                    </Link>
-                    {l.topics.map((c) => {
-                      const href = l.slug ? `/katalog/${l.slug}/${c.slug}` : `/katalog/${c.slug}`;
-                      return (
-                        <Link key={c.slug} href={href} className={`${link(href)} ${c.child ? "ml-3 text-[14px]" : ""} ${c.count ? "" : "text-muted"}`} tabIndex={open ? 0 : -1}>
-                          <span>{c.name}</span>
-                          {c.count > 0 && <span className="tabular text-sm text-muted">{c.count}</span>}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </details>
+                <Link key={href} href={href} className={`${link(href)} font-semibold`} tabIndex={open ? 0 : -1}>
+                  <span>{l.name}</span>
+                  <span className="tabular text-sm font-normal text-muted">{l.count.toLocaleString("ru-RU").replace(/,/g, " ")}</span>
+                </Link>
               );
             })}
           </nav>

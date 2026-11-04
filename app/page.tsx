@@ -5,7 +5,9 @@ import { Cover } from "@/components/Cover";
 import { JsonLd } from "@/components/JsonLd";
 import { bookImage, catalogCounts, getBannerBooks, getMostComparedBooks, getPopularBooks, getSellers } from "@/lib/books";
 import { NewBooksBanner } from "@/components/NewBooksBanner";
-import { getCategoryCounts, menuCategories } from "@/lib/catalog";
+import { LANGUAGES } from "@/lib/categories";
+import { getCategoryCounts } from "@/lib/catalog";
+import { PromotersStrip } from "@/components/PromotersStrip";
 import { formatNumber } from "@/lib/format";
 import { SELLER_TYPE_LABEL } from "@/lib/format";
 import { INSTAGRAM_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
@@ -32,7 +34,7 @@ export default async function HomePage() {
     getBannerBooks(6),
     getCategoryCounts(),
   ]);
-  const cats = menuCategories(catCounts);
+  const langs = LANGUAGES.filter((l) => (catCounts[l.code] ?? 0) > 0);
   // faqat narxi bor sotuvchilar (katalogdagilar /sotuvchilar sahifasida)
   const sellers = allSellers.filter((s) => s._count.offers > 0);
 
@@ -64,6 +66,7 @@ export default async function HomePage() {
       />
 
       <NewBooksBanner books={banner} />
+      <PromotersStrip />
 
       <section className="relative overflow-hidden">
         <div className="float-covers pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
@@ -102,22 +105,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {cats.length > 0 && (
+      {langs.length > 0 && (
         <section className="mx-auto mb-12 max-w-6xl px-4" aria-labelledby="cats">
           <div className="mb-3 flex items-end justify-between gap-4">
-            <h2 id="cats" className="text-xl sm:text-2xl">Bo&apos;limlar</h2>
+            <h2 id="cats" className="text-xl sm:text-2xl">Tillar bo&apos;yicha</h2>
             <Link href="/katalog" className="text-sm font-semibold text-accent hover:underline">
               Butun katalog →
             </Link>
           </div>
           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:flex-wrap">
-            {cats.map((c) => (
+            {langs.map((c) => (
               <Link
                 key={c.slug}
                 href={`/katalog/${c.slug}`}
                 className="shrink-0 rounded-full border border-border bg-surface-2 px-4 py-2 text-sm font-medium transition-colors hover:border-accent"
               >
-                {c.name} <span className="tabular text-muted">{c.count}</span>
+                {c.name} <span className="tabular text-muted">{formatNumber(catCounts[c.code] ?? 0)}</span>
               </Link>
             ))}
           </div>

@@ -150,13 +150,11 @@ Google biladigan barcha do'konlar), pastda Buqancha ro'yxati shahar bo'yicha, Go
 Admin panelda kiritilgan joylashuv (Google Maps koordinatasi/havolasi) tugmalarni aniq nuqtaga olib boradi va
 JSON-LD `geo` ga yoziladi; avtomatik geokodlash ishlatilmaydi — O'zbekiston manzillarida boshqa shahardagi ko'chani topadi.
 
-**Katalog** (chap burchakdagi ☰ menyu): avval til (`/katalog/ozbek-tilida`, `rus-tilida`, `ingliz-tilida`), ichida
-mavzular (`/katalog/<til>/<mavzu>`); `/katalog/<mavzu>` — barcha tillarda. Mavzular `lib/categories.ts` da.
-Kitob tili nashrlaridan: bitta o'zbekcha nashri bo'lsa — o'zbekcha, aks holda barcha nashrlari shu tilda.
-Sotuvchilarning o'z bo'limlari (Qamar `/katalog/..`, Barakot `/catalog/..`) import va kechki tekshiruvda
-`Book.categories` ga moslanadi (diniy, to'plam, sovg'a olinmaydi); "rus-tilida" kabi bo'limlar nashr tiliga yoziladi.
-Admin panel → Kitoblar: "Bo'limsiz" va til filtri, kitob yonidagi ro'yxatdan tanlash bilan darhol bo'limga qo'shish,
-yorliqdagi × bilan olib tashlash, bir nechtasini belgilab birdaniga qo'shish/olib tashlash.
+**Katalog** (chap burchakdagi ☰ menyu): faqat tillar bo'yicha — `/katalog` (barchasi), `/katalog/ozbek-tilida`,
+`rus-tilida`, `ingliz-tilida`. Kitob tili nashrlaridan: bitta o'zbekcha nashri bo'lsa — o'zbekcha, aks holda barcha
+nashrlari shu tilda. Mavzular bo'yicha bo'linish olib tashlangan: eski `/katalog/<mavzu>` va `/katalog/<til>/<mavzu>`
+havolalari 308 bilan katalog/til sahifasiga yo'naltiriladi. Yig'uvchi sotuvchi bo'limlarini `Book.categories` ga
+yozishda davom etadi (saytda ko'rinmaydi), "rus-tilida" kabi bo'limlar nashr tiliga yoziladi.
 
 **Ruscha kitoblar:** `Seller.importLanguages` (sukut `["uz"]`; Bookhunter `["uz","ru"]`) — ruscha mahsulotdan yangi kitob
 yaratiladi, nomi asl kirill holida, nashri `language = "ru"`. Til nomidan aniqlanadi (`looksRussian`: ruscha harflar,

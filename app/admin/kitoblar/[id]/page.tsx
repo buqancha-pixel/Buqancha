@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { formatPrice, formatRelative, LANGUAGE_LABEL, SOURCE_LABEL } from "@/lib/format";
 import { searchBooks } from "@/lib/books";
-import { CATEGORIES } from "@/lib/categories";
 import {
   addEditionAction, deleteBookAction, mergeBookAction, setFeaturedAction, deleteEditionAction, deleteOfferAction, saveOfferAction,
   updateAuthorAction, updateBookAction, updateEditionAction,
@@ -48,14 +47,6 @@ export default async function EditBook({ params, searchParams }: { params: Promi
             <Field label="Kirillcha nomi" name="titleCyrl" defaultValue={book.titleCyrl ?? ""} />
             <Field label="Muallif" name="author" defaultValue={book.author.name} required hint="Boshqa muallifga o'tkazish uchun ismini yozing" />
             <Area label="Tavsif" name="description" defaultValue={book.description} className="sm:col-span-2" />
-            <fieldset className="sm:col-span-2">
-              <legend className="mb-2 text-sm font-medium">Katalog bo&apos;limlari</legend>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {CATEGORIES.map((c) => (
-                  <Check key={c.slug} label={c.name} name="categories" value={c.slug} defaultChecked={book.categories.includes(c.slug)} />
-                ))}
-              </div>
-            </fieldset>
           </div>
           <Button className="mt-4">Saqlash</Button>
         </Section>

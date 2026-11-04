@@ -26,7 +26,6 @@ on:
           - kitob-birlashtirish-qollash
           - ruscha-belgilash-korish
           - ruscha-belgilash-qollash
-          - bolimlarni-toldirish
           - targibotchi-qoshish
       parametr:
         description: "kitob-birlashtirish: '<kitob-slug> <asosiy-slug> [til]'; targibotchi-qoshish: 'username1 username2 +roziligi_olingan'"
@@ -39,7 +38,7 @@ on:
 
 # sahifa yig'ish ishlari kechki yig'ish bilan bir navbatda; tezkor vazifalar (bloger, statistika) kutmaydi
 concurrency:
-  group: ${{ contains(fromJSON('["narxlarni-yangilash","katalog-import","moslanmaganlarni-qayta-urinish","bolimlarni-toldirish"]'), inputs.vazifa) && 'narxlar' || format('xizmat-{0}', inputs.vazifa) }}
+  group: ${{ contains(fromJSON('["narxlarni-yangilash","katalog-import","moslanmaganlarni-qayta-urinish"]'), inputs.vazifa) && 'narxlar' || format('xizmat-{0}', inputs.vazifa) }}
   cancel-in-progress: false
 
 jobs:
@@ -97,7 +96,6 @@ jobs:
             kitob-birlashtirish-qollash)      merge_args; npm run --silent merge-book -- "${MERGE[@]}" --apply ;;
             ruscha-belgilash-korish)          npm run --silent fix-russian ;;
             targibotchi-qoshish)              promoter_args; npm run --silent add-promoters -- "${HANDLES[@]}" ;;
-            bolimlarni-toldirish)             npm run --silent fill-category-parents && npm run --silent collect -- qamar barakot kitob-olami-uzun ;;
             ruscha-belgilash-qollash)         npm run --silent fix-russian -- --apply && npm run --silent remove-religious -- --apply ;;
             *) echo "::error::Noma'lum vazifa: $VAZIFA"; exit 1 ;;
           esac
