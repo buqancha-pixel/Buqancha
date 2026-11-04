@@ -26,7 +26,7 @@ async function main() {
       b.editions.some((e) => isReligiousText("", e.publisher));
     if (!religious) continue;
     n++;
-    if (!APPLY && n <= 40) console.log(`  ${b.title}  [${b.editions.map((e) => e.publisher).join(", ")}]`);
+    if (!APPLY && n <= 300) console.log(`  ${b.title}  [${b.editions.map((e) => e.publisher).join(", ")}]`);
     for (const e of b.editions)
       for (const o of e.offers) if (o.url) bySeller.set(o.sellerId, [...(bySeller.get(o.sellerId) ?? []), o.url]);
   }
