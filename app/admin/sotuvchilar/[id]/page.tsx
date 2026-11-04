@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
-import { deleteSellerAction, partnerLinkAction, partnerTermAction, saveSellerAction } from "../../actions";
+import { adminRemoveSellerPhotoAction, adminSellerPhotoAction, deleteSellerAction, partnerLinkAction, partnerTermAction, saveSellerAction } from "../../actions";
+import { PhotoUpload } from "@/components/PhotoUpload";
+import { SellerLogo } from "@/components/SellerLogo";
+import { sellerPhotoSrc } from "@/lib/seller/photo";
 import { formatDate } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
 import { CopyBox } from "@/components/CopyBox";
@@ -30,6 +33,23 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
           <p className="font-semibold">2. Do&apos;konga yuboriladigan tayyor xabar (havola ichida):</p>
           <CopyBox text={storeGuide(seller.name, `${SITE_URL}/hamkor/kirish?k=${sp.havola}`, seller.partnerUntil)} rows={14} label="Xabarni nusxalash" />
         </div>
+      )}
+      {seller && (
+        <Section title="Logotip yoki do'kon rasmi" id="rasm">
+          <div className="flex flex-wrap items-center gap-4">
+            <SellerLogo name={seller.name} src={sellerPhotoSrc(seller)} size={80} />
+            <form action={adminSellerPhotoAction}>
+              <input type="hidden" name="id" value={seller.id} />
+              <PhotoUpload label={seller.photoAt ? "Boshqa rasm yuklash" : "Rasm yuklash"} />
+            </form>
+            {seller.photoAt && (
+              <form action={adminRemoveSellerPhotoAction}>
+                <input type="hidden" name="id" value={seller.id} />
+                <button className="text-xs text-muted underline">Rasmni olib tashlash</button>
+              </form>
+            )}
+          </div>
+        </Section>
       )}
       <form action={saveSellerAction}>
         {seller && <input type="hidden" name="id" value={seller.id} />}

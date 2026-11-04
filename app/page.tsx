@@ -8,6 +8,8 @@ import { NewBooksBanner } from "@/components/NewBooksBanner";
 import { LANGUAGES } from "@/lib/categories";
 import { getCategoryCounts } from "@/lib/catalog";
 import { PromotersStrip } from "@/components/PromotersStrip";
+import { SellerLogo } from "@/components/SellerLogo";
+import { sellerPhotoSrc } from "@/lib/seller/photo";
 import { formatNumber } from "@/lib/format";
 import { SELLER_TYPE_LABEL } from "@/lib/format";
 import { INSTAGRAM_URL, SITE_NAME, absoluteUrl } from "@/lib/site";
@@ -176,7 +178,8 @@ export default async function HomePage() {
         </div>
         <ul className="mt-5 flex flex-wrap gap-2">
           {sellers.map((s) => (
-            <li key={s.id} className="rounded-full border border-border bg-surface-2 px-4 py-2 text-sm">
+            <li key={s.id} className="flex items-center gap-2 rounded-full border border-border bg-surface-2 py-2 pl-2 pr-4 text-sm">
+              {s.photoAt ? <SellerLogo name={s.name} src={sellerPhotoSrc(s)} size={22} /> : <span className="w-1" />}
               <span className="font-semibold">{s.name}</span>
               <span className="text-muted"> · {SELLER_TYPE_LABEL[s.type]}</span>
             </li>

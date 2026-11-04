@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { sellerContacts } from "@/lib/contacts";
+import { SellerLogo } from "@/components/SellerLogo";
+import { sellerPhotoSrc } from "@/lib/seller/photo";
 import type { SellerType } from "@prisma/client";
 import { getSellers } from "@/lib/books";
 import { SELLER_TYPE_LABEL, SELLER_TYPE_PLURAL, formatRelative } from "@/lib/format";
@@ -85,7 +87,10 @@ function SellerCard({ s }: { s: SellerRow }) {
   return (
     <li className="card flex flex-col p-5">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold">{s.name}</h3>
+        <div className="flex min-w-0 items-center gap-3">
+          <SellerLogo name={s.name} src={sellerPhotoSrc(s)} size={44} />
+          <h3 className="min-w-0 text-lg font-semibold">{s.name}</h3>
+        </div>
         <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
           {SELLER_TYPE_LABEL[s.type]}
         </span>

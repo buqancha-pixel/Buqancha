@@ -121,6 +121,9 @@ model Seller {
   phone     String?
   telegram  String?
   instagram String?
+  // logotip yoki do'kon rasmi (do'kon kabinetda yoki admin yuklaydi); vaqti — rasm manzilidagi ?v=
+  photoAt   DateTime?
+  photo     SellerPhoto?
   // xaritadagi joylashuv (admin panelda qo'lda kiritiladi; avtomatik geokodlash O'zbekistonda ishonchsiz)
   lat      Float?
   lng      Float?
@@ -279,4 +282,12 @@ model PromoterPhoto {
   promoter   Promoter @relation(fields: [promoterId], references: [id], onDelete: Cascade)
   data       Bytes
   updatedAt  DateTime @updatedAt
+}
+
+// Sotuvchi logotipi/rasmi (400×400 WebP, kesilmaydi — shaffof fonda sig'diriladi)
+model SellerPhoto {
+  sellerId  String   @id
+  seller    Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  data      Bytes
+  updatedAt DateTime @updatedAt
 }

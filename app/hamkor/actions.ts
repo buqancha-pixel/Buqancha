@@ -10,6 +10,7 @@ import { isReligiousText } from "@/lib/collector/religion";
 import { importFeed } from "@/lib/collector/run";
 import { docxRows, rowsToCsv, xlsxRows } from "@/lib/collector/parsers/office";
 import { parseLocation } from "@/lib/geo";
+import { deleteSellerPhoto, saveSellerPhoto } from "@/lib/seller/photo";
 import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram } from "@/lib/contacts";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
@@ -169,5 +170,19 @@ export async function savePartnerProfile(data: FormData) {
       },
     });
     return "Ma'lumotlar saqlandi.";
+  });
+}
+
+export async function uploadPartnerPhoto(data: FormData) {
+  await run("/hamkor#rasm", async (sellerId) => {
+    await saveSellerPhoto(sellerId, data.get("photo"));
+    return "Rasm yuklandi.";
+  });
+}
+
+export async function removePartnerPhoto() {
+  await run("/hamkor#rasm", async (sellerId) => {
+    await deleteSellerPhoto(sellerId);
+    return "Rasm olib tashlandi.";
   });
 }

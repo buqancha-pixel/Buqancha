@@ -34,6 +34,8 @@ import { absoluteUrl } from "@/lib/site";
 import { avatarColor, getBookPromoters, promoterPhotoSrc } from "@/lib/promoters";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { OrderMenu } from "@/components/OrderMenu";
+import { SellerLogo } from "@/components/SellerLogo";
+import { sellerPhotoSrc } from "@/lib/seller/photo";
 
 type Params = Promise<{ slug: string }>;
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -378,6 +380,7 @@ function OfferCard({ offer: o, rank, isCheapest, bookTitle }: { offer: OfferRow;
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {o.seller.photoAt && <SellerLogo name={o.seller.name} src={sellerPhotoSrc(o.seller)} size={28} />}
             <span className="text-base font-semibold">{o.seller.name}</span>
             <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted ring-1 ring-border">
               {SELLER_TYPE_LABEL[o.seller.type]}

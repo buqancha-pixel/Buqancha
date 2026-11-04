@@ -199,6 +199,9 @@ do'kon) va muddat — 30 kun, 6 oy, 1 yil yoki muddatsiz (`PARTNER_FOREVER`, 299
 tepasida kirish havolasi va do'konga yuboriladigan tayyor yo'riqnoma chiqadi. Do'kon kabinetda nomi va aloqalarini
 o'zi kiritadi: telefon, Telegram, Instagram, sayt (`Seller.phone/telegram/instagram`, `lib/contacts.ts`; kamida
 bittasi majburiy). Narxida havola bo'lmasa, kitob sahifasida "Buyurtma berish" tugmasi shu aloqalarni ochadi.
+Logotip yoki do'kon rasmi: kabinetda yoki admin sotuvchi sahifasida "Rasm yuklash" — `sharp` bilan kesmasdan 400×400
+shaffof fonli WebP (`SellerPhoto`, `/rasm/sotuvchi/<id>?v=`); kitob sahifasidagi narx yonida, sotuvchilar sahifasi va
+bosh sahifada chiqadi. Rasm qayta ishlash umumiy: `lib/photo.ts` (`toWebp`, bloger rasmi — kesib, logotip — sig'dirib).
 
 **Bloger kabineti** (`/bloger`): admin → Targ'ibotchilar → bloger → "Kabinet ochish" maxfiy havola beradi
 (`Promoter.tokenHash`, hamkor kabinetidagi kabi faqat xesh; yangi havola eskisini bekor qiladi, "Kabinetni yopish" o'chiradi).

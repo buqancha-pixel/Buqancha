@@ -5,7 +5,10 @@ import { sellerContacts } from "@/lib/contacts";
 import { searchBooks } from "@/lib/books";
 import { normalizeIsbn } from "@/lib/collector/isbn";
 import { LANGUAGE_LABEL, formatDate, formatNumber, formatPrice } from "@/lib/format";
-import { addPartnerOffer, createPartnerBook, deletePartnerOffer, partnerLogout, savePartnerOffer, savePartnerProfile, uploadPartnerFeed } from "./actions";
+import { addPartnerOffer, createPartnerBook, deletePartnerOffer, partnerLogout, removePartnerPhoto, savePartnerOffer, savePartnerProfile, uploadPartnerFeed, uploadPartnerPhoto } from "./actions";
+import { PhotoUpload } from "@/components/PhotoUpload";
+import { SellerLogo } from "@/components/SellerLogo";
+import { sellerPhotoSrc } from "@/lib/seller/photo";
 import { Area, Button, Check, Field, Flash, Section, Select, inputCls } from "../admin/ui";
 
 type SP = Promise<Record<string, string | undefined>>;
@@ -60,6 +63,27 @@ export default async function PartnerHome({ searchParams }: { searchParams: SP }
 
   const hasContact = sellerContacts(seller).length > 0;
   const profile = (
+    <>
+      <Section title="Logotip yoki do'kon rasmi" id="rasm">
+        <div className="flex flex-wrap items-center gap-4">
+          <SellerLogo name={seller.name} src={sellerPhotoSrc(seller)} size={96} />
+          <div className="grid gap-2">
+            {active ? (
+              <form action={uploadPartnerPhoto}>
+                <PhotoUpload label={seller.photoAt ? "Boshqa rasm yuklash" : "Rasm yuklash"} />
+              </form>
+            ) : (
+              <p className="text-sm text-muted">Kabinet faol bo&apos;lganda yuklash mumkin.</p>
+            )}
+            {seller.photoAt && active && (
+              <form action={removePartnerPhoto}>
+                <button className="text-xs text-muted underline">Rasmni olib tashlash</button>
+              </form>
+            )}
+            <p className="max-w-xs text-xs text-muted">Logotip yoki do&apos;kon rasmi (JPG/PNG). Kesilmaydi — butunligicha kvadratga sig&apos;diriladi. Narxlaringiz yonida chiqadi.</p>
+          </div>
+        </div>
+      </Section>
       <Section title="Do'kon ma'lumotlari va aloqa" id="malumot">
         <form action={savePartnerProfile} className="grid gap-4 sm:grid-cols-2">
           <Field label="Do'kon nomi (saytda ko'rinadi)" name="name" defaultValue={seller.name} required maxLength={80} className="sm:col-span-2" />
@@ -85,6 +109,7 @@ export default async function PartnerHome({ searchParams }: { searchParams: SP }
           <Button disabled={!active} className="w-fit">Saqlash</Button>
         </form>
       </Section>
+    </>
   );
 
   return (

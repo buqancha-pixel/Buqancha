@@ -16,6 +16,7 @@ import { hashToken, newToken, termUntil } from "@/lib/partner/auth";
 import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram, normalizeYoutube } from "@/lib/contacts";
 import { cleanNote } from "@/lib/promoters";
 import { deletePromoterPhoto, savePromoterPhoto } from "@/lib/promoter/photo";
+import { deleteSellerPhoto, saveSellerPhoto } from "@/lib/seller/photo";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 
@@ -504,4 +505,14 @@ export async function adminPromoterPhotoAction(data: FormData) {
 export async function adminRemovePromoterPhotoAction(data: FormData) {
   const id = s(data, "id");
   await run(`/admin/targibotchilar/${id}#rasm`, () => deletePromoterPhoto(id), "Rasm olib tashlandi.");
+}
+
+export async function adminSellerPhotoAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/sotuvchilar/${id}#rasm`, () => saveSellerPhoto(id, data.get("photo")), "Rasm yuklandi.");
+}
+
+export async function adminRemoveSellerPhotoAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/sotuvchilar/${id}#rasm`, () => deleteSellerPhoto(id), "Rasm olib tashlandi.");
 }
