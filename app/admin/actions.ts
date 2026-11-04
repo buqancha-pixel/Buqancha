@@ -15,6 +15,7 @@ import { parseLocation } from "@/lib/geo";
 import { hashToken, newToken, termUntil } from "@/lib/partner/auth";
 import { ContactError, normalizeInstagram, normalizePhone, normalizeTelegram, normalizeYoutube } from "@/lib/contacts";
 import { cleanNote } from "@/lib/promoters";
+import { publishUnmatched } from "@/lib/admin/publish";
 import { deletePromoterBanner, deletePromoterPhoto, savePromoterBanner, savePromoterPhoto } from "@/lib/promoter/photo";
 import { deleteSellerPhoto, saveSellerPhoto } from "@/lib/seller/photo";
 
@@ -26,12 +27,16 @@ function withMsg(path: string, key: "ok" | "xato", msg: string) {
 }
 
 /** Amalni bajaradi; xato bo'lsa — o'sha sahifaga xabar bilan qaytaradi. */
-async function run(back: string, fn: () => Promise<string | void>, okMsg: string): Promise<never> {
+async function run(back: string, fn: () => Promise<string | { to?: string; msg?: string } | void>, okMsg: string): Promise<never> {
   await requireAdmin();
   let to = back;
   try {
     const next = await fn();
-    if (next) to = next;
+    if (typeof next === "string") to = next;
+    else if (next) {
+      if (next.to) to = next.to;
+      if (next.msg) okMsg = next.msg;
+    }
   } catch (e) {
     const msg = e instanceof AdminError ? e.message : "Kutilmagan xato. Qayta urinib ko'ring.";
     if (!(e instanceof AdminError)) console.error(e);
@@ -564,4 +569,41 @@ export async function deletePostAdminAction(data: FormData) {
   await run("/admin/postlar?holat=hammasi", async () => {
     await prisma.promoterPost.delete({ where: { id: s(data, "id") } });
   }, "Post o'chirildi.");
+}
+
+// ---------- moslanmagan / e'tiborsiz mahsulotlarni saytga chiqarish ----------
+
+export async function publishUnmatchedAction(data: FormData) {
+  const back = s(data, "back").startsWith("/admin/korib-chiqish") ? s(data, "back") : "/admin/korib-chiqish?tab=moslanmagan";
+  await run(back, async () => {
+    const item = await prisma.unmatchedItem.findUniqueOrThrow({ where: { id: s(data, "id") }, select: { status: true, title: true } });
+    const r = await publishUnmatched(s(data, "id"), { allowReligious: item.status === "IGNORED" });
+    return { msg: r === "linked" ? `«${item.title}» bazadagi kitobga ulandi — saytda.` : `«${item.title}» yangi kitob bo'lib saytga chiqdi.` };
+  }, "Saytga chiqdi.");
+}
+
+export async function bulkPublishUnmatchedAction(data: FormData) {
+  const ids = Array.from(new Set(data.getAll("ids").map(String).filter(Boolean))).slice(0, 100);
+  const back = s(data, "back").startsWith("/admin/korib-chiqish") ? s(data, "back") : "/admin/korib-chiqish?tab=moslanmagan";
+  const counts = { linked: 0, created: 0, skipped: 0 };
+  const firstError: string[] = [];
+  await run(back, async () => {
+    if (!ids.length) throw new AdminError("Avval mahsulotlarni belgilang.");
+    for (const id of ids) {
+      try {
+        const item = await prisma.unmatchedItem.findUnique({ where: { id }, select: { status: true } });
+        if (!item || item.status === "MATCHED") continue;
+        counts[await publishUnmatched(id, { allowReligious: item.status === "IGNORED" })]++;
+      } catch (e) {
+        counts.skipped++;
+        if (e instanceof AdminError && !firstError.length) firstError.push(e.message);
+        else if (!(e instanceof AdminError)) console.error(e);
+      }
+    }
+    return {
+      msg:
+        `Saytga chiqdi: ${counts.created} ta yangi kitob, ${counts.linked} tasi bazadagi kitobga ulandi` +
+        (counts.skipped ? `; ${counts.skipped} tasi o'tkazildi (${firstError[0] ?? "xato"})` : "") + ".",
+    };
+  }, "Saytga chiqdi.");
 }

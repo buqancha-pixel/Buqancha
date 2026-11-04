@@ -3,7 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { formatPrice, formatNumber } from "@/lib/format";
-import { pendingAction, setUnmatchedStatusAction } from "../actions";
+import { bulkPublishUnmatchedAction, pendingAction, publishUnmatchedAction, setUnmatchedStatusAction } from "../actions";
+import { SelectAllPublish } from "./SelectAllPublish";
 import { Button, Flash, PageTitle, inputCls, type SP } from "../ui";
 
 const PER_PAGE = 30;
@@ -123,7 +124,8 @@ async function Unmatched({ status, sp, tab }: { status: "PENDING" | "IGNORED"; s
       <p className="mb-2 text-sm text-muted">{formatNumber(total)} ta</p>
       <ul className="card divide-y divide-border">
         {items.map((u) => (
-          <li key={u.id} className="flex items-center justify-between gap-3 px-4 py-3">
+          <li key={u.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3">
+            <input type="checkbox" name="ids" value={u.id} form="bulk-publish" aria-label={`${u.title} — belgilash`} className="h-5 w-5 shrink-0" />
             <Link href={`/admin/korib-chiqish/${u.id}`} className="min-w-0 flex-1 hover:underline">
               <span className="block truncate font-medium">{u.title}</span>
               <span className="block truncate text-xs text-muted">
@@ -132,6 +134,11 @@ async function Unmatched({ status, sp, tab }: { status: "PENDING" | "IGNORED"; s
                 {u.isbn ? ` · ISBN ${u.isbn}` : ""}
               </span>
             </Link>
+            <form action={publishUnmatchedAction}>
+              <input type="hidden" name="id" value={u.id} />
+              <input type="hidden" name="back" value={back} />
+              <button className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-accent-contrast">Saytga chiqarish</button>
+            </form>
             <form action={setUnmatchedStatusAction}>
               <input type="hidden" name="id" value={u.id} />
               <input type="hidden" name="back" value={back} />
@@ -142,6 +149,17 @@ async function Unmatched({ status, sp, tab }: { status: "PENDING" | "IGNORED"; s
         ))}
         {!items.length && <li className="px-4 py-6 text-center text-sm text-muted">Hech narsa yo&apos;q.</li>}
       </ul>
+      {items.length > 0 && (
+        <form id="bulk-publish" action={bulkPublishUnmatchedAction} className="sticky bottom-2 z-20 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-bg px-3 py-2 text-xs shadow-lg">
+          <input type="hidden" name="back" value={back} />
+          <SelectAllPublish />
+          <button className="ml-auto h-9 rounded-full bg-accent px-4 text-xs font-semibold text-accent-contrast">Belgilanganlarni saytga chiqarish</button>
+          <p className="w-full text-[11px] text-muted">
+            Bazada shu nom yoki ISBN&apos;li kitob bo&apos;lsa — narx unga ulanadi, bo&apos;lmasa yangi kitob yaratiladi (keyin kitob sahifasida muallif va
+            nashriyotni to&apos;ldirishingiz mumkin).{status === "PENDING" ? " Diniy adabiyot bu yerdan chiqmaydi — u \"E'tiborsiz\" ro'yxatida." : " Bu ro'yxatdan diniy kitoblar ham chiqariladi — faqat o'zingiz tanlaganlari."}
+          </p>
+        </form>
+      )}
       {pages > 1 && (
         <div className="mt-4 flex items-center justify-between text-sm">
           {page > 1 ? <Link href={qs(page - 1)} className="underline">← Oldingi</Link> : <span />}

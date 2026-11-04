@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { searchBooks } from "@/lib/books";
 import { cleanTitle } from "@/lib/collector/match";
 import { formatPrice } from "@/lib/format";
-import { linkAsNewEditionAction, linkUnmatchedAction, setUnmatchedStatusAction } from "../../actions";
+import { linkAsNewEditionAction, linkUnmatchedAction, publishUnmatchedAction, setUnmatchedStatusAction } from "../../actions";
 import { Button, Field, Flash, PageTitle, Section, inputCls, type SP } from "../../ui";
 
 export default async function UnmatchedItemPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
@@ -83,6 +83,14 @@ export default async function UnmatchedItemPage({ params, searchParams }: { para
         </Link>
       </Section>
 
+      {item.status !== "MATCHED" && (
+        <form action={publishUnmatchedAction} className="mb-3">
+          <input type="hidden" name="id" value={item.id} />
+          <input type="hidden" name="back" value={`/admin/korib-chiqish?tab=${item.status === "PENDING" ? "moslanmagan" : "etiborsiz"}`} />
+          <Button>⚡ Bir tugma bilan saytga chiqarish</Button>
+          <p className="mt-1 text-xs text-muted">Bazada shu nomli kitob bo&apos;lsa — unga ulanadi, bo&apos;lmasa yangi kitob yaratiladi.</p>
+        </form>
+      )}
       {item.status !== "MATCHED" && (
         <form action={setUnmatchedStatusAction}>
           <input type="hidden" name="id" value={item.id} />

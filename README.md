@@ -242,6 +242,12 @@ yakuniy kadr `/rasm/shablon/<blogerId>?f=v|h` (1080×1920 / 1920×1080). Post ra
 Tarmoqlar: Instagram (admin), Telegram va YouTube kanali (bloger kabinetda o'zi kiritadi, `normalizeTelegram`/
 `normalizeYoutube` — video havolasi emas, kanal) — bloger sahifasi va ro'yxatda logolar bilan (`SocialLinks`). Instagram manzili, rozilik va saytda ko'rinish faqat adminda.
 
+**Bir tugma bilan saytga chiqarish** (admin → Ko'rib chiqish → Moslanmagan / E'tiborsiz): "Saytga chiqarish" yoki
+belgilab "Belgilanganlarni saytga chiqarish" (100 tagacha) — `lib/admin/publish.ts`: bazada shu ISBN yoki aynan shu nom
+(muallif bo'lsa — o'sha muallif) bo'lsa narx unga ulanadi, aks holda mahsulotdan yangi kitob yaratiladi (muallif
+bo'lmasa "Muallif ko'rsatilmagan", til — kirill → ruscha, inglizcha so'zlar → inglizcha). Diniy adabiyot faqat
+"E'tiborsiz" ro'yxatidan, admin o'zi tanlaganda chiqadi.
+
 **Kitobni o'chirish** faqat admin panelda: Admin → Kitoblar sukut bo'yicha muqovali ko'rinishda (katalogdagidek,
 "Mashhur / Yangi qo'shilgan / Eski" tartibi) — muqovadagi 🗑 bilan bittasini yoki katakchalarni belgilab, pastdagi
 "Belgilanganlarni o'chirish" bilan birdaniga (120 tagacha); "☰ Ro'yxat" ko'rinishi ham bor. Kitob sahifasining
