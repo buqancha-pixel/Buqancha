@@ -37,8 +37,9 @@ on:
         required: false
         default: ""
 
+# sahifa yig'ish ishlari kechki yig'ish bilan bir navbatda; tezkor vazifalar (bloger, statistika) kutmaydi
 concurrency:
-  group: narxlar # kechki yig'ish bilan bir vaqtda ishlamaydi
+  group: ${{ contains(fromJSON('["narxlarni-yangilash","katalog-import","moslanmaganlarni-qayta-urinish","bolimlarni-toldirish"]'), inputs.vazifa) && 'narxlar' || format('xizmat-{0}', inputs.vazifa) }}
   cancel-in-progress: false
 
 jobs:
