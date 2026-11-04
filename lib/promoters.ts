@@ -16,6 +16,7 @@ export const getPromoters = cached(
       },
     }),
   "promoters",
+  300, // GitHub'dagi skriptlar keshni tozalay olmaydi — qisqa muddat
 );
 
 export const getPromoter = cached(
@@ -25,6 +26,7 @@ export const getPromoter = cached(
       include: { books: { orderBy: { createdAt: "desc" }, include: { book: { include: bookCardInclude } } } },
     }),
   "promoter",
+  300,
 );
 
 /** Kitobni tavsiya qilgan targ'ibotchilar (kitob sahifasi uchun). */
@@ -36,6 +38,7 @@ export const getBookPromoters = cached(
       orderBy: { createdAt: "asc" },
     }),
   "book-promoters",
+  300,
 );
 
 export function instagramUrl(handle: string) {
