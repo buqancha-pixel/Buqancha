@@ -27,6 +27,7 @@ on:
           - ruscha-belgilash-korish
           - ruscha-belgilash-qollash
           - targibotchi-qoshish
+          - telegram-narxlar
       parametr:
         description: "kitob-birlashtirish: '<kitob-slug> <asosiy-slug> [til]'; targibotchi-qoshish: 'username1 username2 +roziligi_olingan'"
         required: false
@@ -92,6 +93,7 @@ jobs:
             moslanmaganlarni-qayta-urinish)   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" --retry-pending ;;
             rasmlar-statistikasi)             npm run --silent images -- stats ;;
             sotuvchilar-sinxron)              npm run --silent db:sellers ;;
+            telegram-narxlar)                 npm run --silent collect-telegram -- "${SOTUVCHI:-asaxiy}" "${PARAMETR:-asaxiybooks}" ;;
             kitob-birlashtirish-korish)       merge_args; npm run --silent merge-book -- "${MERGE[@]}" ;;
             kitob-birlashtirish-qollash)      merge_args; npm run --silent merge-book -- "${MERGE[@]}" --apply ;;
             ruscha-belgilash-korish)          npm run --silent fix-russian ;;

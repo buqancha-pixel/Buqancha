@@ -119,6 +119,11 @@ Qoidalar:
   `Retry-After` bilan qayta uriniladi. Bot saytni aylanib chiqmaydi — faqat kuzatuvdagi sahifalarni tekshiradi.
 
 Hozir avtomatik yig'iladigan sotuvchilar: **Qamar**, **Barakot** (sitemap + JSON-LD), **Akademnashr**. Asaxiy va
+**Telegram kanallar:** sayti bot himoyasida bo'lgan sotuvchining ochiq kanali (`t.me/s/<kanal>`) — sotuvchi o'zi e'lon
+qilgan narxlar: TOP ro'yxat qatorlari (havola + narx) va «"Nom" kitobi … Narxi: N so'm» postlari, oxirgi 30 kun
+(`lib/collector/parsers/telegram.ts`). Kitob yaratilmaydi, moslanmagani "Ko'rib chiqish"ga. Kechki yig'ishda
+`npm run collect-telegram -- asaxiy asaxiybooks`; qo'lda — Texnik xizmat → `telegram-narxlar` (sotuvchi, kanal).
+
 Topar Cloudflare bot himoyasidan foydalanadi — chetlab o'tilmaydi, ular bilan feed orqali ishlash kerak.
 
 > Proksi orqali chiqadigan muhitda (masalan, bulutli dev-konteyner) Node `fetch` uchun `NODE_USE_ENV_PROXY=1` kerak.

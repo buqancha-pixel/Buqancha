@@ -47,6 +47,10 @@ jobs:
       # mavjud narxlarni qayta tekshirish (20 soatdan beri tekshirilmaganlar)
       - name: Narxlar
         run: npm run collect -- qamar barakot akademnashr kitob-olami-uzun bookhunter --stale=20
+      # sotuvchilarning ochiq Telegram kanallaridagi narxlar (sayti bot himoyasida bo'lganlar)
+      - name: Telegram kanallar
+        continue-on-error: true
+        run: npm run collect-telegram -- asaxiy asaxiybooks
       # sotuvchilarda paydo bo'lgan yangi kitoblar (ma'lumi o'tkazib yuboriladi)
       - name: Yangi kitoblar
         run: |

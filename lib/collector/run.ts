@@ -4,6 +4,7 @@ import { prisma } from "../db";
 import { applyItems } from "./apply";
 import { PoliteFetcher } from "./fetcher";
 import { parseFeed } from "./parsers/feed";
+import { parseTelegramChannel } from "./parsers/telegram";
 import { extractJsonLdItems } from "./parsers/jsonld";
 import { emptyStats, type CollectedItem, type RunStats } from "./types";
 import { loadIndex, removeOffersByUrl } from "./apply";
@@ -33,6 +34,32 @@ export async function importFeed(
         ? { createBooks: { sellerName: seller.name, languages: [...new Set(["uz", ...seller.importLanguages])] }, skipReligious: true }
         : {}),
     });
+  });
+}
+
+/**
+ * Sotuvchining ochiq Telegram kanalidagi narxlar (t.me/s/<kanal>, oxirgi ~40 post, 30 kungacha).
+ * Kitob yaratilmaydi — faqat bazadagi kitoblarga moslanadi, moslanmagani "Ko'rib chiqish"ga tushadi.
+ */
+export async function importTelegram(sellerSlug: string, channel: string, opts: FetchOpts = {}): Promise<RunResult> {
+  if (!/^[A-Za-z0-9_]{4,40}$/.test(channel)) throw new Error(`Kanal nomi noto'g'ri: ${channel}`);
+  const seller = await prisma.seller.findUniqueOrThrow({ where: { slug: sellerSlug } });
+  const fetcher = new PoliteFetcher({ minDelayMs: Math.max(3000, seller.crawlDelayMs), ...opts });
+  return withRun(seller, "FEED", async (stats) => {
+    const base = `https://t.me/s/${channel}`;
+    const first = await fetcher.get(base);
+    if (first.status !== 200) throw new Error(`Telegram HTTP ${first.status}: ${base}`);
+    let pages = first.body;
+    // bitta oldingi sahifa (≈20 post ko'proq)
+    const oldest = Math.min(...Array.from(first.body.matchAll(/data-post="[^"/]+\/(\d+)"/g), (m) => Number(m[1])));
+    if (Number.isFinite(oldest)) {
+      const prev = await fetcher.get(`${base}?before=${oldest}`);
+      if (prev.status === 200) pages += prev.body;
+    }
+    const host = seller.website ? new URL(seller.website).hostname.replace(/^www\./, "") : undefined;
+    const items = parseTelegramChannel(pages, { channel, sellerHost: host });
+    if (!items.length) stats.errors.push("Oxirgi 30 kundagi postlarda narx topilmadi");
+    await applyItems(seller.id, items, stats, { source: "AUTO", fullCatalog: false, sellerSlug: seller.slug });
   });
 }
 
