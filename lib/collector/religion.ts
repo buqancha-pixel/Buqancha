@@ -42,13 +42,13 @@ const TITLE_STEMS = [
   "hadis", "payg'ambar", "rasululloh", "alloh", "ilohiy", "islom", "tafsir", "sahoba", "saxoba", "namoz", "avliyo",
   "masjid", "shariat", "ramazon", "iymon", "tasavvuf", "aqida", "qur'on", "muhammad sollalloh",
   "sollalloh", "roziyalloh", "alayhissalom", "oxirat", "sajda", "zakot",
-  "duolar", "imomi", "imomlar", "sunnati", "sunnat ", "tavhid", "fiqh", "zikr",
+  "duolar", "imomi", "imomlar", "sunnati", "sunnat ", "tavhid", "fiqh", "zikr", "musxaf", "mushaf", "tajvid",
   // ruscha (kirill → lotin kalit)
   "коран", "ислам", "аллах", "пророк", "намаз", "молитв", "библи", "евангел", "православ", "христиан", "хадис",
 ].map((w) => searchKey(w));
 
 // ko'p so'zli aniq iboralar (searchKey ko'rinishida)
-const TITLE_PHRASES = ["saodat asri", "tazkirat ul", "s.a.v", "с.а.в"].map((p) => searchKey(p));
+const TITLE_PHRASES = ["saodat asri", "tazkirat ul", "s.a.v", "с.а.в", "usvai hasana", "arab alifbo"].map((p) => searchKey(p));
 
 export function isReligiousText(title: string, publisher?: string | null): boolean {
   if (publisher && PUBLISHER_RE.test(publisher)) return true;
