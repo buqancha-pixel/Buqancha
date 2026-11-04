@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { searchBooks } from "@/lib/books";
 import { requirePromoter } from "@/lib/promoter/auth";
 import { avatarColor } from "@/lib/promoters";
+import { SITE_URL } from "@/lib/site";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { addPromoterRecommendation, promoterLogout, removePromoterRecommendation, savePromoterProfile, updatePromoterNote } from "./actions";
 import { Area, Button, Field, Flash, Section, inputCls } from "../admin/ui";
@@ -44,6 +45,22 @@ export default async function PromoterCabinet({ searchParams }: { searchParams: 
         </form>
       </div>
       <Flash sp={sp} />
+
+      <details open={recs.length === 0} className="card mb-6 p-4 text-sm [&_summary::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer list-none font-semibold">📖 Kabinet qanday ishlaydi?</summary>
+        <ol className="mt-3 grid list-decimal gap-2 pl-5 text-muted">
+          <li><b className="text-text">Kitob qidiring</b> — pastdagi &quot;Kitob tavsiya qilish&quot; qatoriga kitob nomi yoki muallifini yozib, &quot;Qidirish&quot;ni bosing.</li>
+          <li><b className="text-text">Izoh yozing</b> — kitob yonidagi qatorga 1–2 gap: nega o&apos;qish kerak, kimga yoqadi. Ixtiyoriy, lekin izohli tavsiya ko&apos;proq o&apos;qiladi.</li>
+          <li><b className="text-text">&quot;+ Tavsiya qilish&quot;</b> ni bosing — kitob sahifangizda chiqadi, kitobning o&apos;z sahifasida esa &quot;Tavsiya qiladi: @{me.instagram}&quot; bo&apos;lib ko&apos;rinadi.</li>
+          <li><b className="text-text">Tavsiyalarim</b> — izohni o&apos;zgartirib &quot;Saqlash&quot;ni bosing yoki kitobni &quot;Olib tashlash&quot; mumkin.</li>
+          <li><b className="text-text">Sahifamdagi ma&apos;lumot</b> — ismingiz, o&apos;zingiz haqingizda qisqacha va obunachilar soni sahifangiz tepasida chiqadi.</li>
+        </ol>
+        <p className="mt-3 text-muted">
+          Kitob saytda topilmasa, nomini Buqanchaga yozing — qo&apos;shib beramiz. Bu havola parol o&apos;rnida: uni hech kimga bermang.
+          Instagram&apos;da sahifangiz havolasini ulashishingiz mumkin
+          {visible ? <>: <Link href={`/targibotchilar/${me.slug}`} className="text-accent underline">{SITE_URL.replace(/^https?:\/\//, "")}/targibotchilar/{me.slug}</Link></> : null}.
+        </p>
+      </details>
 
       <Section title="Kitob tavsiya qilish" id="qoshish">
         <form className="mb-3 flex gap-2" action="/bloger#qoshish">

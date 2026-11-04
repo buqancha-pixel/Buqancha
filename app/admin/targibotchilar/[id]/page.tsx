@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { searchBooks } from "@/lib/books";
 import { addPromoterBookAction, deletePromoterAction, promoterLinkAction, promoterRevokeAction, removePromoterBookAction, savePromoterAction } from "../../actions";
 import { SITE_URL } from "@/lib/site";
+import { CopyBox } from "@/components/CopyBox";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, inputCls, type SP } from "../../ui";
 
 export default async function EditPromoter({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
@@ -27,6 +28,45 @@ export default async function EditPromoter({ params, searchParams }: { params: P
           <Link href={`/targibotchilar/${p.slug}`} target="_blank" className="text-accent underline">Saytda ko&apos;rish ↗</Link>
         </p>
       )}
+      {p && (
+        <Section title="Bloger kabineti" id="kabinet">
+          {sp.havola ? (
+            <div className="mb-4 grid gap-3 rounded-xl border border-accent bg-accent-soft p-3 text-sm">
+              <p className="font-semibold">1. Kirish havolasi (faqat hozir ko&apos;rinadi — sahifadan chiqsangiz, qayta ko&apos;rsatilmaydi):</p>
+              <CopyBox text={`${SITE_URL}/bloger/kirish?k=${sp.havola}`} label="Havolani nusxalash" />
+              <p className="font-semibold">2. Blogerga yuboriladigan tayyor xabar (havola ichida) — nusxalab, Instagram yoki Telegramda yuboring:</p>
+              <CopyBox text={guideMessage(p.name, `${SITE_URL}/targibotchilar/${p.slug}`, `${SITE_URL}/bloger/kirish?k=${sp.havola}`)} rows={14} label="Xabarni nusxalash" />
+            </div>
+          ) : (
+            <p className="mb-3 text-sm">
+              {p.tokenHash ? (
+                <span className="font-semibold text-accent">Kabinet ochiq.</span>
+              ) : (
+                <span className="text-muted">Kabinet hali ochilmagan.</span>
+              )}{" "}
+              <span className="text-muted">
+                Bloger faqat o&apos;z tavsiyalari va sahifasidagi ma&apos;lumotni o&apos;zgartiradi; Instagram manzili, rozilik va saytda ko&apos;rinish — faqat sizda.
+              </span>
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <form action={promoterLinkAction}>
+              <input type="hidden" name="id" value={p.id} />
+              <Button className="h-10">{p.tokenHash ? "Yangi havola (eskisi o'chadi)" : "Kabinet ochish"}</Button>
+            </form>
+            {p.tokenHash && (
+              <form action={promoterRevokeAction}>
+                <input type="hidden" name="id" value={p.id} />
+                <Button variant="ghost" className="h-10">Kabinetni yopish</Button>
+              </form>
+            )}
+          </div>
+          {p.tokenHash && !sp.havola && (
+            <p className="mt-2 text-xs text-muted">Havolani yo&apos;qotgan bo&apos;lsangiz, &quot;Yangi havola&quot; bosing — tayyor xabar ham qayta chiqadi.</p>
+          )}
+        </Section>
+      )}
+
       <form action={savePromoterAction}>
         {p && <input type="hidden" name="id" value={p.id} />}
         <Section title="Ma'lumotlar">
@@ -88,34 +128,6 @@ export default async function EditPromoter({ params, searchParams }: { params: P
       )}
 
       {p && (
-        <Section title="Bloger kabineti" id="kabinet">
-          {sp.havola && (
-            <div className="mb-3 rounded-xl border border-accent bg-accent-soft p-3 text-sm">
-              <p className="font-semibold">Kirish havolasi (faqat hozir ko&apos;rinadi — nusxalab, blogerga Instagram yoki Telegram orqali yuboring):</p>
-              <input readOnly value={`${SITE_URL}/bloger/kirish?k=${sp.havola}`} className="mt-2 h-10 w-full rounded-lg border border-border bg-bg px-2 font-mono text-xs" />
-            </div>
-          )}
-          <p className="mb-3 text-sm text-muted">
-            {p.tokenHash
-              ? "Kabinet ochiq. Bloger faqat o'z tavsiyalari va sahifasidagi ma'lumotni o'zgartira oladi; Instagram manzili, rozilik va saytda ko'rinish — faqat sizda."
-              : "Kabinet ochilmagan. Ochsangiz, bloger havola orqali kirib, tavsiya qiladigan kitoblarini o'zi qo'shadi."}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <form action={promoterLinkAction}>
-              <input type="hidden" name="id" value={p.id} />
-              <Button className="h-10">{p.tokenHash ? "Yangi havola (eskisi o'chadi)" : "Kabinet ochish"}</Button>
-            </form>
-            {p.tokenHash && (
-              <form action={promoterRevokeAction}>
-                <input type="hidden" name="id" value={p.id} />
-                <Button variant="ghost" className="h-10">Kabinetni yopish</Button>
-              </form>
-            )}
-          </div>
-        </Section>
-      )}
-
-      {p && (
         <Section title="O'chirish">
           <form action={deletePromoterAction} className="grid gap-3">
             <input type="hidden" name="id" value={p.id} />
@@ -126,4 +138,25 @@ export default async function EditPromoter({ params, searchParams }: { params: P
       )}
     </div>
   );
+}
+
+/** Blogerga havola bilan yuboriladigan yo'riqnoma. */
+function guideMessage(name: string, pageUrl: string, link: string) {
+  return [
+    `Assalomu alaykum, ${name}! Buqanchada sizning "Kitob targ'ibotchisi" sahifangiz ochildi:`,
+    pageUrl,
+    "",
+    "Sahifangizni o'zingiz boshqarishingiz uchun shaxsiy kabinet:",
+    link,
+    "",
+    "Qanday ishlatiladi:",
+    "1. Havolani oching va \"Kabinetga kirish\" tugmasini bosing. Login va parol kerak emas — havola parol o'rnida, uni hech kimga bermang.",
+    "2. \"Kitob tavsiya qilish\" bo'limida kitob nomi yoki muallifini yozib, \"Qidirish\"ni bosing.",
+    "3. Kitob yonidagi \"Izoh\" qatoriga 1–2 gap yozing (nega o'qish kerak) va \"+ Tavsiya qilish\"ni bosing.",
+    "4. Kitob sizning sahifangizda chiqadi, kitobning o'z sahifasida esa \"Tavsiya qiladi: @username\" bo'lib ko'rinadi.",
+    "5. \"Tavsiyalarim\" ro'yxatida izohni o'zgartirish yoki kitobni olib tashlash mumkin.",
+    "6. \"Sahifamdagi ma'lumot\" bo'limida ismingiz, o'zingiz haqingizda qisqacha va obunachilar sonini yozing.",
+    "",
+    "Kitob saytda topilmasa, nomini menga yozing — qo'shib beraman. Kabinet telefonda ham ishlaydi, bir marta kirsangiz 90 kun eslab qoladi.",
+  ].join("\n");
 }
