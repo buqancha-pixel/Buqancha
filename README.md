@@ -169,6 +169,10 @@ ko'rinishida bo'lsa, ikki nuqtagacha qism bazadagi muallif bilan solishtiriladi.
 Instagram (`INSTAGRAM`, `lib/site.ts`): sarlavhada belgi, sayt pastida tugma, bosh sahifada schema.org
 `Organization.sameAs` (Google sahifani sayt bilan bog'laydi).
 
+**Kitob targ'ibotchilari** (`/targibotchilar`): Instagram kitob blogerlari va ular tavsiya qilgan kitoblar (narxlari
+bilan); kitob sahifasida "Tavsiya qiladi: @…". Admin panel → Targ'ibotchilar: qo'shish, kitob biriktirish (izoh bilan).
+"Rozilik olindi" belgilanmaguncha bloger saytda ko'rinmaydi.
+
 **Hamkorlar kabineti** (`/hamkor`): do'kon/nashriyot o'z narxlarini o'zi boshqaradi — kitob qo'shish (ISBN yoki nom
 bo'yicha qidirib), narx/mavjudlikni tahrirlash, bazada yo'q kitobni qo'shish (ISBN bilan; diniy adabiyot — faqat
 sayt egasi orqali), CSV/JSON fayl yuklash ("to'liq ro'yxat" belgilansa faylda yo'qlari "sotuvda yo'q"), do'kon

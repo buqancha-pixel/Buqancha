@@ -29,6 +29,7 @@ import {
   LANGUAGE_LABEL,
 } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
+import { getBookPromoters } from "@/lib/promoters";
 
 type Params = Promise<{ slug: string }>;
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -97,7 +98,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
   const cover = bookImage(book);
   const coverSeller = cover?.source && cover.source !== "own" ? everyOffer.find((o) => o.seller.slug === cover.source)?.seller : null;
 
-  const author = await getAuthorBySlug(book.author.slug);
+  const [author, recommendedBy] = await Promise.all([getAuthorBySlug(book.author.slug), getBookPromoters(book.id)]);
   const moreByAuthor = author?.books.filter((b) => b.id !== book.id).slice(0, 4) ?? [];
   const pageUrl = absoluteUrl(`/kitob/${book.slug}`);
 
@@ -161,6 +162,16 @@ export default async function BookPage({ params, searchParams }: { params: Param
               <span lang="uz-Cyrl" className="text-muted"> · {book.author.nameCyrl}</span>
             )}
           </p>
+          {recommendedBy.length > 0 && (
+            <p className="mt-3 flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="text-muted">Tavsiya qiladi:</span>
+              {recommendedBy.map((r) => (
+                <Link key={r.promoterId} href={`/targibotchilar/${r.promoter.slug}`} className="rounded-full bg-accent-soft px-2.5 py-1 font-semibold hover:underline">
+                  @{r.promoter.instagram}
+                </Link>
+              ))}
+            </p>
+          )}
           {book.description && <p className="mt-4 hidden max-w-prose text-[15px] text-muted sm:block">{book.description}</p>}
         </div>
 

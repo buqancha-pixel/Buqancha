@@ -116,6 +116,7 @@ export function CatalogMenu({ languages, total, instagramUrl }: { languages: Lan
           <div className="mx-4 border-t border-border" />
           <nav className="flex flex-col px-2 py-4" aria-label="Sayt bo'limlari">
             {[
+              ["/targibotchilar", "Kitob targ'ibotchilari"],
               ["/manzillar", "Do'konlar manzillari"],
               ["/sotuvchilar", "Sotuvchilar"],
               ["/hamkorlik", "Hamkor bo'lish"],

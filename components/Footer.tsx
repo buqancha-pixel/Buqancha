@@ -30,6 +30,7 @@ export function Footer() {
           <Link href="/qidiruv" className="hover:text-text">Qidiruv</Link>
           <Link href="/sotuvchilar" className="hover:text-text">Sotuvchilar</Link>
           <Link href="/manzillar" className="hover:text-text">Do'konlar manzillari</Link>
+          <Link href="/targibotchilar" className="hover:text-text">Kitob targ'ibotchilari</Link>
         </nav>
         <nav className="flex flex-col gap-2" aria-label="Hamkorlar uchun">
           <Link href="/hamkorlik" className="hover:text-text">Hamkor bo'lish</Link>

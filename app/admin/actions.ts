@@ -344,3 +344,69 @@ export async function partnerTermAction(data: FormData) {
     await prisma.seller.update({ where: { id }, data: { partnerUntil: new Date(base.getTime() + days * 864e5), partnerSince: seller.partnerSince ?? new Date() } });
   }, days === 0 ? "Hamkorlik bekor qilindi, havola o'chirildi." : `Muddat ${days} kunga uzaytirildi.`);
 }
+
+// ---------- kitob targ'ibotchilari ----------
+
+function instagramHandle(raw: string): string {
+  const h = raw.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/[/?#].*$/, "");
+  if (!/^[A-Za-z0-9._]{1,30}$/.test(h)) throw new AdminError("Instagram username noto'g'ri (masalan: shakhreads).");
+  return h;
+}
+
+export async function savePromoterAction(data: FormData) {
+  const id = s(data, "id");
+  await run(id ? `/admin/targibotchilar/${id}` : "/admin/targibotchilar/yangi", async () => {
+    const name = s(data, "name");
+    if (name.length < 2) throw new AdminError("Ismini kiriting.");
+    const photo = optionalUrl(s(data, "photoUrl"), "Rasm havolasi");
+    if (photo && !photo.startsWith("https://")) throw new AdminError("Rasm havolasi https:// bilan boshlanishi kerak.");
+    const fields = {
+      name,
+      instagram: instagramHandle(s(data, "instagram")),
+      followers: s(data, "followers").slice(0, 30) || null,
+      about: s(data, "about").slice(0, 600) || null,
+      photoUrl: photo,
+      position: Number(s(data, "position")) || 0,
+      consent: data.get("consent") === "on",
+      active: data.get("active") === "on",
+    };
+    if (id) {
+      await prisma.promoter.update({ where: { id }, data: fields });
+      return `/admin/targibotchilar/${id}`;
+    }
+    const base = slugify(name).slice(0, 60) || "bloger";
+    let slug = base;
+    for (let i = 2; await prisma.promoter.findUnique({ where: { slug } }); i++) slug = `${base}-${i}`;
+    const created = await prisma.promoter.create({ data: { ...fields, slug } });
+    return `/admin/targibotchilar/${created.id}`;
+  }, "Saqlandi.");
+}
+
+export async function deletePromoterAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}`, async () => {
+    if (s(data, "confirm") !== "ha") throw new AdminError("O'chirish uchun tasdiqlash belgisini qo'ying.");
+    await prisma.promoter.delete({ where: { id } });
+    return "/admin/targibotchilar";
+  }, "O'chirildi.");
+}
+
+export async function addPromoterBookAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}#kitoblar`, async () => {
+    const bookId = s(data, "bookId");
+    const note = s(data, "note").slice(0, 200) || null;
+    await prisma.promoterBook.upsert({
+      where: { promoterId_bookId: { promoterId: id, bookId } },
+      create: { promoterId: id, bookId, note },
+      update: { note },
+    });
+  }, "Kitob tavsiyalarga qo'shildi.");
+}
+
+export async function removePromoterBookAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}#kitoblar`, async () => {
+    await prisma.promoterBook.delete({ where: { promoterId_bookId: { promoterId: id, bookId: s(data, "bookId") } } });
+  }, "Olib tashlandi.");
+}

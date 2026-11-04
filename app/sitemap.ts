@@ -1,5 +1,6 @@
 import { CATEGORIES, LANGUAGES } from "@/lib/categories";
 import { getCategoryCounts } from "@/lib/catalog";
+import { getPromoters } from "@/lib/promoters";
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { cached } from "@/lib/cache";
@@ -19,11 +20,13 @@ const sitemapAuthors = cached(() => prisma.author.findMany({ select: { slug: tru
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [books, authors] = await Promise.all([sitemapBooks(), sitemapAuthors()]);
   const now = new Date();
-  const counts = await getCategoryCounts();
+  const [counts, promoters] = await Promise.all([getCategoryCounts(), getPromoters()]);
   return [
     { url: absoluteUrl("/"), lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: absoluteUrl("/sotuvchilar"), changeFrequency: "weekly", priority: 0.5 },
     { url: absoluteUrl("/manzillar"), changeFrequency: "weekly", priority: 0.5 },
+    { url: absoluteUrl("/targibotchilar"), changeFrequency: "weekly", priority: 0.5 },
+    ...promoters.map((p) => ({ url: absoluteUrl(`/targibotchilar/${p.slug}`), changeFrequency: "weekly" as const, priority: 0.4 })),
     { url: absoluteUrl("/katalog"), changeFrequency: "daily", priority: 0.8 },
     // faqat kitobi bor bo'limlar (bo'sh sahifalar Google'ga yuborilmaydi)
     ...CATEGORIES.filter((c) => counts[`*|${c.slug}`]).map((c) => ({ url: absoluteUrl(`/katalog/${c.slug}`), changeFrequency: "daily" as const, priority: 0.7 })),

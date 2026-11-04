@@ -72,6 +72,7 @@ model Book {
   featuredNote String?
   // katalog bo'limlari (lib/categories.ts dagi slug'lar; sotuvchi bo'limlaridan avtomatik yoki admin panelda)
   categories   String[]  @default([])
+  promoters    PromoterBook[]
   editions     Edition[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -225,4 +226,32 @@ model UnmatchedItem {
 
   @@unique([sellerId, key])
   @@index([status])
+}
+
+/// Kitob targ'ibotchilari (Instagram blogerlari) — admin qo'shadi; rozilik olinmaguncha saytda ko'rinmaydi
+model Promoter {
+  id        String         @id @default(cuid())
+  slug      String         @unique
+  name      String
+  instagram String         // username, @ belgisisiz
+  about     String?
+  followers String?        // "120 ming" kabi matn
+  photoUrl  String?
+  consent   Boolean        @default(false)
+  active    Boolean        @default(true)
+  position  Int            @default(0)
+  createdAt DateTime       @default(now())
+  books     PromoterBook[]
+}
+
+model PromoterBook {
+  promoterId String
+  promoter   Promoter @relation(fields: [promoterId], references: [id], onDelete: Cascade)
+  bookId     String
+  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@id([promoterId, bookId])
+  @@index([bookId])
 }
