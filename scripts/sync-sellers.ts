@@ -1,6 +1,7 @@
 /**
  * Sotuvchilar katalogini (prisma/data/sellers.ts) bazaga qo'shish/yangilash.
- * Takliflar, narxlar va yig'ish sozlamalariga tegilmaydi.
+ * Yangi sotuvchilar to'liq qo'shiladi; mavjudlarida yig'ish sozlamalari yangilanadi, nom/manzil/sayt kabi
+ * maydonlar esa faqat bo'sh bo'lsa to'ldiriladi (admin paneldagi tahrirlar saqlanadi). Narxlarga tegilmaydi.
  *   npm run db:sellers            — bazaga yozish
  *   npm run db:sellers -- --csv   — docs/sotuvchilar.csv faylini yangilash
  */
@@ -31,12 +32,34 @@ async function main() {
       searchUrlTemplate: s.searchUrlTemplate ?? null,
       ...(s.collector ? { collector: s.collector } : {}),
       ...(s.sitemapUrls ? { sitemapUrls: s.sitemapUrls } : {}),
+      ...(s.listingUrls ? { listingUrls: s.listingUrls } : {}),
       ...(s.productUrlPattern ? { productUrlPattern: s.productUrlPattern } : {}),
     };
-    const exists = await prisma.seller.findUnique({ where: { slug: s.slug }, select: { id: true } });
-    await prisma.seller.upsert({ where: { slug: s.slug }, create: { slug: s.slug, ...data }, update: data });
-    if (exists) updated++;
-    else created++;
+    const exists = await prisma.seller.findUnique({ where: { slug: s.slug } });
+    if (!exists) {
+      await prisma.seller.create({ data: { slug: s.slug, ...data } });
+      created++;
+      continue;
+    }
+    // mavjud sotuvchi: narx yig'ish sozlamalari fayldan olinadi, ma'lumotnoma maydonlari esa
+    // faqat bo'sh bo'lsa to'ldiriladi — admin panelda kiritilgan o'zgarishlar ustidan yozilmaydi
+    const fillIfEmpty = <K extends keyof typeof exists>(k: K, v: unknown) => (exists[k] == null || exists[k] === "" ? { [k]: v } : {});
+    await prisma.seller.update({
+      where: { slug: s.slug },
+      data: {
+        searchUrlTemplate: data.searchUrlTemplate,
+        sources: data.sources,
+        ...(s.collector ? { collector: s.collector } : {}),
+        ...(s.sitemapUrls ? { sitemapUrls: s.sitemapUrls } : {}),
+        ...(s.listingUrls ? { listingUrls: s.listingUrls } : {}),
+        ...(s.productUrlPattern ? { productUrlPattern: s.productUrlPattern } : {}),
+        ...fillIfEmpty("website", data.website),
+        ...fillIfEmpty("social", data.social),
+        ...fillIfEmpty("address", data.address),
+        ...fillIfEmpty("description", data.description),
+      },
+    });
+    updated++;
   }
   console.log(`Sotuvchilar: ${created} ta yangi, ${updated} ta yangilandi (jami katalogda ${SELLERS.length}).`);
 }

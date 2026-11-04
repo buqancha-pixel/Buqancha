@@ -141,6 +141,14 @@ Vercel'da `ADMIN_PASSWORD` o'rnatilgach, `/admin` da parol bilan kiriladi (sessi
 Qo'lda qo'shilgan yoki tahrirlangan kitoblar `origin = "manual"` — avtomatik tozalash va diniy filtr ularga tegmaydi.
 O'chirilgan narx havolasi `IGNORED` sifatida eslab qolinadi, shuning uchun katalog importi kitobni qayta yaratmaydi.
 
+**Manzillar** (`/manzillar`): do'kon va nashriyotlar shahar bo'yicha, Google/Yandex xarita tugmalari bilan.
+Xaritadagi nuqta faqat admin panelda joylashuv kiritilgan sotuvchilarga chiqadi (Google Maps koordinatasi yoki
+havolasi); avtomatik geokodlash ishlatilmaydi — O'zbekiston manzillarida boshqa shahardagi ko'chani topib qo'yadi.
+
+**Bo'lim sahifalaridan yig'ish:** sitemap'da mahsulot bo'lmagan saytlar uchun `Seller.listingUrls` — bo'lim
+sahifalari `?page=N` bilan yangi havola chiqmaguncha aylanadi (masalan, kitobolami.uz). Nom "MUALLIF: NOM"
+ko'rinishida bo'lsa, ikki nuqtagacha qism bazadagi muallif bilan solishtiriladi.
+
 Instagram (`INSTAGRAM`, `lib/site.ts`): sarlavhada belgi, sayt pastida tugma, bosh sahifada schema.org
 `Organization.sameAs` (Google sahifani sayt bilan bog'laydi).
 

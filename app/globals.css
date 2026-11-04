@@ -282,3 +282,29 @@ a {
     transition: none;
   }
 }
+
+/* ---------- Do'konlar xaritasi ---------- */
+
+.store-map {
+  z-index: 0;
+  background: var(--bg-soft);
+}
+[data-theme="koinot"] .store-map .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
+}
+.store-pin span {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--accent);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.35);
+}
+.store-map .leaflet-popup-content {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1c1b19;
+}

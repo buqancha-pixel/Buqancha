@@ -111,6 +111,9 @@ model Seller {
   address  String?
   // Instagram / Telegram (sayti bo'lmaganlar uchun)
   social   String?
+  // xaritadagi joylashuv (admin panelda qo'lda kiritiladi; avtomatik geokodlash O'zbekistonda ishonchsiz)
+  lat      Float?
+  lng      Float?
   // ma'lumot olingan manbalar (tekshirish uchun)
   sources  String[]  @default([])
   // narx yig'ish sozlamalari
@@ -118,6 +121,8 @@ model Seller {
   feedUrl      String?
   // mahsulot sahifalarini topish uchun sitemap'lar (PRODUCT_PAGE)
   sitemapUrls  String[]      @default([])
+  // sitemap'da mahsulotlar bo'lmasa: bo'lim sahifalari (?page=1, 2, ... yangi havola chiqmaguncha)
+  listingUrls  String[]      @default([])
   // katalog importi uchun: sitemap'dagi qaysi manzillar kitob sahifasi (regex)
   productUrlPattern String?
   crawlDelayMs Int           @default(3000)

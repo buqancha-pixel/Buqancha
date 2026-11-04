@@ -117,6 +117,20 @@ const contains = (hay: string, needle: string) => ` ${hay} `.includes(` ${needle
  *  Bir nechta nashr bo'lsa, nashriyot bo'yicha tanlanadi; aniq bo'lmasa — moslanmaydi.
  */
 export function matchItem(item: CollectedItem, index: MatchIndex): MatchResult {
+  const res = matchItemOnce(item, index);
+  // "G'AFUR G'ULOM: SHUM BOLA" — ba'zi do'konlar muallifni nomga qo'shib yozadi; ikki nuqtagacha
+  // bo'lgan qism muallif sifatida tekshiriladi (mos muallif bo'lmasa — hech narsa o'zgarmaydi)
+  if (res.editionId === null && res.bookId === null && res.reason === "kitob topilmadi") {
+    const m = item.title.match(/^([^:]{3,60}):\s*(.{2,})$/);
+    if (m) {
+      const retry = matchItemOnce({ ...item, title: m[2], author: m[1], authorFromBrand: false }, index);
+      if (retry.bookId) return retry;
+    }
+  }
+  return res;
+}
+
+function matchItemOnce(item: CollectedItem, index: MatchIndex): MatchResult {
   const isbn = normalizeIsbn(item.isbn);
   if (isbn) {
     const hit = index.byIsbn.get(isbn);

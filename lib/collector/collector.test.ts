@@ -123,6 +123,11 @@ test("moslashtirish: ISBN, nom + muallif, nashriyot, noaniqlik", () => {
   assert.equal(matchItem(item({ title: "Alisher Navoiy. Xamsa", author: "Alisher Navoiy" }), index).editionId, null);
   assert.equal(matchItem(item({ title: "Navoiy haqida esse" }), index).bookId, null);
   assert.equal(matchItem(item({ title: "Navoiy", author: "Oybek" }), index).editionId, "e3");
+  // "MUALLIF: NOM" (muallif maydonida nashriyot) — ikki nuqtagacha muallif deb tekshiriladi
+  assert.equal(matchItem(item({ title: "G‘AFUR G‘ULOM: SHUM BOLA", author: "Oltin qalam nashriyoti" }), index).bookId, "b3");
+  assert.equal(matchItem(item({ title: "OYBEK: NAVOIY", author: "TURON ZAMIN", authorFromBrand: true }), index).editionId, "e3");
+  // ikki nuqtagacha muallif emas — moslanmaydi
+  assert.equal(matchItem(item({ title: "Navoiy: 2-kitob", author: "Oybek" }), index).bookId, null);
 });
 
 test("moslashtirish: qo'shimcha so'z, to'plam, boshqa til — boshqa mahsulot", () => {

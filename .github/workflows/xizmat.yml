@@ -21,6 +21,7 @@ on:
           - katalog-import
           - moslanmaganlarni-qayta-urinish
           - rasmlar-statistikasi
+          - sotuvchilar-sinxron
       sotuvchi:
         description: "Sotuvchi slug'i (narxlarni-yangilash, katalog-import, moslanmaganlarni-qayta-urinish uchun): qamar, barakot…"
         required: false
@@ -66,6 +67,7 @@ jobs:
             katalog-import)                   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" ;;
             moslanmaganlarni-qayta-urinish)   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" --retry-pending ;;
             rasmlar-statistikasi)             npm run --silent images -- stats ;;
+            sotuvchilar-sinxron)              npm run --silent db:sellers ;;
             *) echo "::error::Noma'lum vazifa: $VAZIFA"; exit 1 ;;
           esac
           echo "--- yakuniy holat ---"

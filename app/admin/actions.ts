@@ -9,6 +9,7 @@ import {
   optionalUrl, rejectPending, saveOffer, updateBook, updateEdition, type EditionInput,
 } from "@/lib/admin/books";
 import { buildSearchKey, slugify } from "@/lib/normalize";
+import { parseLocation } from "@/lib/geo";
 
 const s = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
 
@@ -185,10 +186,16 @@ function sellerFields(d: FormData) {
   if (!TYPES.includes(type)) throw new AdminError("Turini tanlang.");
   const city = s(d, "city");
   if (city.length < 2) throw new AdminError("Shaharni kiriting.");
+  const locRaw = s(d, "location");
+  const loc = locRaw ? parseLocation(locRaw) : null;
+  if (locRaw && !loc)
+    throw new AdminError("Joylashuv tushunarsiz: \"41.311, 69.240\" ko'rinishida yoki Google/Yandex xarita havolasini kiriting (qisqa goo.gl havola ishlamaydi).");
   return {
     name,
     type,
     city,
+    lat: loc?.lat ?? null,
+    lng: loc?.lng ?? null,
     website: optionalUrl(s(d, "website"), "Sayt"),
     description: s(d, "description") || null,
     address: s(d, "address") || null,

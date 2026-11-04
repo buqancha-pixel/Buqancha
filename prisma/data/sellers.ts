@@ -32,6 +32,8 @@ export type SellerSeed = {
   /** narx yig'ish: mahsulot sahifalari (JSON-LD) va ularni topish uchun sitemap'lar */
   collector?: "NONE" | "FEED" | "PRODUCT_PAGE";
   sitemapUrls?: string[];
+  /** sitemap'da mahsulot bo'lmasa — bo'lim sahifalari (?page=N bilan aylanadi) */
+  listingUrls?: string[];
   /** katalog importi: sitemap'dagi kitob sahifalari (regex) */
   productUrlPattern?: string;
 };
@@ -487,8 +489,24 @@ export const SELLERS: SellerSeed[] = [
     city: "Uzun",
     website: "https://kitobolami.uz",
     address: "O'zbekiston ko'chasi, 16",
-    description: "Surxondaryo viloyati, Uzun tumanidagi kitob do'koni.",
+    description: "Surxondaryo viloyati, Uzun tumanidagi kitob do'koni; onlayn do'koni bor (kitobolami.uz).",
     sources: ["https://www.goldenpages.uz/uz/company/?Id=109209", "https://kitobolami.uz/"],
+    collector: "PRODUCT_PAGE",
+    // diniy bo'limlar ataylab yo'q (diniy adabiyot avtomatik qo'shilmaydi)
+    listingUrls: [
+      "https://kitobolami.uz/categories/ozbek-adabiyoti",
+      "https://kitobolami.uz/categories/jahon-adabiyoti",
+      "https://kitobolami.uz/categories/jahon-adabiyotlari",
+      "https://kitobolami.uz/categories/badiiy-adabiyotlar",
+      "https://kitobolami.uz/categories/oquv-adabiyoti",
+      "https://kitobolami.uz/categories/psixologiya-va-shaxsiy-rivojlanish",
+      "https://kitobolami.uz/categories/chet-tilini-organamiz",
+      "https://kitobolami.uz/categories/ingliz-tili",
+      "https://kitobolami.uz/categories/jahon-bolalar-adabiyoti",
+      "https://kitobolami.uz/categories/ozbek-va-jahon-bolalar-adabiyoti",
+      "https://kitobolami.uz/categories/ozbek-bolalar-adabiyoti",
+    ],
+    productUrlPattern: "^https://kitobolami\\.uz/products/",
   },
   {
     slug: "prometey-pitnak",

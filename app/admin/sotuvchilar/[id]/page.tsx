@@ -27,6 +27,14 @@ export default async function EditSeller({ params, searchParams }: { params: Pro
             <Field label="Shahar" name="city" defaultValue={seller?.city ?? "Toshkent"} required />
             <Field label="Sayt" name="website" type="url" defaultValue={seller?.website ?? ""} placeholder="https://" className="sm:col-span-2" />
             <Field label="Manzil" name="address" defaultValue={seller?.address ?? ""} className="sm:col-span-2" />
+            <Field
+              label="Xaritadagi joylashuv"
+              name="location"
+              defaultValue={seller?.lat != null && seller?.lng != null ? `${seller.lat}, ${seller.lng}` : ""}
+              placeholder="41.311081, 69.240562"
+              className="sm:col-span-2"
+              hint="Google Maps'da do'kon ustiga barmoqni bosib turing — tepada koordinata chiqadi, nusxalab shu yerga qo'ying. Yoki brauzerdagi to'liq xarita havolasi. Bo'sh qolsa, xaritada nuqta chiqmaydi."
+            />
             <Field label="Ijtimoiy tarmoq" name="social" defaultValue={seller?.social ?? ""} placeholder="Telegram: @…" className="sm:col-span-2" />
             <Area label="Tavsif" name="description" defaultValue={seller?.description ?? ""} className="sm:col-span-2" />
             <div className="sm:col-span-2">

@@ -3,7 +3,7 @@ import { applyItems } from "./apply";
 import { PoliteFetcher, type FetcherOptions } from "./fetcher";
 import { extractJsonLdItems } from "./parsers/jsonld";
 import { extractCategories } from "./religion";
-import { sitemapLocs } from "./run";
+import { catalogLocs } from "./run";
 import { emptyStats, type CollectedItem, type RunStats } from "./types";
 
 export type CatalogOptions = Pick<FetcherOptions, "fetchImpl" | "sleep"> & {
@@ -22,8 +22,8 @@ export type CatalogOptions = Pick<FetcherOptions, "fetchImpl" | "sleep"> & {
  */
 export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {}) {
   const seller = await prisma.seller.findUniqueOrThrow({ where: { slug: sellerSlug } });
-  if (!seller.sitemapUrls.length || !seller.productUrlPattern)
-    throw new Error(`${seller.name}: sitemapUrls va productUrlPattern sozlanmagan`);
+  if ((!seller.sitemapUrls.length && !seller.listingUrls.length) || !seller.productUrlPattern)
+    throw new Error(`${seller.name}: sitemapUrls/listingUrls va productUrlPattern sozlanmagan`);
   const fetcher = new PoliteFetcher({ minDelayMs: seller.crawlDelayMs, fetchImpl: opts.fetchImpl, sleep: opts.sleep });
   const pattern = new RegExp(seller.productUrlPattern);
   const stats = emptyStats();
@@ -31,8 +31,8 @@ export async function importCatalog(sellerSlug: string, opts: CatalogOptions = {
   let error: string | undefined;
 
   try {
-    const locs: string[] = [];
-    for (const sm of seller.sitemapUrls) locs.push(...(await sitemapLocs(fetcher, sm)));
+    const locs = await catalogLocs(seller, fetcher, stats.errors);
+    if (!locs.length && stats.errors.length) throw new Error(stats.errors[0]);
     const [offers, unmatched] = await Promise.all([
       prisma.offer.findMany({ where: { sellerId: seller.id, url: { not: null } }, select: { url: true } }),
       prisma.unmatchedItem.findMany({

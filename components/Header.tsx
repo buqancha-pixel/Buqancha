@@ -21,6 +21,9 @@ export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?
           <Link href="/sotuvchilar" className="hover:text-text">
             Sotuvchilar
           </Link>
+          <Link href="/manzillar" className="hover:text-text">
+            Manzillar
+          </Link>
           <Link href="/hamkorlik" className="hover:text-text">
             Hamkorlik
           </Link>
@@ -32,9 +35,12 @@ export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?
           <ThemeToggle initial={theme} />
         </div>
       </div>
-      <nav className="mx-auto flex max-w-6xl gap-5 px-4 pb-2 text-sm font-medium text-muted sm:hidden">
+      <nav className="no-scrollbar mx-auto flex max-w-6xl items-center gap-5 overflow-x-auto whitespace-nowrap px-4 pb-2 text-sm font-medium text-muted sm:hidden">
         <Link href="/sotuvchilar" className="hover:text-text">
           Sotuvchilar
+        </Link>
+        <Link href="/manzillar" className="hover:text-text">
+          Manzillar
         </Link>
         <Link href="/hamkorlik" className="hover:text-text">
           Hamkorlik
@@ -44,7 +50,7 @@ export function Header({ theme, showSearch = true }: { theme: Theme; showSearch?
             Qidiruv
           </Link>
         )}
-        <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer me" aria-label={`Instagram: @${INSTAGRAM}`} className="ml-auto hover:text-text">
+        <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer me" aria-label={`Instagram: @${INSTAGRAM}`} className="ml-auto shrink-0 hover:text-text">
           <InstagramIcon />
         </a>
       </nav>

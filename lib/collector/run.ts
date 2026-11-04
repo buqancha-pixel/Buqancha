@@ -1,3 +1,4 @@
+import { extractLinks } from "./links";
 import type { CollectorKind, Seller } from "@prisma/client";
 import { prisma } from "../db";
 import { applyItems } from "./apply";
@@ -45,6 +46,50 @@ export async function sitemapLocs(fetcher: PoliteFetcher, url: string, depth = 0
   return locs;
 }
 
+/** Bo'lim sahifalarini (?page=N) yangi mahsulot havolasi chiqmay qolguncha aylanadi. */
+export async function listingLocs(fetcher: PoliteFetcher, url: string, pattern: RegExp, maxPages = 200): Promise<string[]> {
+  const seen = new Set<string>();
+  for (let page = 1; page <= maxPages; page++) {
+    const pageUrl = `${url}${url.includes("?") ? "&" : "?"}page=${page}`;
+    const res = await fetcher.get(pageUrl);
+    if (res.status !== 200) {
+      if (page === 1) throw new Error(`bo'lim HTTP ${res.status}: ${url}`);
+      break;
+    }
+    const fresh = extractLinks(res.body, pageUrl, pattern).filter((l) => !seen.has(l));
+    if (!fresh.length) break;
+    fresh.forEach((l) => seen.add(l));
+  }
+  return Array.from(seen);
+}
+
+/** Sotuvchining barcha mahsulot manzillari: sitemap'lar + bo'lim sahifalari. Xatolar stats'ga yoziladi. */
+export async function catalogLocs(
+  seller: Pick<Seller, "sitemapUrls" | "listingUrls" | "productUrlPattern">,
+  fetcher: PoliteFetcher,
+  errors: string[],
+): Promise<string[]> {
+  const locs: string[] = [];
+  for (const sm of seller.sitemapUrls) {
+    try {
+      locs.push(...(await sitemapLocs(fetcher, sm)));
+    } catch (e) {
+      errors.push(`${sm}: ${(e as Error).message}`);
+    }
+  }
+  if (seller.listingUrls.length && seller.productUrlPattern) {
+    const pattern = new RegExp(seller.productUrlPattern);
+    for (const lu of seller.listingUrls) {
+      try {
+        locs.push(...(await listingLocs(fetcher, lu, pattern)));
+      } catch (e) {
+        errors.push(`${lu}: ${(e as Error).message}`);
+      }
+    }
+  }
+  return Array.from(new Set(locs));
+}
+
 /** URL'ning oxirgi qismini qidiruv kalitiga aylantiradi: "/kitob/otkan-kunlar-romoni" → "otkan kunlar romoni" */
 export function urlKey(url: string): string {
   try {
@@ -69,15 +114,8 @@ async function discover(seller: Seller, fetcher: PoliteFetcher, stats: RunStats,
   ]);
   const known = new Set([...offers.map((o) => o.url!), ...unmatched.map((u) => u.key)]);
 
-  const locs: string[] = [];
-  for (const sm of seller.sitemapUrls) {
-    try {
-      locs.push(...(await sitemapLocs(fetcher, sm)));
-    } catch (e) {
-      stats.errors.push(`${sm}: ${(e as Error).message}`);
-    }
-  }
-  const candidates = Array.from(new Set(locs)).filter((url) => {
+  const locs = await catalogLocs(seller, fetcher, stats.errors);
+  const candidates = locs.filter((url) => {
     if (known.has(url)) return false;
     const k = ` ${urlKey(url)} `;
     return titleKeys.some((t) => k.includes(` ${t} `));
@@ -118,7 +156,7 @@ export async function collectSeller(sellerSlug: string, opts: FetchOpts = {}): P
     return withRun(seller, "PRODUCT_PAGE", async (stats) => {
       const started = new Date();
       const staleBefore = opts.staleHours ? new Date(started.getTime() - opts.staleHours * 3600_000) : started;
-      if (seller.sitemapUrls.length) await discover(seller, fetcher, stats, opts.discoverLimit ?? 200);
+      if (seller.sitemapUrls.length || seller.listingUrls.length) await discover(seller, fetcher, stats, opts.discoverLimit ?? 200);
       // allaqachon bog'langan mahsulot sahifalarini qayta tekshiramiz
       // (shu ishga tushirishda topilganlar qayta yuklanmaydi)
       const offers = await prisma.offer.findMany({
