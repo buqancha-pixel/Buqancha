@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { Prisma, SellerType } from "@prisma/client";
 import { prisma } from "./db";
 import { searchKey } from "./normalize";
+import { isUzbekEdition } from "./format";
 
 const bookCardInclude = {
   author: true,
@@ -18,7 +19,9 @@ export function bookImage(book: { editions: Array<{ imageUrl: string | null; ima
 }
 
 export function priceRange(book: BookCardData) {
-  const every = book.editions.flatMap((e) => e.offers);
+  // o'zbekcha nashrlar bo'lsa — faqat ular (tarjima/boshqa tildagi nashr narxni buzmasin)
+  const uz = book.editions.filter((e) => isUzbekEdition(e.language));
+  const every = (uz.length ? uz : book.editions).flatMap((e) => e.offers);
   // haqiqiy narxlar bo'lsa — namunaviylar hisobga olinmaydi
   const real = every.filter((o) => !o.isSample);
   const all = real.length ? real : every;
@@ -190,7 +193,9 @@ export function splitOffers(all: OfferRow[]) {
 }
 
 export function offerStats(all: OfferRow[]) {
-  const offers = splitOffers(all).primary;
+  const primary = splitOffers(all).primary;
+  const uz = primary.filter((o) => isUzbekEdition(o.edition.language));
+  const offers = uz.length ? uz : primary;
   const inStock = offers.filter((o) => o.inStock);
   const pool = inStock.length ? inStock : offers;
   if (!pool.length) return null;
@@ -201,10 +206,10 @@ export function offerStats(all: OfferRow[]) {
     max: priciest.price,
     cheapest,
     priciest,
-    count: offers.length,
-    inStockCount: inStock.length,
-    hasSample: offers.some((o) => o.isSample),
-    lastUpdated: new Date(Math.max(...offers.map((o) => (o.checkedAt ?? o.updatedAt).getTime()))),
+    count: primary.length,
+    inStockCount: primary.filter((o) => o.inStock).length,
+    hasSample: primary.some((o) => o.isSample),
+    lastUpdated: new Date(Math.max(...primary.map((o) => (o.checkedAt ?? o.updatedAt).getTime()))),
   };
 }
 

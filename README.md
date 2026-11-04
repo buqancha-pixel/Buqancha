@@ -135,6 +135,9 @@ Vercel'da `ADMIN_PASSWORD` o'rnatilgach, `/admin` da parol bilan kiriladi (sessi
 - **Ko'rib chiqish:** 70% dan ko'p o'zgargan narxlarni qabul/rad qilish; moslanmagan va e'tiborsiz mahsulotlarni
   mavjud kitob/nashrga bog'lash yoki ulardan yangi kitob yaratish (diniy adabiyot shu yerdan qo'lda qo'shiladi).
 - **Sotuvchilar:** qo'shish, tahrirlash, muqova rasmlarini ko'rsatishni o'chirish.
+- **Boshqa kitobga qo'shish:** kitob aslida boshqa kitobning nashri bo'lsa (tarjima, takror) — nashrlari va narxlari
+  o'sha kitobga o'tadi. Nashrning tili (`Edition.language`: bo'sh — o'zbekcha, `en`, `ru`, `uz-Cyrl`...) belgi bilan
+  ko'rsatiladi; eng arzon/eng qimmat narx faqat o'zbekcha nashrlardan hisoblanadi.
 - **Bosh sahifa banneri:** kitob sahifasida «Bannerda ko'rsatish» + qisqa yozuv. Bannerda 6 tagacha kitob:
   avval tanlanganlar (oxirgisi birinchi), qolgani — saytga eng so'nggi qo'shilgan, rasmi va narxi bor kitoblar.
 
@@ -171,7 +174,8 @@ Hamkorlik sahifasida forma yo'q (shaxsiy ma'lumot saqlanmaydi) — Telegram havo
 
 **Texnik xizmat** ([.github/workflows/xizmat.yml](.github/workflows/xizmat.yml)) — *Actions → Texnik xizmat → Run workflow*:
 statistika, ko'rib chiqish ro'yxati, takrorlarni ko'rish/birlashtirish, diniy kitoblarni ko'rish/olib tashlash,
-bitta sotuvchi narxlarini yangilash, katalog importi, moslanmaganlarni qayta urinish, rasmlar statistikasi.
+bitta sotuvchi narxlarini yangilash, katalog importi, moslanmaganlarni qayta urinish, rasmlar statistikasi,
+sotuvchilarni sinxronlash, kitobni boshqa kitobga qo'shish (`parametr`: `<kitob-slug> <asosiy-slug> [til]`).
 `...-qollash` vazifalari bazani o'zgartiradi, qolganlari faqat ko'rsatadi; natija workflow logida.
 Kechki narx yig'ish bilan bir vaqtda ishlamaydi (navbatda kutadi). Mahalliy: `npm run stats`.
 

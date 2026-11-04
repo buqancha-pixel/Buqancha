@@ -26,6 +26,7 @@ import {
   formatNumber,
   formatPrice,
   formatRelative,
+  LANGUAGE_LABEL,
 } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
 
@@ -279,6 +280,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
             <dl className="grid flex-1 grid-cols-[auto_1fr] content-start gap-x-4 gap-y-1.5 text-sm">
               <dt className="text-muted">Nashriyot</dt>
               <dd className="font-semibold">{e.publisher}</dd>
+              {e.language && LANGUAGE_LABEL[e.language] && (<><dt className="text-muted">Til</dt><dd>{LANGUAGE_LABEL[e.language]}</dd></>)}
               {e.year && (<><dt className="text-muted">Yil</dt><dd className="tabular">{e.year}</dd></>)}
               {e.pages && (<><dt className="text-muted">Betlar</dt><dd className="tabular">{e.pages} bet</dd></>)}
               {e.cover && (<><dt className="text-muted">Muqova</dt><dd>{e.cover}</dd></>)}
@@ -342,6 +344,11 @@ function OfferCard({ offer: o, rank, isCheapest }: { offer: OfferRow; rank: numb
             )}
           </div>
           <p className="mt-1 text-sm text-muted">
+            {o.edition.language && LANGUAGE_LABEL[o.edition.language] && (
+              <span className="mr-1.5 rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-text">
+                {LANGUAGE_LABEL[o.edition.language]}
+              </span>
+            )}
             {o.edition.publisher}
             {o.edition.year ? `, ${o.edition.year}` : ""}
             {o.edition.pages ? `, ${o.edition.pages} bet` : ""}
@@ -429,6 +436,7 @@ function bookJsonLd(
       isbn: e.isbn ?? undefined,
       numberOfPages: e.pages ?? undefined,
       datePublished: e.year ? String(e.year) : undefined,
+      inLanguage: e.language ?? "uz",
       publisher: { "@type": "Organization", name: e.publisher },
     })),
     offers: stats

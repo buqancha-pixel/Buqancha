@@ -1,4 +1,5 @@
 import type { Edition, Seller } from "@prisma/client";
+import { LANGUAGE_LABEL } from "@/lib/format";
 import { Field, Select } from "../ui";
 
 /** Nashr maydonlari (yangi kitob, yangi nashr va nashrni tahrirlash formalari uchun). */
@@ -14,7 +15,12 @@ export function EditionFields({ e, sellers, prefix = "" }: { e?: Partial<Edition
         <option value="qattiq">Qattiq</option>
         <option value="yumshoq">Yumshoq</option>
       </Select>
-      <div />
+      <Select label="Tili" name="language" defaultValue={e?.language ?? ""} id={`${prefix}language`}>
+        <option value="">O&apos;zbekcha (lotin)</option>
+        {Object.entries(LANGUAGE_LABEL).map(([code, label]) => (
+          <option key={code} value={code}>{label}</option>
+        ))}
+      </Select>
       <Field label="Muqova rasmi havolasi" name="imageUrl" defaultValue={e?.imageUrl ?? ""} type="url" placeholder="https://…" className="sm:col-span-2" id={`${prefix}imageUrl`}
         hint="Sotuvchi saytidagi rasm havolasi yoki o'zingizniki" />
       <Select label="Rasm manbasi (saytda ko'rsatiladi)" name="imageSource" defaultValue={e?.imageSource ?? "own"} className="sm:col-span-2" id={`${prefix}imageSource`}>

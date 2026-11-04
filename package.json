@@ -23,7 +23,8 @@
     "images": "tsx scripts/images.ts",
     "remove-religious": "tsx scripts/remove-religious.ts",
     "snapshot": "tsx scripts/snapshot.ts",
-    "stats": "tsx scripts/stats.ts"
+    "stats": "tsx scripts/stats.ts",
+    "merge-book": "tsx scripts/merge-book.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

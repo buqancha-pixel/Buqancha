@@ -5,7 +5,7 @@ import type { SellerType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { checkPassword, endSession, requireAdmin, startSession, adminEnabled } from "@/lib/admin/auth";
 import {
-  AdminError, acceptPending, addEdition, createBook, deleteBook, deleteEdition, deleteOffer, linkUnmatched,
+  AdminError, acceptPending, addEdition, mergeBookInto, createBook, deleteBook, deleteEdition, deleteOffer, linkUnmatched,
   optionalUrl, rejectPending, saveOffer, updateBook, updateEdition, type EditionInput,
 } from "@/lib/admin/books";
 import { buildSearchKey, slugify } from "@/lib/normalize";
@@ -41,6 +41,7 @@ const editionInput = (d: FormData): EditionInput => ({
   cover: s(d, "cover"),
   imageUrl: s(d, "imageUrl"),
   imageSource: s(d, "imageSource"),
+  language: s(d, "language"),
 });
 
 // ---------- kirish ----------
@@ -101,6 +102,16 @@ export async function setFeaturedAction(data: FormData) {
       data: { featuredAt: on ? (book.featuredAt ?? new Date()) : null, featuredNote: on ? note : null },
     });
   }, on ? "Bannerga chiqarildi." : "Bannerdan olindi.");
+}
+
+export async function mergeBookAction(data: FormData) {
+  const id = s(data, "id");
+  const intoId = s(data, "intoId");
+  await run(`/admin/kitoblar/${id}#birlashtirish`, async () => {
+    const lang = s(data, "language");
+    await mergeBookInto(id, intoId, lang === "keep" ? undefined : lang || null);
+    return `/admin/kitoblar/${intoId}#nashrlar`;
+  }, "Kitob nashr sifatida qo'shildi.");
 }
 
 export async function deleteBookAction(data: FormData) {

@@ -6,6 +6,7 @@
 import { prisma } from "../db";
 import { buildSearchKey, slugify } from "../normalize";
 import { normalizeIsbn } from "../collector/isbn";
+import { LANGUAGE_LABEL } from "../format";
 import { colorFor, displayPair, findOrCreateAuthor, uniqueSlug } from "../collector/create-book";
 
 export class AdminError extends Error {}
@@ -101,6 +102,7 @@ export type EditionInput = {
   cover: string;
   imageUrl: string;
   imageSource: string;
+  language?: string;
 };
 
 function bookFields(input: BookInput) {
@@ -124,6 +126,7 @@ function editionFields(input: EditionInput) {
     cover,
     imageUrl,
     imageSource: imageUrl ? input.imageSource.trim() || "own" : null,
+    language: input.language && LANGUAGE_LABEL[input.language] ? input.language : null,
   };
 }
 
@@ -229,4 +232,37 @@ export async function linkUnmatched(itemId: string, editionId: string) {
   await prisma.unmatchedItem.update({ where: { id: itemId }, data: { status: "MATCHED" } });
   const ed = await prisma.edition.findUniqueOrThrow({ where: { id: editionId } });
   await prisma.book.update({ where: { id: ed.bookId }, data: { origin: "manual" } });
+}
+
+/**
+ * Kitobni boshqa kitobga qo'shish: barcha nashrlari (narxlari bilan) o'sha kitobga o'tadi, bu kitob o'chiriladi.
+ * Masalan, "O'tkan kunlar: Bygone days" → "O'tkan kunlar" (inglizcha nashr sifatida).
+ */
+export async function mergeBookInto(fromId: string, intoId: string, language?: string | null) {
+  if (fromId === intoId) throw new AdminError("Kitobni o'ziga qo'shib bo'lmaydi.");
+  const [from, into] = await Promise.all([
+    prisma.book.findUniqueOrThrow({ where: { id: fromId } }),
+    prisma.book.findUniqueOrThrow({ where: { id: intoId } }),
+  ]);
+  await prisma.$transaction(async (tx) => {
+    await tx.edition.updateMany({
+      where: { bookId: fromId },
+      data: { bookId: intoId, ...(language !== undefined ? { language } : {}) },
+    });
+    await tx.book.update({
+      where: { id: intoId },
+      data: {
+        origin: "manual",
+        searchCount: into.searchCount + from.searchCount,
+        description: into.description || from.description,
+        titleCyrl: into.titleCyrl ?? from.titleCyrl,
+        ...(from.featuredAt && !into.featuredAt ? { featuredAt: from.featuredAt, featuredNote: from.featuredNote } : {}),
+      },
+    });
+    await tx.book.delete({ where: { id: fromId } });
+  });
+  await refreshSearchKey(intoId);
+  const author = await prisma.author.findUnique({ where: { id: from.authorId }, include: { _count: { select: { books: true } } } });
+  if (author && author._count.books === 0 && !author.bio) await prisma.author.delete({ where: { id: author.id } });
+  return into;
 }

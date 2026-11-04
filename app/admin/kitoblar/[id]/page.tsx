@@ -2,12 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
-import { formatPrice, formatRelative, SOURCE_LABEL } from "@/lib/format";
+import { formatPrice, formatRelative, LANGUAGE_LABEL, SOURCE_LABEL } from "@/lib/format";
+import { searchBooks } from "@/lib/books";
 import {
-  addEditionAction, deleteBookAction, setFeaturedAction, deleteEditionAction, deleteOfferAction, saveOfferAction,
+  addEditionAction, deleteBookAction, mergeBookAction, setFeaturedAction, deleteEditionAction, deleteOfferAction, saveOfferAction,
   updateAuthorAction, updateBookAction, updateEditionAction,
 } from "../../actions";
-import { Area, Button, Check, Field, Flash, PageTitle, Section, Select, type SP } from "../../ui";
+import { Area, Button, Check, Field, Flash, PageTitle, Section, Select, inputCls, type SP } from "../../ui";
 import { EditionFields } from "../forms";
 
 export default async function EditBook({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
@@ -24,6 +25,8 @@ export default async function EditBook({ params, searchParams }: { params: Promi
     prisma.seller.findMany({ orderBy: [{ offers: { _count: "desc" } }, { name: "asc" }], select: { id: true, slug: true, name: true } }),
   ]);
   if (!book) notFound();
+  const mergeQ = (sp.birlash ?? "").trim();
+  const mergeCandidates = mergeQ ? (await searchBooks(mergeQ, 8)).filter((b) => b.id !== book.id) : [];
 
   return (
     <div>
@@ -172,6 +175,38 @@ export default async function EditBook({ params, searchParams }: { params: Promi
             <Button>Muallifni saqlash</Button>
           </form>
         </details>
+      </Section>
+
+      <Section title="Boshqa kitobga nashr sifatida qo'shish" id="birlashtirish">
+        <p className="mb-3 text-sm text-muted">
+          Bu kitob aslida boshqa kitobning nashri bo&apos;lsa (tarjima, boshqa nashriyot, takror) — barcha nashr va narxlari
+          o&apos;sha kitobga o&apos;tadi, bu sahifa esa o&apos;chadi.
+        </p>
+        <form className="mb-3 flex gap-2" action={`/admin/kitoblar/${book.id}#birlashtirish`}>
+          <input name="birlash" defaultValue={mergeQ} placeholder="Asosiy kitob nomi" className={inputCls} />
+          <button className="h-11 shrink-0 rounded-full border border-border bg-surface-2 px-4 text-sm font-semibold">Qidirish</button>
+        </form>
+        {mergeQ && !mergeCandidates.length && <p className="text-sm text-muted">Topilmadi.</p>}
+        <ul className="grid gap-2">
+          {mergeCandidates.map((c) => (
+            <li key={c.id} className="rounded-xl border border-border p-3">
+              <p className="font-medium">{c.title}</p>
+              <p className="mb-2 text-xs text-muted">{c.author.name} · {c.editions.length} nashr</p>
+              <form action={mergeBookAction} className="flex flex-wrap items-end gap-2">
+                <input type="hidden" name="id" value={book.id} />
+                <input type="hidden" name="intoId" value={c.id} />
+                <Select label="Bu nashrlarning tili" name="language" defaultValue="keep" className="min-w-48">
+                  <option value="keep">O&apos;zgartirmaslik</option>
+                  <option value="">O&apos;zbekcha (lotin)</option>
+                  {Object.entries(LANGUAGE_LABEL).map(([code, label]) => (
+                    <option key={code} value={code}>{label}</option>
+                  ))}
+                </Select>
+                <Button className="h-11">Shu kitobga qo&apos;shish</Button>
+              </form>
+            </li>
+          ))}
+        </ul>
       </Section>
 
       <Section title="Kitobni o'chirish">

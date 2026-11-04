@@ -89,6 +89,8 @@ model Edition {
   year      Int?
   pages     Int?
   cover     String? // qattiq / yumshoq
+  // nashr tili: bo'sh — o'zbekcha (lotin); "uz-Cyrl", "en", "ru", "tr" ... (boshqa tildagilar narx solishtirishga kirmaydi)
+  language  String?
   // muqova rasmi: sotuvchi saytidagi havola yoki o'zimizning surat (/covers/...)
   imageUrl  String?
   // rasm manbasi: sotuvchi slug'i yoki "own" (o'z suratimiz)
