@@ -187,6 +187,15 @@ bekor qiladi. `Seller.partnerUntil` — birinchi marta 30 kun bepul, keyin admin
 muddat tugasa narxlar qoladi, tahrirlash va "Hamkor" belgisi yopiladi. Hamkor narxini kechki avtomatik yig'ish
 almashtirmaydi. Sessiya imzosi: `PARTNER_SECRET` (bo'lmasa `ADMIN_PASSWORD`).
 
+**Bloger kabineti** (`/bloger`): admin → Targ'ibotchilar → bloger → "Kabinet ochish" maxfiy havola beradi
+(`Promoter.tokenHash`, hamkor kabinetidagi kabi faqat xesh; yangi havola eskisini bekor qiladi, "Kabinetni yopish" o'chiradi).
+Bloger faqat o'zining tavsiyalarini (kitob qidirib qo'shish, izoh, olib tashlash) va ism/rasm/tavsif/obunachilarni
+o'zgartiradi — `promoterId` sessiyadan olinadi, formadan emas. Instagram manzili, rozilik va saytda ko'rinish faqat adminda.
+
+**Saytdan o'chirish:** admin kirgan brauzerda katalogdagi har bir muqovada 🗑 tugmasi, kitob sahifasida "Admin: Tahrirlash /
+Kitobni o'chirish" qatori, admin kitoblar ro'yxatida ham "Kitobni o'chirish". Tasdiqdan keyin kitob barcha nashr va
+narxlari bilan o'chadi; sotuvchi havolalari eslab qolinadi — kechki yig'ish uni qayta qo'shmaydi.
+
 Hamkorlik sahifasida forma yo'q (shaxsiy ma'lumot saqlanmaydi) — Telegram havolasi (`PARTNER_TELEGRAM`, `lib/site.ts`).
 
 ## Internetga chiqarish (Vercel + Neon)

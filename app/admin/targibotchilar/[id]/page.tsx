@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { searchBooks } from "@/lib/books";
-import { addPromoterBookAction, deletePromoterAction, removePromoterBookAction, savePromoterAction } from "../../actions";
+import { addPromoterBookAction, deletePromoterAction, promoterLinkAction, promoterRevokeAction, removePromoterBookAction, savePromoterAction } from "../../actions";
+import { SITE_URL } from "@/lib/site";
 import { Area, Button, Check, Field, Flash, PageTitle, Section, inputCls, type SP } from "../../ui";
 
 export default async function EditPromoter({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
@@ -83,6 +84,34 @@ export default async function EditPromoter({ params, searchParams }: { params: P
             ))}
             {!p.books.length && <li className="px-3 py-4 text-center text-sm text-muted">Hali kitob yo&apos;q — yuqoridan qidirib qo&apos;shing.</li>}
           </ul>
+        </Section>
+      )}
+
+      {p && (
+        <Section title="Bloger kabineti" id="kabinet">
+          {sp.havola && (
+            <div className="mb-3 rounded-xl border border-accent bg-accent-soft p-3 text-sm">
+              <p className="font-semibold">Kirish havolasi (faqat hozir ko&apos;rinadi — nusxalab, blogerga Instagram yoki Telegram orqali yuboring):</p>
+              <input readOnly value={`${SITE_URL}/bloger/kirish?k=${sp.havola}`} className="mt-2 h-10 w-full rounded-lg border border-border bg-bg px-2 font-mono text-xs" />
+            </div>
+          )}
+          <p className="mb-3 text-sm text-muted">
+            {p.tokenHash
+              ? "Kabinet ochiq. Bloger faqat o'z tavsiyalari va sahifasidagi ma'lumotni o'zgartira oladi; Instagram manzili, rozilik va saytda ko'rinish — faqat sizda."
+              : "Kabinet ochilmagan. Ochsangiz, bloger havola orqali kirib, tavsiya qiladigan kitoblarini o'zi qo'shadi."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <form action={promoterLinkAction}>
+              <input type="hidden" name="id" value={p.id} />
+              <Button className="h-10">{p.tokenHash ? "Yangi havola (eskisi o'chadi)" : "Kabinet ochish"}</Button>
+            </form>
+            {p.tokenHash && (
+              <form action={promoterRevokeAction}>
+                <input type="hidden" name="id" value={p.id} />
+                <Button variant="ghost" className="h-10">Kabinetni yopish</Button>
+              </form>
+            )}
+          </div>
         </Section>
       )}
 

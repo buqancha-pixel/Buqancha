@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { BookCard } from "./BookCard";
+import { AdminDeleteBook } from "./AdminDeleteBook";
+import { isAdmin } from "@/lib/admin/auth";
 import { JsonLd } from "./JsonLd";
 import { CATALOG_SORTS, type CatalogSort, getCatalogPage, getCategoryCounts } from "@/lib/catalog";
 import { LANGUAGES, type Language } from "@/lib/categories";
@@ -14,9 +16,10 @@ export function parseCatalogParams(sp: { tartib?: string; sahifa?: string }) {
 
 /** Katalog sahifasi: tillar qatori, saralash, kitoblar to'ri va sahifalash. */
 export async function CatalogView({ lang, sort, page }: { lang?: Language; sort: CatalogSort; page: number }) {
-  const [{ books, total, pages }, counts] = await Promise.all([
+  const [{ books, total, pages }, counts, admin] = await Promise.all([
     getCatalogPage({ language: lang?.code ?? null }, sort, page),
     getCategoryCounts(),
+    isAdmin(),
   ]);
   const langs = LANGUAGES.filter((l) => (counts[l.code] ?? 0) > 0);
   const base = lang ? `/katalog/${lang.slug}` : "/katalog";
@@ -86,9 +89,16 @@ export async function CatalogView({ lang, sort, page }: { lang?: Language; sort:
 
       {books.length ? (
         <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {books.map((b) => (
-            <BookCard key={b.id} book={b} />
-          ))}
+          {books.map((b) =>
+            admin ? (
+              <div key={b.id} className="relative">
+                <BookCard book={b} />
+                <AdminDeleteBook id={b.id} title={b.title} variant="card" />
+              </div>
+            ) : (
+              <BookCard key={b.id} book={b} />
+            ),
+          )}
         </div>
       ) : (
         <p className="card mt-6 p-8 text-center text-muted">Bu bo&apos;limda hozircha sotuvda kitob yo&apos;q.</p>

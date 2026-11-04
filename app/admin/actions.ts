@@ -5,7 +5,7 @@ import { revalidateTag } from "next/cache";
 import { CATALOG_TAG } from "@/lib/cache";
 import type { SellerType } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { checkPassword, endSession, requireAdmin, startSession, adminEnabled } from "@/lib/admin/auth";
+import { checkPassword, endSession, isAdmin, requireAdmin, startSession, adminEnabled } from "@/lib/admin/auth";
 import {
   AdminError, acceptPending, addEdition, mergeBookInto, createBook, deleteBook, deleteEdition, deleteOffer, linkUnmatched,
   optionalUrl, rejectPending, saveOffer, updateBook, updateEdition, type EditionInput,
@@ -369,4 +369,40 @@ export async function removePromoterBookAction(data: FormData) {
   await run(`/admin/targibotchilar/${id}#kitoblar`, async () => {
     await prisma.promoterBook.delete({ where: { promoterId_bookId: { promoterId: id, bookId: s(data, "bookId") } } });
   }, "Olib tashlandi.");
+}
+
+// ---------- bloger kabineti ----------
+
+export async function promoterLinkAction(data: FormData) {
+  const id = s(data, "id");
+  let token = "";
+  await run(`/admin/targibotchilar/${id}#kabinet`, async () => {
+    token = newToken();
+    await prisma.promoter.update({ where: { id }, data: { tokenHash: hashToken(token) } });
+    // havola faqat bir marta ko'rsatiladi (bazada saqlanmaydi)
+    return `/admin/targibotchilar/${id}?havola=${encodeURIComponent(token)}#kabinet`;
+  }, "Yangi kirish havolasi yaratildi. Eski havola endi ishlamaydi.");
+}
+
+export async function promoterRevokeAction(data: FormData) {
+  const id = s(data, "id");
+  await run(`/admin/targibotchilar/${id}#kabinet`, async () => {
+    await prisma.promoter.update({ where: { id }, data: { tokenHash: null } });
+  }, "Kabinet yopildi, havola o'chirildi.");
+}
+
+// ---------- saytdan tezkor o'chirish (admin kirgan bo'lsa katalog va kitob sahifasida) ----------
+
+export async function quickDeleteBookAction(id: string): Promise<{ ok: boolean; message: string }> {
+  if (!(await isAdmin())) return { ok: false, message: "Avval admin panelga kiring." };
+  try {
+    const book = await prisma.book.findUnique({ where: { id }, select: { title: true } });
+    if (!book) return { ok: true, message: "Kitob allaqachon o'chirilgan." };
+    await deleteBook(id);
+    revalidateTag(CATALOG_TAG);
+    return { ok: true, message: `«${book.title}» o'chirildi.` };
+  } catch (e) {
+    console.error(e);
+    return { ok: false, message: "O'chirib bo'lmadi. Qayta urinib ko'ring." };
+  }
 }

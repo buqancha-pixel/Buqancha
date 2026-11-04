@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { LANGUAGE_LABEL, formatNumber, formatPrice } from "@/lib/format";
 import { searchKey } from "@/lib/normalize";
 import { Flash, PageTitle, inputCls, type SP } from "../ui";
+import { AdminDeleteBook } from "@/components/AdminDeleteBook";
 
 const PER_PAGE = 60;
 
@@ -63,7 +64,7 @@ export default async function AdminBooks({ searchParams }: { searchParams: SP })
             const prices = b.editions.flatMap((e) => e.offers).map((o) => o.price);
             const lang = b.editions.length && b.editions.every((e) => e.language && !["uz", "uz-Cyrl"].includes(e.language)) ? b.editions[0].language : null;
             return (
-              <li key={b.id} className="flex gap-3 px-3 py-3">
+              <li key={b.id} className="flex items-center gap-3 px-3 py-3">
                 <div className="min-w-0 flex-1">
                   <Link href={`/admin/kitoblar/${b.id}`} className="block truncate font-medium hover:underline">
                     {b.title}
@@ -73,6 +74,7 @@ export default async function AdminBooks({ searchParams }: { searchParams: SP })
                     {lang && LANGUAGE_LABEL[lang] ? ` · ${LANGUAGE_LABEL[lang]}` : ""} · {prices.length ? formatPrice(Math.min(...prices)) : "narx yo'q"}
                   </p>
                 </div>
+                <AdminDeleteBook id={b.id} title={b.title} variant="button" />
               </li>
             );
           })}

@@ -12,13 +12,13 @@ import { prisma } from "../db";
 const COOKIE = "buqancha_hamkor";
 const DAYS = 60;
 
-function secret(): string | null {
+export function sessionSecret(): string | null {
   const s = (process.env.PARTNER_SECRET || process.env.ADMIN_PASSWORD || "").trim();
   return s.length >= 8 ? s : null;
 }
 
 export function partnerEnabled(): boolean {
-  return secret() !== null;
+  return sessionSecret() !== null;
 }
 
 export function hashToken(token: string): string {
@@ -30,11 +30,11 @@ export function newToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
-function sign(payload: string, key: string): string {
+export function sign(payload: string, key: string): string {
   return createHmac("sha256", key).update(payload).digest("base64url");
 }
 
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
   const x = Buffer.from(a);
   const y = Buffer.from(b);
   return x.length === y.length && timingSafeEqual(x, y);
@@ -46,7 +46,7 @@ export async function sellerByToken(token: string): Promise<Seller | null> {
 }
 
 export async function startPartnerSession(seller: Seller): Promise<void> {
-  const key = secret();
+  const key = sessionSecret();
   if (!key || !seller.partnerTokenHash) throw new Error("Hamkorlar kabineti yoqilmagan");
   const exp = String(Date.now() + DAYS * 864e5);
   // sessiya kalit xeshiga bog'langan: yangi havola yaratilsa — eski sessiyalar ishlamaydi
@@ -66,7 +66,7 @@ export async function endPartnerSession(): Promise<void> {
 
 /** Joriy hamkor (sessiya bo'lsa). */
 export async function currentPartner(): Promise<Seller | null> {
-  const key = secret();
+  const key = sessionSecret();
   if (!key) return null;
   const raw = (await cookies()).get(COOKIE)?.value;
   if (!raw) return null;

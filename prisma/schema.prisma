@@ -237,6 +237,7 @@ model Promoter {
   about     String?
   followers String?        // "120 ming" kabi matn
   photoUrl  String?
+  tokenHash String?        @unique // bloger kabineti kaliti xeshi (kalitning o'zi saqlanmaydi)
   consent   Boolean        @default(false)
   active    Boolean        @default(true)
   position  Int            @default(0)
