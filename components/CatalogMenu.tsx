@@ -1,0 +1,117 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+type Lang = { slug: string; name: string; count: number };
+
+/** Chap burchakdagi menyu: tillar bo'yicha katalog va sayt sahifalari. */
+export function CatalogMenu({ languages, instagramUrl }: { languages: Lang[]; instagramUrl: string }) {
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const pathname = usePathname();
+  const panel = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  // sahifa almashganda yopiladi
+  useEffect(() => setOpen(false), [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    panel.current?.querySelector<HTMLElement>("a")?.focus();
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+      button.current?.focus();
+    };
+  }, [open]);
+
+  const link = (href: string) =>
+    `flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-[15px] transition-colors hover:bg-surface-2 ${
+      pathname === href ? "bg-accent-soft font-semibold text-text" : ""
+    }`;
+
+  return (
+    <>
+      <button
+        ref={button}
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Menyu va katalog"
+        aria-expanded={open}
+        aria-controls="catalog-menu"
+        className="-ml-1 grid size-10 shrink-0 place-items-center rounded-full text-text hover:bg-surface-2"
+      >
+        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h10" />
+        </svg>
+      </button>
+
+      {mounted &&
+        createPortal(
+      // sarlavhadagi backdrop-blur fixed elementlarni o'ziga qamaydi — panel body'ga chiqariladi
+      <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
+        <div
+          className={`absolute inset-0 bg-black/45 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setOpen(false)}
+        />
+        <div
+          id="catalog-menu"
+          ref={panel}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menyu"
+          className={`menu-panel absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col overflow-y-auto border-r border-border bg-bg shadow-2xl transition-transform duration-200 ${
+            open ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between px-4 pb-2 pt-4">
+            <p className="font-heading text-lg font-semibold">Katalog</p>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Yopish" className="grid size-10 place-items-center rounded-full hover:bg-surface-2">
+              <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
+          <nav className="flex flex-col px-2 pb-4" aria-label="Katalog bo'limlari">
+            {languages.map((l) => {
+              const href = l.slug ? `/katalog/${l.slug}` : "/katalog";
+              return (
+                <Link key={href} href={href} className={`${link(href)} font-semibold`} tabIndex={open ? 0 : -1}>
+                  <span>{l.name}</span>
+                  <span className="tabular text-sm font-normal text-muted">{l.count.toLocaleString("ru-RU").replace(/,/g, " ")}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="mx-4 border-t border-border" />
+          <nav className="flex flex-col px-2 py-4" aria-label="Sayt bo'limlari">
+            {[
+              ["/targibotchilar", "Kitob targ'ibotchilari"],
+              ["/manzillar", "Do'konlar manzillari"],
+              ["/sotuvchilar", "Sotuvchilar"],
+              ["/hamkorlik", "Hamkor bo'lish"],
+              ["/qidiruv", "Qidiruv"],
+            ].map(([href, label]) => (
+              <Link key={href} href={href} className={link(href)} tabIndex={open ? 0 : -1}>
+                {label}
+              </Link>
+            ))}
+            <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className={link("#ig")} tabIndex={open ? 0 : -1}>
+              Instagram
+            </a>
+          </nav>
+        </div>
+      </div>,
+          document.body,
+        )}
+    </>
+  );
+}

@@ -1,0 +1,109 @@
+# Texnik xizmat: bazadagi ishlarni qo'lda ishga tushirish (Actions → Texnik xizmat → Run workflow).
+# DATABASE_URL secret'i narxlar workflow'i bilan bir xil. "...-qollash" vazifalari bazani o'zgartiradi,
+# qolganlari faqat ko'rsatadi (natija — workflow logida).
+name: Texnik xizmat
+
+on:
+  workflow_dispatch:
+    inputs:
+      vazifa:
+        description: Vazifa
+        required: true
+        type: choice
+        options:
+          - statistika
+          - korib-chiqish-royxati
+          - takrorlar-korish
+          - takrorlar-birlashtirish-qollash
+          - diniy-korish
+          - diniy-olib-tashlash-qollash
+          - narxlarni-yangilash
+          - katalog-import
+          - moslanmaganlarni-qayta-urinish
+          - rasmlar-statistikasi
+          - sotuvchilar-sinxron
+          - kitob-birlashtirish-korish
+          - kitob-birlashtirish-qollash
+          - ruscha-belgilash-korish
+          - ruscha-belgilash-qollash
+          - targibotchi-qoshish
+          - telegram-narxlar
+          - moslanmaganlarni-chiqarish-korish
+          - moslanmaganlarni-chiqarish-qollash
+      parametr:
+        description: "kitob-birlashtirish: '<kitob-slug> <asosiy-slug> [til]'; targibotchi-qoshish: 'username1 username2 +roziligi_olingan'"
+        required: false
+        default: ""
+      sotuvchi:
+        description: "Sotuvchi slug'i (narxlarni-yangilash, katalog-import, moslanmaganlarni-qayta-urinish uchun): qamar, barakot…"
+        required: false
+        default: ""
+
+# sahifa yig'ish ishlari kechki yig'ish bilan bir navbatda; tezkor vazifalar (bloger, statistika) kutmaydi
+concurrency:
+  group: ${{ contains(fromJSON('["narxlarni-yangilash","katalog-import","moslanmaganlarni-qayta-urinish"]'), inputs.vazifa) && 'narxlar' || format('xizmat-{0}', inputs.vazifa) }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://buqancha.vercel.app' }}
+      NODE_NO_WARNINGS: "1"
+      VAZIFA: ${{ inputs.vazifa }}
+      SOTUVCHI: ${{ inputs.sotuvchi }}
+      PARAMETR: ${{ inputs.parametr }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - name: Vazifa
+        run: |
+          set -euo pipefail
+          if [ -n "$SOTUVCHI" ] && ! [[ "$SOTUVCHI" =~ ^[a-z0-9-]{2,60}$ ]]; then
+            echo "::error::Sotuvchi slug'i noto'g'ri: $SOTUVCHI"; exit 1
+          fi
+          merge_args() {
+            if ! [[ "$PARAMETR" =~ ^([a-z0-9-]{2,100})\ ([a-z0-9-]{2,100})(\ ([a-zA-Z-]{2,8}))?$ ]]; then
+              echo "::error::parametr: '<kitob-slug> <asosiy-kitob-slug> [til]' ko'rinishida bo'lsin"; exit 1
+            fi
+            MERGE=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}")
+            if [ -n "${BASH_REMATCH[4]}" ]; then MERGE+=("--til=${BASH_REMATCH[4]}"); fi
+          }
+          promoter_args() {
+            if ! [[ "$PARAMETR" =~ ^(\+?[A-Za-z0-9._]{1,30})(\ \+?[A-Za-z0-9._]{1,30})*$ ]]; then
+              echo "::error::parametr: Instagram username'lar bo'sh joy bilan (rozilik olinganlari + bilan)"; exit 1
+            fi
+            read -r -a HANDLES <<< "$PARAMETR"
+          }
+          need_seller() { if [ -z "$SOTUVCHI" ]; then echo "::error::Bu vazifa uchun sotuvchi slug'ini kiriting"; exit 1; fi; }
+          case "$VAZIFA" in
+            statistika)                       npm run --silent stats ;;
+            korib-chiqish-royxati)            npm run --silent review ;;
+            takrorlar-korish)                 npm run --silent merge-duplicates ;;
+            takrorlar-birlashtirish-qollash)  npm run --silent merge-duplicates -- --apply ;;
+            diniy-korish)                     npm run --silent remove-religious ;;
+            diniy-olib-tashlash-qollash)      npm run --silent remove-religious -- --apply ;;
+            narxlarni-yangilash)              need_seller; npm run --silent collect -- "$SOTUVCHI" ;;
+            katalog-import)                   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" ;;
+            moslanmaganlarni-qayta-urinish)   need_seller; npm run --silent import-catalog -- "$SOTUVCHI" --retry-pending ;;
+            rasmlar-statistikasi)             npm run --silent images -- stats ;;
+            sotuvchilar-sinxron)              npm run --silent db:sellers ;;
+            moslanmaganlarni-chiqarish-korish)  npm run --silent publish-unmatched ;;
+            moslanmaganlarni-chiqarish-qollash) npm run --silent publish-unmatched -- --qollash ;;
+            telegram-narxlar)                 if [ -n "$SOTUVCHI" ]; then npm run --silent collect-telegram -- "$SOTUVCHI" "$PARAMETR"; else npm run --silent collect-telegram; fi ;;
+            kitob-birlashtirish-korish)       merge_args; npm run --silent merge-book -- "${MERGE[@]}" ;;
+            kitob-birlashtirish-qollash)      merge_args; npm run --silent merge-book -- "${MERGE[@]}" --apply ;;
+            ruscha-belgilash-korish)          npm run --silent fix-russian ;;
+            targibotchi-qoshish)              promoter_args; npm run --silent add-promoters -- "${HANDLES[@]}" ;;
+            ruscha-belgilash-qollash)         npm run --silent fix-russian -- --apply && npm run --silent remove-religious -- --apply ;;
+            *) echo "::error::Noma'lum vazifa: $VAZIFA"; exit 1 ;;
+          esac
+          echo "--- yakuniy holat ---"
+          npm run --silent stats

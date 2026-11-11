@@ -1,0 +1,55 @@
+{
+  "name": "buqancha",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "vercel-build": "bash scripts/vercel-build.sh",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types \"lib/**/*.test.ts\"",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "collect": "tsx scripts/collect.ts",
+    "import-feed": "tsx scripts/import-feed.ts",
+    "track-url": "tsx scripts/track-url.ts",
+    "review": "tsx scripts/review.ts",
+    "test:db": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://buqancha:buqancha@localhost:5432/buqancha_test} tsx --test lib/collector/collector.itest.ts",
+    "db:sellers": "tsx scripts/sync-sellers.ts",
+    "import-catalog": "tsx scripts/import-catalog.ts",
+    "merge-duplicates": "tsx scripts/merge-duplicates.ts",
+    "images": "tsx scripts/images.ts",
+    "remove-religious": "tsx scripts/remove-religious.ts",
+    "snapshot": "tsx scripts/snapshot.ts",
+    "stats": "tsx scripts/stats.ts",
+    "merge-book": "tsx scripts/merge-book.ts",
+    "fix-russian": "tsx scripts/fix-russian.ts",
+    "fill-category-parents": "tsx scripts/fill-category-parents.ts",
+    "add-promoters": "tsx scripts/add-promoters.ts",
+    "collect-telegram": "tsx scripts/collect-telegram.ts",
+    "publish-unmatched": "tsx scripts/publish-unmatched.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "fflate": "^0.8.2",
+    "next": "^15.5.28",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.4",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4.3.4",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
