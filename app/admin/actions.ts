@@ -577,7 +577,7 @@ export async function publishUnmatchedAction(data: FormData) {
   const back = s(data, "back").startsWith("/admin/korib-chiqish") ? s(data, "back") : "/admin/korib-chiqish?tab=moslanmagan";
   await run(back, async () => {
     const item = await prisma.unmatchedItem.findUniqueOrThrow({ where: { id: s(data, "id") }, select: { status: true, title: true } });
-    const r = await publishUnmatched(s(data, "id"), { allowReligious: item.status === "IGNORED" });
+    const r = await publishUnmatched(s(data, "id"), { allowReligious: item.status === "IGNORED", allowNonBook: true });
     return { msg: r === "linked" ? `«${item.title}» bazadagi kitobga ulandi — saytda.` : `«${item.title}» yangi kitob bo'lib saytga chiqdi.` };
   }, "Saytga chiqdi.");
 }

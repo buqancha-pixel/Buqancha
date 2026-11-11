@@ -248,6 +248,13 @@ belgilab "Belgilanganlarni saytga chiqarish" (100 tagacha) — `lib/admin/publis
 bo'lmasa "Muallif ko'rsatilmagan", til — kirill → ruscha, inglizcha so'zlar → inglizcha). Diniy adabiyot faqat
 "E'tiborsiz" ro'yxatidan, admin o'zi tanlaganda chiqadi.
 
+**Hammasini chiqarish:** `npm run publish-unmatched` (hisobot) / `-- --qollash`; Texnik xizmat →
+`moslanmaganlarni-chiqarish-korish` / `-qollash`. Ommaviy chiqarishda (va "Belgilanganlarni saytga chiqarish"da) diniy
+adabiyot, kitob emaslar (`looksNonBook`: marker, ruchka, lego, termos, mozaika…) va ISBN ham, muallif ham yo'q
+mahsulotlar o'tkaziladi — ular "Moslanmagan"da qoladi, bittalab "Saytga chiqarish" bilan chiqariladi. Muallifi yo'q
+kitoblar umumiy "Muallif ko'rsatilmagan" (`UNKNOWN_AUTHOR`) ga yoziladi: kitob sahifasida havolasiz, muallif sahifasi
+404, sitemap'da yo'q.
+
 **Kitobni o'chirish** faqat admin panelda: Admin → Kitoblar sukut bo'yicha muqovali ko'rinishda (katalogdagidek,
 "Mashhur / Yangi qo'shilgan / Eski" tartibi) — muqovadagi 🗑 bilan bittasini yoki katakchalarni belgilab, pastdagi
 "Belgilanganlarni o'chirish" bilan birdaniga (120 tagacha); "☰ Ro'yxat" ko'rinishi ham bor. Kitob sahifasining

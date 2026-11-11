@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { UNKNOWN_AUTHOR } from "@/lib/language";
 import { BookCard } from "@/components/BookCard";
 import { JsonLd } from "@/components/JsonLd";
 import { getAuthorBySlug, priceRange } from "@/lib/books";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function AuthorPage({ params }: { params: Params }) {
   const { slug } = await params;
   const author = await getAuthorBySlug(slug);
-  if (!author) notFound();
+  if (!author || author.name === UNKNOWN_AUTHOR) notFound();
   const years = author.birthYear ? `${author.birthYear}–${author.deathYear ?? ""}` : null;
 
   return (

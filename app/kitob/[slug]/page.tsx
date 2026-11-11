@@ -33,6 +33,7 @@ import { avatarColor, getBookPosts, getBookPromoters, promoterPhotoSrc } from "@
 import { PostCard } from "@/components/PostCard";
 import { PromoterAvatar } from "@/components/PromoterAvatar";
 import { OrderMenu } from "@/components/OrderMenu";
+import { UNKNOWN_AUTHOR } from "@/lib/language";
 import { Stars } from "@/components/Stars";
 import { SellerLogo } from "@/components/SellerLogo";
 import { sellerPhotoSrc } from "@/lib/seller/photo";
@@ -73,6 +74,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
   const sp = await searchParams;
   const book = await getBookBySlug(slug);
   if (!book) notFound();
+  const knownAuthor = book.author.name !== UNKNOWN_AUTHOR;
 
   const tur = typeof sp.tur === "string" && sp.tur in SELLER_TYPE_PARAM ? sp.tur : undefined;
   const onlyInStock = sp.mavjud === "1";
@@ -117,8 +119,8 @@ export default async function BookPage({ params, searchParams }: { params: Param
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Bosh sahifa", item: absoluteUrl("/") },
-            { "@type": "ListItem", position: 2, name: book.author.name, item: absoluteUrl(`/muallif/${book.author.slug}`) },
-            { "@type": "ListItem", position: 3, name: book.title, item: pageUrl },
+            ...(knownAuthor ? [{ "@type": "ListItem", position: 2, name: book.author.name, item: absoluteUrl(`/muallif/${book.author.slug}`) }] : []),
+            { "@type": "ListItem", position: knownAuthor ? 3 : 2, name: book.title, item: pageUrl },
           ],
         }}
       />
@@ -127,7 +129,7 @@ export default async function BookPage({ params, searchParams }: { params: Param
         <ol className="flex flex-wrap items-center gap-1.5">
           <li><Link href="/" className="hover:text-text">Bosh sahifa</Link></li>
           <li aria-hidden="true">/</li>
-          <li><Link href={`/muallif/${book.author.slug}`} className="hover:text-text">{book.author.name}</Link></li>
+          <li>{knownAuthor ? <Link href={`/muallif/${book.author.slug}`} className="hover:text-text">{book.author.name}</Link> : "Kitob"}</li>
           <li aria-hidden="true">/</li>
           <li className="text-text" aria-current="page">{book.title}</li>
         </ol>
@@ -161,9 +163,13 @@ export default async function BookPage({ params, searchParams }: { params: Param
             </p>
           )}
           <p className="mt-2 text-base">
-            <Link href={`/muallif/${book.author.slug}`} className="font-semibold text-accent hover:underline">
-              {book.author.name}
-            </Link>
+            {knownAuthor ? (
+              <Link href={`/muallif/${book.author.slug}`} className="font-semibold text-accent hover:underline">
+                {book.author.name}
+              </Link>
+            ) : (
+              <span className="text-muted">{book.author.name}</span>
+            )}
             {book.author.nameCyrl && (
               <span lang="uz-Cyrl" className="text-muted"> · {book.author.nameCyrl}</span>
             )}

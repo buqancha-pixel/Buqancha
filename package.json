@@ -28,7 +28,8 @@
     "fix-russian": "tsx scripts/fix-russian.ts",
     "fill-category-parents": "tsx scripts/fill-category-parents.ts",
     "add-promoters": "tsx scripts/add-promoters.ts",
-    "collect-telegram": "tsx scripts/collect-telegram.ts"
+    "collect-telegram": "tsx scripts/collect-telegram.ts",
+    "publish-unmatched": "tsx scripts/publish-unmatched.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

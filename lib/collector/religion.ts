@@ -42,7 +42,7 @@ const TITLE_STEMS = [
   "hadis", "payg'ambar", "rasululloh", "alloh", "ilohiy", "islom", "tafsir", "sahoba", "saxoba", "namoz", "avliyo",
   "masjid", "shariat", "ramazon", "iymon", "tasavvuf", "aqida", "qur'on", "muhammad sollalloh",
   "sollalloh", "roziyalloh", "alayhissalom", "oxirat", "sajda", "zakot",
-  "duolar", "imomi", "imomlar", "sunnati", "sunnat ", "tavhid", "fiqh", "zikr", "musxaf", "mushaf", "tajvid",
+  "duolar", "imomi", "imomlar", "sunnati", "sunnat ", "tavhid", "fiqh", "zikr", "musxaf", "mushaf", "tajvid", "muslima", "fatvo", "фатво",
   // ruscha (kirill → lotin kalit)
   "коран", "ислам", "аллах", "пророк", "намаз", "молитв", "библи", "евангел", "православ", "христиан", "хадис",
 ].map((w) => searchKey(w));

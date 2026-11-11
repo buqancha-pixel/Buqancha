@@ -2,6 +2,7 @@ import { LANGUAGES } from "@/lib/categories";
 import { getCategoryCounts } from "@/lib/catalog";
 import { getPromoters } from "@/lib/promoters";
 import { getSellers } from "@/lib/books";
+import { UNKNOWN_AUTHOR } from "@/lib/language";
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { cached } from "@/lib/cache";
@@ -16,7 +17,7 @@ const sitemapBooks = cached(
   () => prisma.book.findMany({ select: { slug: true, updatedAt: true, editions: { select: { offers: { select: { updatedAt: true } } } } } }),
   "sitemap-books",
 );
-const sitemapAuthors = cached(() => prisma.author.findMany({ select: { slug: true } }), "sitemap-authors");
+const sitemapAuthors = cached(() => prisma.author.findMany({ where: { name: { not: UNKNOWN_AUTHOR } }, select: { slug: true } }), "sitemap-authors");
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [books, authors] = await Promise.all([sitemapBooks(), sitemapAuthors()]);
